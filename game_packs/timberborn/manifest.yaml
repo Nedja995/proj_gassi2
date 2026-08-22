@@ -1,0 +1,24 @@
+game_id: timberborn
+display_name: "Timberborn"
+window_title_pattern: "Timberborn"
+game_version: "0.6"
+rag_collection_name: null
+
+hud_regions:
+  - label: "top_resource_bar"
+    x_pct: 0.15
+    y_pct: 0.0
+    width_pct: 0.70
+    height_pct: 0.04
+
+  - label: "population_panel"
+    x_pct: 0.0
+    y_pct: 0.0
+    width_pct: 0.15
+    height_pct: 0.06
+
+  - label: "day_season_indicator"
+    x_pct: 0.85
+    y_pct: 0.0
+    width_pct: 0.15
+    height_pct: 0.04

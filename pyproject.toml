@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "gassi"
+version = "0.1.0"
+description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
+authors = ["Your Name <your@email.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "gassi", from = "src"}]
+
+[tool.poetry.scripts]
+gassi = "gassi.main:main"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+pydantic = "^2.9"
+pydantic-settings = "^2.6"
+keyring = "^25.5"
+mss = "^9.0"
+Pillow = "^11.0"
+rapidocr-onnxruntime = "^1.4"
+google-genai = "^1.0"
+pynput = "^1.7"
+edge-tts = "^7.0"
+numpy = "^2.1"
+pyyaml = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-asyncio = "^0.24"
+ruff = "^0.8"
+mypy = "^1.13"
+pyinstaller = "^6.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

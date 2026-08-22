@@ -1,0 +1,1 @@
+"""OCR abstraction and implementations."""
