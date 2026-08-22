@@ -1,0 +1,105 @@
+# TODO — GASSI Roadmap
+
+## v0.1.2 — Usability & Debugging
+
+### Settings UI
+- [ ] Settings dialog accessible from toolbar (gear icon)
+- [ ] Configurable hotkeys (F1/F2 conflict with Timberborn's own bindings)
+- [ ] Theme picker (dark/midnight/forest + future user themes)
+- [ ] Cooldown interval slider
+- [ ] API model selector dropdown
+
+### Debug Tools
+- [ ] Debug capture viewer: hotkey to save last captured frame as PNG to disk
+- [ ] Show what was sent to Gemini (captured region outline or saved image)
+- [ ] Log viewer panel in overlay (collapsible, shows last N log lines)
+
+### Prompt Quality
+- [ ] Tighten advisor prompt: max 3-4 lines, no markdown formatting instruction
+- [ ] Add early-game context recognition (Cycle 1/Day 1 = beginner advice)
+- [ ] Prompt iteration against real Timberborn gameplay screenshots
+
+### Window Behavior
+- [ ] Remember window position/size across sessions (save to local config)
+- [ ] "Ready" indicator in green after cooldown expires (before clearing)
+
+## v0.2.0 — OCR & Input Improvements
+
+### OCR Pipeline
+- [ ] OCR preprocessing: contrast boost, binarization, upscaling crops before OCR
+- [ ] Per-game font tuning profiles in game pack manifest
+- [ ] Test RapidOCR against Timberborn's actual font with preprocessed images
+- [ ] Fallback chain: OCR → screenshot only when OCR actually works for the game
+
+### Input Improvements
+- [ ] Inline text entry in the overlay body (replace popup dialog for F2)
+- [ ] Prompt history (last 5 placement queries, selectable)
+- [ ] Predefined quick-prompts per game pack (e.g. "Where to build next?", "Water strategy?")
+
+## v0.3.0 — Spatial & Visual Feedback
+
+### Grid Overlay (v2 placement)
+- [ ] Draw A-Z / 1-N grid on captured screenshot before sending to Gemini
+- [ ] Parse Gemini's cell references (e.g. "D5") from structured response
+- [ ] Cell → screen pixel conversion using capture_rect + scale_factor
+- [ ] Bounding box rendering on overlay at target coordinates
+
+### Tutorial Overlays
+- [ ] Arrow rendering: directional arrows pointing to game UI elements
+- [ ] Tutorial step system: "click here" highlights with instruction text
+- [ ] Tutorial sequences defined in game pack YAML (per-game tutorials)
+- [ ] Dim background + highlighted region for focused guidance
+
+## v0.4.0 — Multi-Game & RAG
+
+### Second Game Pack
+- [ ] RimWorld or Factorio game pack
+- [ ] Validate pack structure generalizes (manifest, prompts, HUD regions)
+- [ ] Identify what's truly game-specific vs. core engine
+- [ ] Extract common prompt patterns into reusable templates
+
+### RAG Pipeline
+- [ ] Chroma + sentence-transformers for game knowledge retrieval
+- [ ] Wiki/formula ingestion pipeline (chunking, embedding, persistence)
+- [ ] Pre-baked Chroma collections shipped per game pack
+- [ ] RAG-augmented prompts replacing static system prompt knowledge
+- [ ] patch_version metadata filtering in Chroma queries
+
+## v0.5.0 — Multi-Backend & Local Models
+
+### AI Backend Expansion
+- [ ] Claude API backend (ClaudeBackend implementing AiBackend Protocol)
+- [ ] Backend selector in settings UI
+- [ ] Cost tracking / token usage display per session
+
+### Local SLM Support
+- [ ] Ollama backend (OllamaBackend implementing AiBackend Protocol)
+- [ ] Qwen2.5-VL / Llama 3.2 Vision support
+- [ ] Freemium model: local SLM free, cloud paid
+- [ ] GPU detection and model recommendation
+
+## v0.6.0 — Platform & Distribution
+
+### Platform Support
+- [ ] Wayland capture backend (PipeWire/portal)
+- [ ] Native window detection: per-OS window handle lookup (NativeWindowRegionProvider)
+- [ ] SteamOS / Steam Deck testing
+- [ ] macOS Screen Recording permission first-run prompt
+
+### Anti-Cheat Posture (for online games)
+- [ ] SetWindowDisplayAffinity (Windows — hide overlay from other screen captures)
+- [ ] Adjustable window class/enumeration behavior
+- [ ] Document per-game anti-cheat compatibility
+
+### Distribution
+- [ ] PyInstaller packaging and testing
+- [ ] Auto-updater mechanism
+- [ ] Installer for Windows (MSI or NSIS)
+- [ ] TTS voice readout (edge-tts integration, optional)
+
+## Ongoing / Cross-Cutting
+
+- [ ] Unit tests for new features (maintain test coverage)
+- [ ] Update README.md and docs/architecture.md with each version
+- [ ] Performance profiling (memory, CPU during capture + OCR)
+- [ ] Gemini API cost monitoring and optimization

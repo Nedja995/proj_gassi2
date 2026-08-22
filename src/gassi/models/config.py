@@ -35,6 +35,9 @@ class AppSettings(BaseSettings):
     # Game pack
     active_game_id: str = "timberborn"
 
+    # Theme
+    theme_name: str = "dark"
+
     # TTS (optional, off by default)
     tts_enabled: bool = False
     tts_voice: str = "en-US-AriaNeural"

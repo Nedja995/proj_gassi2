@@ -7,16 +7,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned (v2)
-- Grid overlay for Placement mode (A–Z / 1–N coordinate system)
-- Arrow/bounding-box rendering on overlay for spatial guidance
-- Tutorial overlay system (highlight UI elements, step-by-step instructions)
-- Native window detection (replace overlay-anchored region with per-OS window lookup)
-- RAG pipeline (Chroma + sentence-transformers) replacing static prompt knowledge
-- Claude API backend
-- Local SLM support via Ollama (Qwen2.5-VL / Llama 3.2 Vision)
-- Wayland capture backend (PipeWire/portal)
-- TTS voice readout of advice (edge-tts integration)
+## [0.1.1] - Unreleased
+
+### Added
+- Theme system: all visual constants extracted to `Theme` model (dark, midnight, forest presets)
+- Collapsible overlay: toolbar-only strip mode via ▼/▲ button, auto-expands when results arrive
+- Markdown bold rendering: `**text**` in Gemini responses renders as bold in the overlay
+- Auto-hide during capture: overlay withdraws before screenshot to avoid capturing itself
+- Theme selection via `GASSI_THEME_NAME` env var
+- Cooldown timer in footer bar
+
+### Changed
+- Toolbar is now compact (22px) with icon-only buttons
+- Footer reduced to 18px with abbreviated hotkey hints
+- All captures (F1 screenshot, F2 placement) now use full-screen grab
+- Single-shot query model: no auto-polling, each hotkey press = one API call
+- PlacementPromptDialog now themed consistently with overlay
+
+See [TODO.md](TODO.md) for the full roadmap.
 
 ## [0.1.0] - Unreleased
 

@@ -15,6 +15,7 @@ from gassi.core.capture.region_provider import OverlayAnchoredRegionProvider
 from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.hotkey_manager import HotkeyManager
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
+from gassi.core.theme.theme import THEMES, DARK_THEME
 from gassi.models.config import AppSettings
 from gassi.viewmodels.assistant_viewmodel import AssistantViewModel
 from gassi.views.dialogs import PlacementPromptDialog
@@ -46,6 +47,7 @@ def _get_api_key() -> str:
 def main() -> None:
     """Application entry point — compose and start."""
     settings = AppSettings()
+    theme = THEMES.get(settings.theme_name, DARK_THEME)
 
     # retrieve API key from OS credential store
     api_key = _get_api_key()
@@ -57,7 +59,7 @@ def main() -> None:
     pack_loader = GamePackLoader()
 
     # UI
-    overlay = MainOverlay()
+    overlay = MainOverlay(theme=theme)
     async_bridge = AsyncBridge(overlay)
     region_provider = OverlayAnchoredRegionProvider(overlay)
 
@@ -77,7 +79,9 @@ def main() -> None:
     hotkey_manager = HotkeyManager()
     hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.trigger_advisor)
     hotkey_manager.register(settings.hotkey_advisor_source_switch, viewmodel.switch_advisor_source)
+
     def _open_placement_dialog() -> None:
+        overlay.auto_expand_for_result()
         PlacementPromptDialog(overlay, on_submit=viewmodel.trigger_placement)
 
     hotkey_manager.register(settings.hotkey_placement, _open_placement_dialog)
@@ -90,7 +94,7 @@ def main() -> None:
         async_bridge.shutdown()
         overlay.destroy()
 
-    overlay.protocol("WM_DELETE_WINDOW", _on_close)
+    overlay.set_close_handler(_on_close)
 
     logger.info("GASSI started — game: %s", settings.active_game_id)
     overlay.mainloop()

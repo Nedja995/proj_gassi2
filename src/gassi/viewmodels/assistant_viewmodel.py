@@ -189,6 +189,10 @@ class AssistantViewModel:
 
     def _on_result(self, response_text: str) -> None:
         self._busy = False
+        # auto-expand overlay if collapsed
+        overlay = self._canvas.winfo_toplevel()
+        if hasattr(overlay, "auto_expand_for_result"):
+            overlay.auto_expand_for_result()
         self._canvas.show_advice(response_text)
         self._start_cooldown()
         self._mode = AssistantMode.IDLE
