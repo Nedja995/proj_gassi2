@@ -46,8 +46,8 @@ uv pip install -e ".[dev]"
 # On Windows, also install pywin32 for click-through overlay
 uv pip install -e ".[dev,windows]"
 
-# Store your Gemini API key in OS keyring
-python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_API_KEY')"
+# Store your Gemini API key in OS keyring (requires activated venv)
+uv run python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_API_KEY')"
 ```
 
 ## Usage

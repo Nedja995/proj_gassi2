@@ -15,7 +15,7 @@ class GeminiBackend:
     not stored in config files.
     """
 
-    def __init__(self, api_key: str, model: str = "gemini-2.5-flash") -> None:
+    def __init__(self, api_key: str, model: str = "gemini-3.6-flash") -> None:
         self._model = model
         self._client = genai.Client(api_key=api_key)
 

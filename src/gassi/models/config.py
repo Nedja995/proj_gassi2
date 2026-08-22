@@ -17,11 +17,11 @@ class AppSettings(BaseSettings):
     model_config = {"env_prefix": "GASSI_"}
 
     # AI backend
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"
 
     # Advisor mode
     advisor_input_source: AdvisorInputSource = AdvisorInputSource.OCR
-    advisor_poll_interval_seconds: float = Field(default=5.0, ge=1.0, le=60.0)
+    cooldown_seconds: float = Field(default=15.0, ge=5.0, le=120.0)
     ocr_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
 
     # Capture
@@ -43,3 +43,4 @@ class AppSettings(BaseSettings):
     hotkey_advisor_toggle: str = "<f1>"
     hotkey_advisor_source_switch: str = "<shift>+<f1>"
     hotkey_placement: str = "<f2>"
+    hotkey_lock_overlay: str = "<f3>"

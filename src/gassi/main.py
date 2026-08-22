@@ -75,12 +75,13 @@ def main() -> None:
 
     # hotkeys
     hotkey_manager = HotkeyManager()
-    hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.toggle_advisor)
+    hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.trigger_advisor)
     hotkey_manager.register(settings.hotkey_advisor_source_switch, viewmodel.switch_advisor_source)
     def _open_placement_dialog() -> None:
         PlacementPromptDialog(overlay, on_submit=viewmodel.trigger_placement)
 
     hotkey_manager.register(settings.hotkey_placement, _open_placement_dialog)
+    hotkey_manager.register(settings.hotkey_lock_overlay, overlay.toggle_click_through)
     hotkey_manager.start()
 
     # cleanup on close
