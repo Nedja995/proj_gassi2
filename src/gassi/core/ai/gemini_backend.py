@@ -1,6 +1,5 @@
 """Gemini AI backend implementation."""
 
-import base64
 import logging
 
 from google import genai

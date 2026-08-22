@@ -17,6 +17,7 @@ from gassi.core.hotkey_manager import HotkeyManager
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.models.config import AppSettings
 from gassi.viewmodels.assistant_viewmodel import AssistantViewModel
+from gassi.views.dialogs import PlacementPromptDialog
 from gassi.views.main_overlay import MainOverlay
 
 logging.basicConfig(
@@ -76,12 +77,10 @@ def main() -> None:
     hotkey_manager = HotkeyManager()
     hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.toggle_advisor)
     hotkey_manager.register(settings.hotkey_advisor_source_switch, viewmodel.switch_advisor_source)
-    # placement hotkey opens a simple prompt — for v1 we use a fixed test prompt
-    # TODO: replace with a small input dialog or text entry widget
-    hotkey_manager.register(
-        settings.hotkey_placement,
-        lambda: viewmodel.trigger_placement("Where should I build next?"),
-    )
+    def _open_placement_dialog() -> None:
+        PlacementPromptDialog(overlay, on_submit=viewmodel.trigger_placement)
+
+    hotkey_manager.register(settings.hotkey_placement, _open_placement_dialog)
     hotkey_manager.start()
 
     # cleanup on close

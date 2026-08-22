@@ -28,7 +28,7 @@ On-demand: captures full game window + your typed question → Gemini returns sp
 
 ## Requirements
 
-- Python 3.12.x
+- Python 3.12.x (managed via [uv](https://docs.astral.sh/uv/))
 - Google Gemini API key
 - Windows / macOS / Linux (X11). Wayland support is planned.
 
@@ -39,8 +39,12 @@ On-demand: captures full game window + your typed question → Gemini returns sp
 git clone <repo-url>
 cd proj_gassi2
 
-# Install dependencies (Poetry)
-poetry install
+# Create venv and install all dependencies (including dev)
+uv venv --python 3.12
+uv pip install -e ".[dev]"
+
+# On Windows, also install pywin32 for click-through overlay
+uv pip install -e ".[dev,windows]"
 
 # Store your Gemini API key in OS keyring
 python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_API_KEY')"
@@ -49,11 +53,17 @@ python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR
 ## Usage
 
 ```bash
-# Run via Poetry
-poetry run gassi
+# Activate venv first
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
 
-# Or directly
-python -m gassi.main
+# Run
+gassi
+
+# Or without activating
+uv run gassi
 ```
 
 Position the overlay window over your game. Hotkeys:
@@ -89,6 +99,7 @@ src/gassi/
 ├── viewmodels/
 │   └── assistant_viewmodel.py  # Mode FSM, dispatch, state management
 └── views/
+    ├── dialogs.py              # Placement prompt input dialog
     └── main_overlay.py         # Root tkinter overlay window
 
 game_packs/
@@ -113,13 +124,13 @@ See `docs/architecture.md` for detailed decisions and rationale.
 
 ```bash
 # Run tests
-poetry run pytest
+uv run pytest -v
 
 # Lint
-poetry run ruff check src/ tests/
+uv run ruff check src/ tests/
 
 # Type check
-poetry run mypy src/
+uv run mypy src/
 ```
 
 ## License

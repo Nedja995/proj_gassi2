@@ -92,8 +92,8 @@ This document captures the key architecture decisions made for GASSI and the rat
 
 **Rationale:** Anti-cheat compliance. Even for single-player games without anti-cheat (Timberborn, RimWorld), this stance is maintained as a product principle — especially since online multiplayer game support is planned for future versions.
 
-## AD-16: Python 3.12 pinned
+## AD-16: Python 3.12 pinned, uv as package manager
 
-**Decision:** Pin to Python `>=3.12,<3.13` (stable release).
+**Decision:** Pin to Python `>=3.12,<3.13` (stable release). Use `uv` (Astral) for venv creation and dependency management.
 
-**Rationale:** 3.12 is the current stable with mature ecosystem support. Avoids 3.13+ breaking changes in dependencies (especially compiled ones like ONNX runtime, mss, numpy). Upgrade deliberately after verifying full dep compatibility.
+**Rationale:** 3.12 is the current stable with mature ecosystem support. Avoids 3.13+ breaking changes in dependencies (especially compiled ones like ONNX runtime, mss, numpy). `uv` chosen over Poetry because (a) it was already installed on the dev machine managing Python, (b) faster installs/resolution, (c) simpler mental model (no separate shell/plugin ecosystem), (d) standard PEP 621 `pyproject.toml` with no tool-specific lock-in. Hatchling as build backend — lightweight, standard-compliant.

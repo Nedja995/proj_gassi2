@@ -1,39 +1,49 @@
-[tool.poetry]
+[project]
 name = "gassi"
 version = "0.1.0"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
-authors = ["Your Name <your@email.com>"]
-license = "MIT"
 readme = "README.md"
-packages = [{include = "gassi", from = "src"}]
+license = "MIT"
+requires-python = ">=3.12,<3.13"
+authors = [
+    { name = "Your Name", email = "your@email.com" },
+]
 
-[tool.poetry.scripts]
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "keyring>=25.5",
+    "mss>=9.0",
+    "Pillow>=11.0",
+    "rapidocr-onnxruntime>=1.4",
+    "google-genai>=1.0",
+    "pynput>=1.7",
+    "edge-tts>=7.0",
+    "numpy>=2.1",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pyinstaller>=6.11",
+]
+windows = [
+    "pywin32>=306",
+]
+
+[project.scripts]
 gassi = "gassi.main:main"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-pydantic = "^2.9"
-pydantic-settings = "^2.6"
-keyring = "^25.5"
-mss = "^9.0"
-Pillow = "^11.0"
-rapidocr-onnxruntime = "^1.4"
-google-genai = "^1.0"
-pynput = "^1.7"
-edge-tts = "^7.0"
-numpy = "^2.1"
-pyyaml = "^6.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3"
-pytest-asyncio = "^0.24"
-ruff = "^0.8"
-mypy = "^1.13"
-pyinstaller = "^6.11"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gassi"]
 
 [tool.ruff]
 line-length = 120
