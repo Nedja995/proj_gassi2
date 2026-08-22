@@ -9,7 +9,7 @@ States:
 import logging
 import platform
 import tkinter as tk
-from typing import Any
+from typing import Any, Callable
 
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
@@ -99,6 +99,11 @@ class MainOverlay(tk.Tk):
             self._toolbar, text="🔓", command=self.toggle_click_through, **btn_opts,
         )
         self._lock_btn.pack(side=tk.RIGHT, padx=1)
+
+        self._settings_btn = tk.Button(
+            self._toolbar, text="⚙", command=self._open_settings, **btn_opts,
+        )
+        self._settings_btn.pack(side=tk.RIGHT, padx=1)
 
         # draggable toolbar
         for widget in (self._toolbar, self._title_label, self._status_label):
@@ -323,6 +328,36 @@ class MainOverlay(tk.Tk):
 
     def set_close_handler(self, handler: object) -> None:
         self._close_handler = handler
+
+    def set_settings_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
+        """Set the callback for when settings are saved."""
+        self._settings_handler = handler
+
+    def _open_settings(self) -> None:
+        """Open the settings dialog."""
+        from gassi.views.settings_dialog import SettingsDialog
+        from gassi.core.settings_manager import load_saved_settings
+
+        current = load_saved_settings()
+        # merge runtime defaults for fields not yet saved
+        defaults = {
+            "hotkey_advisor_toggle": "<f1>",
+            "hotkey_advisor_source_switch": "<shift>+<f1>",
+            "hotkey_placement": "<f2>",
+            "hotkey_lock_overlay": "<f3>",
+            "theme_name": self._theme.name,
+            "cooldown_seconds": 15.0,
+            "gemini_model": "gemini-3.6-flash",
+            "advisor_input_source": "ocr",
+        }
+        for k, v in defaults.items():
+            current.setdefault(k, v)
+
+        def _on_save(settings: dict[str, Any]) -> None:
+            if hasattr(self, "_settings_handler") and self._settings_handler:
+                self._settings_handler(settings)
+
+        SettingsDialog(self, self._theme, current, on_save=_on_save)
 
     def _on_close_click(self) -> None:
         self._destroy_pull_tab()

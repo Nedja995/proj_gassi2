@@ -1,13 +1,16 @@
 # TODO — GASSI Roadmap
 
-## v0.1.2 — Usability & Debugging (NEXT)
+## v0.1.2 — Usability & Debugging (IN PROGRESS)
 
 ### Settings UI
-- [ ] Settings dialog accessible from toolbar (gear icon)
-- [ ] Configurable hotkeys (F1/F2 conflict with Timberborn's own bindings — blocking issue)
-- [ ] Theme picker (dark/midnight/forest + future user themes)
-- [ ] Cooldown interval slider
-- [ ] API model selector dropdown
+- [x] Settings dialog accessible from toolbar (gear icon)
+- [x] Configurable hotkeys with key capture widget
+- [x] Theme picker (dark/midnight/forest)
+- [x] Cooldown interval slider
+- [x] API model selector
+- [x] Default input source selector (ocr/screenshot)
+- [x] Persistent settings (JSON config file in OS app data directory)
+- [x] Window position/size remembered across sessions
 
 ### Debug Tools
 - [ ] Debug capture viewer: hotkey to save last captured frame as PNG to disk
@@ -20,7 +23,6 @@
 - [ ] Prompt iteration against real Timberborn gameplay screenshots
 
 ### Window Behavior
-- [ ] Remember window position/size across sessions (save to local config)
 - [ ] "Ready" indicator in green after cooldown expires (before clearing)
 
 ## v0.2.0 — OCR & Input Improvements
@@ -108,7 +110,19 @@
 
 ## Completed
 
-### v0.1.1 (2026-08-22)
+### v0.1.2 (2026-08-22) — Settings & Persistence
+- [x] Settings dialog with two tabs (Hotkeys, General)
+- [x] Key capture widget for hotkey rebinding
+- [x] Theme picker dropdown
+- [x] Cooldown slider (5-60s)
+- [x] AI model text field
+- [x] Default input source dropdown
+- [x] Gear icon (⚙) in toolbar
+- [x] Persistent JSON config in OS app data directory
+- [x] Window geometry saved on close, restored on launch
+- [x] Settings manager module (load/save/window geometry)
+
+### v0.1.1 (2026-08-22) — Theme & Overlay UX
 - [x] Theme system extracted (Theme model + 3 presets)
 - [x] Collapsible overlay (▲/▼ toggle)
 - [x] Slide-off-screen (◀ hide + ▶ pull-tab)
@@ -128,7 +142,7 @@
 - [x] Fixed overlay self-capture in screenshots
 - [x] Fixed slide-off-screen reliability (withdraw/deiconify)
 
-### v0.1.0 (2026-08-22)
+### v0.1.0 (2026-08-22) — Initial Scaffold
 - [x] MVVM project scaffold with Protocol abstractions
 - [x] Advisor mode (OCR + Screenshot sources)
 - [x] Placement mode (free-text spatial advice)

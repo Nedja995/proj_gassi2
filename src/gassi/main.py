@@ -5,6 +5,7 @@ Wires all components together and starts the tkinter mainloop.
 
 import logging
 import sys
+from typing import Any
 
 import keyring
 
@@ -15,7 +16,8 @@ from gassi.core.capture.region_provider import OverlayAnchoredRegionProvider
 from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.hotkey_manager import HotkeyManager
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
-from gassi.core.theme.theme import THEMES, DARK_THEME
+from gassi.core.settings_manager import load_saved_settings, save_window_geometry
+from gassi.core.theme.theme import THEMES, FOREST_THEME
 from gassi.models.config import AppSettings
 from gassi.viewmodels.assistant_viewmodel import AssistantViewModel
 from gassi.views.dialogs import PlacementPromptDialog
@@ -46,8 +48,11 @@ def _get_api_key() -> str:
 
 def main() -> None:
     """Application entry point — compose and start."""
-    settings = AppSettings()
-    theme = THEMES.get(settings.theme_name, DARK_THEME)
+    # load saved user settings and merge with defaults
+    saved = load_saved_settings()
+    settings = AppSettings(**{k: v for k, v in saved.items() if not k.startswith("_")})
+
+    theme = THEMES.get(settings.theme_name, FOREST_THEME)
 
     # retrieve API key from OS credential store
     api_key = _get_api_key()
@@ -60,6 +65,13 @@ def main() -> None:
 
     # UI
     overlay = MainOverlay(theme=theme)
+
+    # restore window position
+    from gassi.core.settings_manager import load_window_geometry
+    saved_geometry = load_window_geometry()
+    if saved_geometry:
+        overlay.geometry(saved_geometry)
+
     async_bridge = AsyncBridge(overlay)
     region_provider = OverlayAnchoredRegionProvider(overlay)
 
@@ -88,8 +100,21 @@ def main() -> None:
     hotkey_manager.register(settings.hotkey_lock_overlay, overlay.toggle_click_through)
     hotkey_manager.start()
 
+    # settings save handler
+    def _on_settings_saved(new_settings: dict[str, Any]) -> None:
+        logger.info("Settings saved — restart required for hotkey changes")
+        # apply non-restart settings immediately
+        if "cooldown_seconds" in new_settings:
+            viewmodel._settings = AppSettings(
+                **{k: v for k, v in new_settings.items() if not k.startswith("_")}
+            )
+
+    overlay.set_settings_handler(_on_settings_saved)
+
     # cleanup on close
     def _on_close() -> None:
+        # save window position
+        save_window_geometry(overlay.geometry())
         hotkey_manager.stop()
         async_bridge.shutdown()
         overlay.destroy()
