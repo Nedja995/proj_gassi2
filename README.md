@@ -12,7 +12,7 @@ GASSI captures your game screen, extracts information via local OCR or direct sc
 
 ### Advisor Mode (`F1`)
 
-Periodic polling of pre-calibrated HUD regions. Two input sources (toggle with `Shift+F1`):
+On-Demand or periodic polling of pre-calibrated HUD regions. Two input sources (toggle with `Shift+F1`):
 
 - **OCR** — local text extraction via RapidOCR, sends text to Gemini (cheapest)
 - **Screenshot** — sends cropped HUD image directly to Gemini (fallback / richer context)
@@ -71,7 +71,7 @@ uv run gassi
 
 Position the overlay window over your game. Hotkeys:
 
-- `F1` — Toggle Advisor mode (periodic polling)
+- `F1` — Toggle Advisor mode
 - `Shift+F1` — Switch Advisor input source (OCR ↔ Screenshot)
 - `F2` — Placement query (one-shot screenshot + question)
 
@@ -140,3 +140,13 @@ uv run mypy src/
 ## License
 
 MIT
+
+## Market Concurrency & Competitive Advantage
+
+**Market Landscape:** Competes alongside generalist tools like **NVIDIA Project G-Assist**, **Gaming Copilot** (Steam), **Google Play Games Sidekick**, and open-source screen-capture companions like **AI Game Coach**.
+
+**Key Differentiator:** Commercial platforms attempt to cover every genre generically (yielding basic tips like "build more houses"). This project wins by leveraging **Hyper-Specialization (Niche RAG)**—providing exact, deep mathematical and strategic recommendations for complex individual games that competitors cannot match.
+
+**Monetization & Risk Mitigation:** Uses a **Freemium Model**: Free local SLM support for users with strong GPUs vs. a paid cloud subscription for users with lower-end hardware.
+
+* Relies purely on **Computer Vision (CV)** and screen overlays, avoiding game memory reading to ensure compliance and avoid anti-cheat bans.

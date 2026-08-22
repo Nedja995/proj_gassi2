@@ -6,7 +6,7 @@ Timberborn (single game pack, vanilla UI only)
 
 ## Feature 1: Advisor Mode (periodic polling)
 
-**Trigger:** `F1` toggle on/off
+**Trigger:** `F1` Advosor mode
 
 **Input sources** (switch via `Shift+F1`):
 
