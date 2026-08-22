@@ -7,31 +7,45 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.1.1] - Unreleased
-
-### Added
-
-- Theme system: all visual constants extracted to `Theme` model (dark, midnight, forest presets)
-- Collapsible overlay: toolbar-only strip mode via ▼/▲ button, auto-expands when results arrive
-- Markdown bold rendering: `**text**` in Gemini responses renders as bold in the overlay
-- Auto-hide during capture: overlay withdraws before screenshot to avoid capturing itself
-- Theme selection via `GASSI_THEME_NAME` env var
-- Cooldown timer in footer bar
-
-### Changed
-
-- Toolbar is now compact (22px) with icon-only buttons
-- Footer reduced to 18px with abbreviated hotkey hints
-- All captures (F1 screenshot, F2 placement) now use full-screen grab
-- Single-shot query model: no auto-polling, each hotkey press = one API call
-- PlacementPromptDialog now themed consistently with overlay
-
 See [TODO.md](TODO.md) for the full roadmap.
 
-## [0.1.0] - Unreleased
+## [0.1.1] - 2026-08-22
 
 ### Added
+- Theme system: all visual constants extracted to `Theme` model with 3 presets (dark, midnight, forest)
+- Theme selection via `GASSI_THEME_NAME` env var
+- Collapsible overlay: ▲/▼ button toggles toolbar-only strip; auto-expands when results arrive
+- Slide-off-screen: ◀ button hides overlay entirely, leaving a small ▶ pull-tab at the left edge to restore
+- Custom frameless window (overrideredirect) — no native titlebar, fully custom toolbar
+- Custom toolbar: ◀ slide | ▲ collapse | GASSI status | 🔓 lock | ✕ close
+- Markdown bold rendering: `**text**` in Gemini responses renders as actual bold
+- Auto-hide during capture: overlay withdraws before screenshot to avoid capturing itself
+- Cooldown timer in footer bar with visible countdown after each API call
+- Footer hotkey hints in accent green: `F1 Advisor │ F2 Placement │ F3 Lock`
+- F3 hotkey for click-through lock toggle
+- PlacementPromptDialog: themed modal for typing placement questions (F2)
+- Close button with proper cleanup handler (replaces native window close)
 
+### Changed
+- Toolbar compact (22px) with icon-only buttons, smaller dimmer title
+- Footer guaranteed visible (packed before canvas in layout order)
+- All captures (F1 screenshot fallback, F2 placement) now use full-screen grab
+- Single-shot query model: no auto-polling, each hotkey press = one API call + cooldown
+- Combined all HUD regions into single API call per advisor query (was 3 separate calls)
+- Default Gemini model: gemini-3.6-flash (2.5-flash unavailable for new accounts)
+- Default cooldown: 15 seconds between queries (rate limit protection)
+- Migrated from Poetry to uv (pyproject.toml converted to PEP 621 standard)
+
+### Fixed
+- Overlay no longer captures itself in screenshots (withdraw/deiconify pattern)
+- Advisor results no longer overwrite each other (single combined call)
+- Rate limiting: was hitting 429 RESOURCE_EXHAUSTED at 36 req/min, now ~4 req/min max
+- Click-through was always-on at startup making window unmovable
+- Slide-off-screen now uses withdraw/deiconify (negative coordinates were unreliable on Windows)
+
+## [0.1.0] - 2026-08-22
+
+### Added
 - Project scaffold: MVVM architecture with Protocol-based abstractions
 - Advisor mode with two input sources (OCR via RapidOCR, Screenshot)
 - Placement mode with free-text spatial advice (no grid)

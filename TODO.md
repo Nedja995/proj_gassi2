@@ -1,10 +1,10 @@
 # TODO — GASSI Roadmap
 
-## v0.1.2 — Usability & Debugging
+## v0.1.2 — Usability & Debugging (NEXT)
 
 ### Settings UI
 - [ ] Settings dialog accessible from toolbar (gear icon)
-- [ ] Configurable hotkeys (F1/F2 conflict with Timberborn's own bindings)
+- [ ] Configurable hotkeys (F1/F2 conflict with Timberborn's own bindings — blocking issue)
 - [ ] Theme picker (dark/midnight/forest + future user themes)
 - [ ] Cooldown interval slider
 - [ ] API model selector dropdown
@@ -103,3 +103,45 @@
 - [ ] Update README.md and docs/architecture.md with each version
 - [ ] Performance profiling (memory, CPU during capture + OCR)
 - [ ] Gemini API cost monitoring and optimization
+
+---
+
+## Completed
+
+### v0.1.1 (2026-08-22)
+- [x] Theme system extracted (Theme model + 3 presets)
+- [x] Collapsible overlay (▲/▼ toggle)
+- [x] Slide-off-screen (◀ hide + ▶ pull-tab)
+- [x] Custom frameless window (no native titlebar)
+- [x] Compact toolbar with icon buttons
+- [x] Markdown bold rendering in responses
+- [x] Auto-hide overlay during capture
+- [x] Full-screen capture for F2 placement and F1 screenshot fallback
+- [x] Single-shot query model (no auto-polling)
+- [x] Combined HUD regions into single API call
+- [x] Cooldown timer with visible countdown
+- [x] Footer hotkey hints in accent color
+- [x] F3 lock hotkey
+- [x] Themed placement dialog
+- [x] Migrated Poetry → uv
+- [x] Fixed rate limiting (36 req/min → 4 req/min)
+- [x] Fixed overlay self-capture in screenshots
+- [x] Fixed slide-off-screen reliability (withdraw/deiconify)
+
+### v0.1.0 (2026-08-22)
+- [x] MVVM project scaffold with Protocol abstractions
+- [x] Advisor mode (OCR + Screenshot sources)
+- [x] Placement mode (free-text spatial advice)
+- [x] Gemini backend (google-genai SDK)
+- [x] mss screen capture
+- [x] Overlay-anchored region provider
+- [x] Layered OverlayCanvas (v2 layers scaffolded)
+- [x] Async-to-tkinter bridge
+- [x] pynput global hotkeys
+- [x] Per-OS click-through (Windows/macOS/Linux)
+- [x] Game pack system (folder + manifest.yaml + prompts)
+- [x] Timberborn pack (v0.6)
+- [x] OS keyring API key storage
+- [x] pydantic-settings config
+- [x] OCR confidence fallback
+- [x] API error backoff
