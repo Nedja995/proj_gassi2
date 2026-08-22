@@ -9,14 +9,15 @@ States:
 import logging
 import platform
 import tkinter as tk
+from typing import Any
 
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
 
 logger = logging.getLogger(__name__)
 
-_TAB_WIDTH = 20
-_TAB_HEIGHT = 60
+_TAB_WIDTH = 28
+_TAB_HEIGHT = 80
 
 
 class MainOverlay(tk.Tk):
@@ -53,7 +54,7 @@ class MainOverlay(tk.Tk):
         self._toolbar.pack(fill=tk.X, side=tk.TOP)
         self._toolbar.pack_propagate(False)
 
-        btn_opts: dict = dict(
+        btn_opts: dict[str, Any] = dict(
             bg=t.bg_header, fg=t.fg_button, font=t.font("small"),
             bd=0, activebackground=t.bg_button_hover,
             activeforeground=t.fg_button_active, cursor="hand2",
@@ -67,7 +68,7 @@ class MainOverlay(tk.Tk):
         self._slide_btn.pack(side=tk.LEFT, padx=(4, 1))
 
         self._collapse_btn = tk.Button(
-            self._toolbar, text="▼", command=self.toggle_collapse, **btn_opts,
+            self._toolbar, text="▲", command=self.toggle_collapse, **btn_opts,
         )
         self._collapse_btn.pack(side=tk.LEFT, padx=1)
 
@@ -108,10 +109,7 @@ class MainOverlay(tk.Tk):
         self._body = tk.Frame(self, bg=t.bg_primary)
         self._body.pack(fill=tk.BOTH, expand=True)
 
-        self.canvas = OverlayCanvas(self._body, theme=t)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        # footer
+        # footer (pack FIRST so it always has space, even in small windows)
         self._footer = tk.Frame(self._body, bg=t.bg_footer, height=t.footer_height)
         self._footer.pack(fill=tk.X, side=tk.BOTTOM)
         self._footer.pack_propagate(False)
@@ -119,7 +117,7 @@ class MainOverlay(tk.Tk):
         self._hints_label = tk.Label(
             self._footer,
             text="F1 Advisor  │  F2 Placement  │  F3 Lock",
-            bg=t.bg_footer, fg=t.fg_button, font=t.font("small"),
+            bg=t.bg_footer, fg=t.fg_accent, font=t.font("small"),
         )
         self._hints_label.pack(side=tk.LEFT, padx=t.padding_x)
 
@@ -128,6 +126,10 @@ class MainOverlay(tk.Tk):
             fg=t.fg_warning, font=t.font("small", bold=True),
         )
         self._cooldown_label.pack(side=tk.RIGHT, padx=t.padding_x)
+
+        # canvas / advice area (pack AFTER footer so footer is guaranteed)
+        self.canvas = OverlayCanvas(self._body, theme=t)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # ── pull-back tab (visible when offscreen) ────────────────
         # This is a tiny bar that sticks out from the left screen edge
@@ -168,7 +170,7 @@ class MainOverlay(tk.Tk):
         self.geometry(f"{w}x{t.toolbar_collapsed_height}")
         self.minsize(t.window_min_width, t.toolbar_collapsed_height)
         self.attributes("-alpha", t.window_alpha_collapsed)
-        self._collapse_btn.config(text="▲")
+        self._collapse_btn.config(text="▼")
 
     def expand(self) -> None:
         if not self._collapsed:
@@ -181,7 +183,7 @@ class MainOverlay(tk.Tk):
             self.geometry(self._expanded_geometry)
         self.minsize(t.window_min_width, t.window_min_height)
         self.attributes("-alpha", t.window_alpha)
-        self._collapse_btn.config(text="▼")
+        self._collapse_btn.config(text="▲")
 
     def auto_expand_for_result(self) -> None:
         if self._offscreen:
@@ -198,31 +200,32 @@ class MainOverlay(tk.Tk):
             self.slide_offscreen()
 
     def slide_offscreen(self) -> None:
-        """Slide the overlay off the left edge of the screen."""
+        """Hide the overlay, show only a pull-back tab at the left edge."""
         if self._offscreen:
             return
         self._offscreen = True
         self._onscreen_x = self.winfo_x()
         self._onscreen_y = self.winfo_y()
 
-        # move window fully off left edge
-        w = self.winfo_width()
-        self.geometry(f"+{-w}+{self._onscreen_y}")
-
-        # create the pull-back tab
+        self.withdraw()
         self._create_pull_tab()
-        self._slide_btn.config(text="▶")
-        logger.info("Overlay slid offscreen")
+        logger.info("Overlay hidden")
 
     def slide_onscreen(self) -> None:
         """Bring the overlay back to its previous position."""
         if not self._offscreen:
             return
         self._offscreen = False
-        self.geometry(f"+{self._onscreen_x}+{self._onscreen_y}")
         self._destroy_pull_tab()
+
+        x = max(self._onscreen_x, 40)
+        y = max(self._onscreen_y, 0)
+        self.geometry(f"+{x}+{y}")
+        self.deiconify()
+        self.lift()
+        self.attributes("-topmost", True)
         self._slide_btn.config(text="◀")
-        logger.info("Overlay slid onscreen")
+        logger.info("Overlay restored at +%d+%d", x, y)
 
     def _create_pull_tab(self) -> None:
         """Create a small tab at the left screen edge to pull the overlay back."""
@@ -232,13 +235,13 @@ class MainOverlay(tk.Tk):
         tab = tk.Toplevel(self)
         tab.overrideredirect(True)
         tab.attributes("-topmost", True)
-        tab.attributes("-alpha", 0.7)
+        tab.attributes("-alpha", 0.85)
         tab.geometry(f"{_TAB_WIDTH}x{_TAB_HEIGHT}+0+{self._onscreen_y}")
         tab.configure(bg=t.bg_header)
 
         tab_btn = tk.Label(
             tab, text="▶", bg=t.bg_header, fg=t.fg_accent,
-            font=t.font("small", bold=True), cursor="hand2",
+            font=(t.font_family, 12, "bold"), cursor="hand2",
         )
         tab_btn.pack(fill=tk.BOTH, expand=True)
         tab_btn.bind("<Button-1>", lambda _e: self.slide_onscreen())

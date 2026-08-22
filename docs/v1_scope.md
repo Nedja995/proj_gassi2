@@ -1,6 +1,7 @@
 # v1 Scope — Feature Specification
 
 ## Target Game
+
 Timberborn (single game pack, vanilla UI only)
 
 ## Feature 1: Advisor Mode (periodic polling)
@@ -8,6 +9,7 @@ Timberborn (single game pack, vanilla UI only)
 **Trigger:** `F1` toggle on/off
 
 **Input sources** (switch via `Shift+F1`):
+
 - **OCR:** RapidOCR on pre-calibrated HUD region crops → extracted text → Gemini text-only call
 - **Screenshot:** same cropped HUD region sent as image → Gemini multimodal call
 

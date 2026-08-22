@@ -11,13 +11,16 @@ GASSI captures your game screen, extracts information via local OCR or direct sc
 ## Features (v0.1.0)
 
 ### Advisor Mode (`F1`)
+
 Periodic polling of pre-calibrated HUD regions. Two input sources (toggle with `Shift+F1`):
+
 - **OCR** — local text extraction via RapidOCR, sends text to Gemini (cheapest)
 - **Screenshot** — sends cropped HUD image directly to Gemini (fallback / richer context)
 
 Automatic confidence-gated fallback: if OCR confidence drops below threshold, that cycle uses screenshot instead.
 
 ### Placement Mode (`F2`)
+
 On-demand: captures full game window + your typed question → Gemini returns spatial advice using visible landmarks and directions.
 
 ## Supported Games
@@ -67,13 +70,14 @@ uv run gassi
 ```
 
 Position the overlay window over your game. Hotkeys:
+
 - `F1` — Toggle Advisor mode (periodic polling)
 - `Shift+F1` — Switch Advisor input source (OCR ↔ Screenshot)
 - `F2` — Placement query (one-shot screenshot + question)
 
 ## Project Structure
 
-```
+```cmd
 src/gassi/
 ├── main.py                     # Entry point, wiring
 ├── models/                     # Pydantic data models

@@ -10,6 +10,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.1] - Unreleased
 
 ### Added
+
 - Theme system: all visual constants extracted to `Theme` model (dark, midnight, forest presets)
 - Collapsible overlay: toolbar-only strip mode via ▼/▲ button, auto-expands when results arrive
 - Markdown bold rendering: `**text**` in Gemini responses renders as bold in the overlay
@@ -18,6 +19,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Cooldown timer in footer bar
 
 ### Changed
+
 - Toolbar is now compact (22px) with icon-only buttons
 - Footer reduced to 18px with abbreviated hotkey hints
 - All captures (F1 screenshot, F2 placement) now use full-screen grab
@@ -29,6 +31,7 @@ See [TODO.md](TODO.md) for the full roadmap.
 ## [0.1.0] - Unreleased
 
 ### Added
+
 - Project scaffold: MVVM architecture with Protocol-based abstractions
 - Advisor mode with two input sources (OCR via RapidOCR, Screenshot)
 - Placement mode with free-text spatial advice (no grid)
