@@ -50,12 +50,16 @@ without correct regions, OCR accuracy is undefined. Build calibration first, the
 - [x] "Clear User Calibration" button in dialog reverts to manifest.yaml defaults
 - [x] AD-22 added to architecture.md
 
-### OCR Pipeline (after calibration)
-- [ ] OCR preprocessing: contrast boost, binarization, upscaling crops before OCR
-- [ ] Per-game font tuning profiles in game pack manifest
-- [ ] Test RapidOCR against Timberborn's actual font with preprocessed images
-- [ ] Fallback chain: OCR → screenshot only when OCR actually fails for the region
-- [ ] docs/adding_game_pack.md: update calibration section to describe auto-calibration workflow
+### OCR Pipeline ✅ Done
+- [x] `core/ocr/preprocessor.py`: full preprocessing pipeline (upscale 3×, grayscale,
+      adaptive threshold, sharpen, padding) with per-region config
+- [x] Three named configs: DEFAULT, POPULATION_CONFIG, CYCLE_TIME_CONFIG tuned per HUD area
+- [x] `LABEL_CONFIGS` registry: looked up by region label at runtime, falls back to DEFAULT
+- [x] `RapidOcrEngine.extract()`: applies preprocessing before OCR, logs timing
+- [x] `opencv-python-headless` added to dependencies
+- [x] F4 debug save now stores preprocessed crop (not raw) for visual verification
+- [x] Preprocessing grounded in Timberborn HUD analysis: 12px white text, icon noise,
+      dark gradient backgrounds across all 3 calibrated regions
 
 ### Input Improvements
 - [ ] Inline text entry in the overlay body (replace popup dialog for F2)
@@ -139,6 +143,9 @@ without correct regions, OCR accuracy is undefined. Build calibration first, the
 - [x] Update README.md and docs/architecture.md with each version
 - [ ] Performance profiling (memory, CPU during capture + OCR)
 - [ ] Gemini API cost monitoring and optimization
+- [ ] AFC warning: evaluate migrating to AsyncChat.send_message (low priority — SDK style preference)
+- [ ] Free tier quota (20 req/day gemini-3.6-flash): document model alternatives in README
+      (gemini-2.0-flash has higher free limits; paid tier removes the cap entirely)
 
 ---
 

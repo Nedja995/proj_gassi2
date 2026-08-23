@@ -1,11 +1,36 @@
-"""Gemini AI backend implementation."""
+"""Gemini AI backend implementation.
 
+Handles 429 RESOURCE_EXHAUSTED by reading the retryDelay from the
+error response and surfacing a human-readable message with the wait time.
+AFC is explicitly disabled since GASSI does not use function calling tools.
+"""
+
+import asyncio
 import logging
+import re
 
 from google import genai
 from google.genai import types
+from google.api_core.exceptions import ResourceExhausted
 
 logger = logging.getLogger(__name__)
+
+# suppress AFC warning — we never use function calling tools
+_AFC_CONFIG = types.AutomaticFunctionCallingConfig(disable=True)
+
+_RETRY_DELAY_RE = re.compile(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", re.IGNORECASE)
+
+
+def _parse_retry_seconds(error: Exception) -> float | None:
+    """Extract retryDelay seconds from a 429 error message if present."""
+    try:
+        text = str(error)
+        match = _RETRY_DELAY_RE.search(text)
+        if match:
+            return float(match.group(1))
+    except Exception:
+        pass
+    return None
 
 
 class GeminiBackend:
@@ -21,14 +46,18 @@ class GeminiBackend:
 
     async def complete_text(self, system_prompt: str, user_prompt: str) -> str:
         """Send text-only prompt to Gemini."""
-        response = await self._client.aio.models.generate_content(
-            model=self._model,
-            contents=user_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-            ),
-        )
-        return response.text or ""
+        try:
+            response = await self._client.aio.models.generate_content(
+                model=self._model,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    automatic_function_calling=_AFC_CONFIG,
+                ),
+            )
+            return response.text or ""
+        except ResourceExhausted as exc:
+            raise _build_quota_error(exc) from exc
 
     async def complete_with_image(
         self,
@@ -44,11 +73,27 @@ class GeminiBackend:
         )
         text_part = types.Part.from_text(text=user_prompt)
 
-        response = await self._client.aio.models.generate_content(
-            model=self._model,
-            contents=[image_part, text_part],
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-            ),
-        )
-        return response.text or ""
+        try:
+            response = await self._client.aio.models.generate_content(
+                model=self._model,
+                contents=[image_part, text_part],
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    automatic_function_calling=_AFC_CONFIG,
+                ),
+            )
+            return response.text or ""
+        except ResourceExhausted as exc:
+            raise _build_quota_error(exc) from exc
+
+
+def _build_quota_error(exc: ResourceExhausted) -> Exception:
+    """Convert a raw 429 into a readable error with retry wait time."""
+    retry_seconds = _parse_retry_seconds(exc)
+    if retry_seconds is not None:
+        wait = int(retry_seconds) + 1
+        msg = f"API quota exceeded — retry in {wait}s (free tier: 20 req/day on gemini-3.6-flash)"
+    else:
+        msg = "API quota exceeded — check your Gemini plan at https://ai.dev/rate-limit"
+    logger.warning("Gemini 429: %s", msg)
+    return RuntimeError(msg)

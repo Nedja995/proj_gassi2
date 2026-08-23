@@ -25,6 +25,21 @@ See [TODO.md](TODO.md) for the full roadmap.
   design. Removed; callers simplified.
 
 ### Added
+- **429 handling** in `GeminiBackend`: catches `ResourceExhausted`, parses `retryDelay`
+  from error message, surfaces readable message e.g. "API quota exceeded — retry in 19s"
+  instead of raw JSON dump in the overlay.
+- **AFC warning suppressed**: `AutomaticFunctionCallingConfig(disable=True)` passed on
+  every call — GASSI never uses function calling tools.
+- **OCR preprocessing pipeline** (`core/ocr/preprocessor.py`): upscale 3× (12px→36px),
+  grayscale, Gaussian denoise, adaptive threshold, unsharp mask sharpening, white padding.
+  Grounded in Timberborn HUD analysis: small white text, icon/progress-bar noise,
+  dark gradient backgrounds.
+- **Per-region preprocessing configs**: `DEFAULT_CONFIG`, `POPULATION_CONFIG` (larger
+  adaptive block for green wellness bar background), `CYCLE_TIME_CONFIG` (lighter denoise
+  for cleaner background). `LABEL_CONFIGS` registry lookups by region label.
+- **`opencv-python-headless`** added to dependencies.
+- F4 debug save now stores the **preprocessed crop** (binary thresholded) so you can
+  visually verify what RapidOCR actually receives.
 - **`CalibrationService`** (`core/calibration_service.py`): one-shot Gemini multimodal call with
   `response_schema` that returns HUD region bounding boxes as fractions. Each region immediately
   validated by RapidOCR — rejected if confidence below threshold or geometry is invalid.

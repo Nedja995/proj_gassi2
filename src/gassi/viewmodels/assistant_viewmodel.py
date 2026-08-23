@@ -18,6 +18,7 @@ from gassi.core.async_bridge import AsyncBridge
 from gassi.core.capture.protocol import CaptureBackend, CaptureRegionProvider
 from gassi.core.debug_manager import DebugManager
 from gassi.core.game_pack_loader import GamePackLoader
+from gassi.core.ocr.preprocessor import config_for_label, preprocess
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.models.config import AppSettings
@@ -171,6 +172,9 @@ class AssistantViewModel:
                 frame = self._capture.grab(cropped_rect)
                 last_frame = frame
                 ocr_result = self._ocr.extract(frame, hud_region.label)
+                # store preprocessed frame for F4 debug save
+                preprocessed = preprocess(frame, config_for_label(hud_region.label))
+                self._debug.store_frame(preprocessed, label=f"ocr_preprocessed_{hud_region.label}")
 
                 if ocr_result.confidence < self._settings.ocr_confidence_threshold:
                     logger.info(
