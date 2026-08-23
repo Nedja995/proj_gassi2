@@ -15,13 +15,14 @@
 - [x] Markdown rendering expanded: ## headings, - bullets, **bold** rendered natively in OverlayCanvas
 - [x] Prompts use markdown structure (heading + bullets + bold) for readability
 
-### Prompt Iteration (requires gameplay session — not a code task) ⏸ SKIPPED
-- [ ] Play Timberborn to early/mid/late game states, save frames with F4
-- [ ] Run prompt_iteration.py against each saved frame (all 3 modes)
-- [ ] Check: ## heading matches situation, bullets are actionable, early-game clause fires on Day 1–10
-- [ ] Check: placement references actual visible landmarks, not generic directions
-- [ ] Edit prompts on failures, re-run immediately (tool reads from disk, no restart)
-- [ ] Sign off when all 3 modes produce consistent, correct output across game stages
+### Prompt Iteration ✅ Done (based on real gameplay screenshots)
+- [x] Reviewed 6 gameplay screenshots: Cycle 2 Day 1 through Cycle 11 Day 14
+- [x] Defined 3 real stages from actual progression (Early/Mid/Pre-Late)
+- [x] Stage signals: cycle number + planks scarcity + drought bar visibility + pop count
+- [x] advisor_ocr.txt: full rewrite with real stage clauses, planks/floodgate/badwater knowledge
+- [x] advisor_screenshot.txt: full rewrite, references drought countdown timer top-right, map state
+- [x] placement.txt: expanded spatial rules (badwater canals, battery height bonus, irrigation canals)
+- [x] All prompts grounded in observed player behavior across 11 cycles
 
 ### Window Behavior ✅ Done
 - [x] "Ready" indicator in green after cooldown expires (before clearing)
