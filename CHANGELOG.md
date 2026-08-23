@@ -9,6 +9,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.3.0] - 2026-08-23
+
+### In Progress
+- v0.3.0 — Spatial & Visual Feedback (next milestone)
+
 ## [0.2.0] - 2026-08-23
 
 ### Fixed
@@ -25,9 +30,13 @@ See [TODO.md](TODO.md) for the full roadmap.
   design. Removed; callers simplified.
 
 ### Added
-- **429 handling** in `GeminiBackend`: catches `ResourceExhausted`, parses `retryDelay`
-  from error message, surfaces readable message e.g. "API quota exceeded — retry in 19s"
-  instead of raw JSON dump in the overlay.
+- **Model dropdown in Settings**: replaces text entry. Fetches live model list from
+  Gemini API in background thread on dialog open. Shows ⟳ Fetching... status, updates
+  to ✓ N models available or ⚠ fallback on error. Flash models sorted first (cheaper).
+  Fallback list shown if API key missing or fetch fails.
+- **Default model changed** to `gemini-2.0-flash` (1500 req/day free tier vs 20 on gemini-3.6-flash).
+- **429 handling** in `GeminiBackend`: catches quota errors by string matching (no external
+  dependency), parses `retryDelay`, surfaces readable message e.g. "API quota exceeded — retry in 19s".
 - **AFC warning suppressed**: `AutomaticFunctionCallingConfig(disable=True)` passed on
   every call — GASSI never uses function calling tools.
 - **OCR preprocessing pipeline** (`core/ocr/preprocessor.py`): upscale 3× (12px→36px),

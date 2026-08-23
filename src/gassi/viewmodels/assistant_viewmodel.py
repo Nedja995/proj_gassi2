@@ -89,8 +89,18 @@ class AssistantViewModel:
         self._canvas.show_advice("Capturing and analyzing...", is_loading=True)
 
         if self._input_source == AdvisorInputSource.OCR:
+            logger.info(
+                "Advisor: OCR mode — model=%s game=%s",
+                self._settings.gemini_model,
+                self._settings.active_game_id,
+            )
             self._process_ocr_advisor()
         else:
+            logger.info(
+                "Advisor: Screenshot mode — model=%s game=%s",
+                self._settings.gemini_model,
+                self._settings.active_game_id,
+            )
             self._process_screenshot_advisor()
 
     def switch_advisor_source(self) -> None:
@@ -117,6 +127,12 @@ class AssistantViewModel:
         frame = self._capture_without_overlay(region=None)
         self._debug.store_frame(frame, label="placement")
         image_bytes = self._frame_to_png_bytes(frame)
+
+        logger.info(
+            "Placement: Screenshot mode — model=%s game=%s",
+            self._settings.gemini_model,
+            self._settings.active_game_id,
+        )
 
         self._bridge.submit(
             self._ai.complete_with_image(
@@ -203,6 +219,12 @@ class AssistantViewModel:
 
         combined_prompt = "Current HUD readings:\n" + "\n".join(combined_text_parts)
 
+        logger.info(
+            "Advisor OCR → Gemini %s (%d regions, %d chars)",
+            self._settings.gemini_model,
+            len(combined_text_parts),
+            len(combined_prompt),
+        )
         self._bridge.submit(
             self._ai.complete_text(
                 system_prompt=self._advisor_ocr_prompt,
@@ -220,6 +242,11 @@ class AssistantViewModel:
         self._debug.store_frame(frame, label="advisor_screenshot")
         image_bytes = self._frame_to_png_bytes(frame)
 
+        logger.info(
+            "Advisor screenshot → Gemini %s (%dx%d px)",
+            self._settings.gemini_model,
+            frame.shape[1], frame.shape[0],
+        )
         self._bridge.submit(
             self._ai.complete_with_image(
                 system_prompt=self._advisor_screenshot_prompt,

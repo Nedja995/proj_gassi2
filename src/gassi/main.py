@@ -136,7 +136,7 @@ def main() -> None:
             )
 
     overlay.set_settings_handler(_on_settings_saved)
-    overlay.set_calibration_service(calibration_service, settings.active_game_id)
+    overlay.set_calibration_service(calibration_service, settings.active_game_id, api_key)
 
     # ── cleanup on close ──────────────────────────────────────────────
     def _on_close() -> None:

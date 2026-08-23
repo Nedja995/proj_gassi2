@@ -10,6 +10,7 @@ from tkinter import ttk
 from typing import Any, Callable
 
 from gassi.core.calibration_service import CalibrationService
+from gassi.core.ai.gemini_backend import fetch_available_models
 from gassi.core.theme.theme import Theme, THEMES, DARK_THEME
 from gassi.core.settings_manager import load_saved_settings, save_settings
 
@@ -130,6 +131,7 @@ class SettingsDialog(tk.Toplevel):
         on_save: Callable[[dict[str, Any]], None],
         calibration_service: CalibrationService | None = None,
         game_id: str = "",
+        api_key: str = "",
     ) -> None:
         super().__init__(parent)
         self._theme = theme
@@ -137,6 +139,7 @@ class SettingsDialog(tk.Toplevel):
         self._current = current_settings
         self._calibration_service = calibration_service
         self._game_id = game_id
+        self._api_key = api_key
         t = theme
 
         self.title("GASSI — Settings")
@@ -270,22 +273,35 @@ class SettingsDialog(tk.Toplevel):
         self._cooldown_scale.pack(side=tk.LEFT)
         row += 1
 
-        # AI model
+        # AI model — combobox populated from live API fetch
         tk.Label(
             frame, text="AI Model", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
         ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
 
-        self._model_var = tk.StringVar(
-            value=self._current.get("gemini_model", "gemini-3.6-flash")
-        )
-        model_entry = tk.Entry(
+        current_model = self._current.get("gemini_model", "gemini-2.0-flash")
+        self._model_var = tk.StringVar(value=current_model)
+        self._model_combo = ttk.Combobox(
             frame, textvariable=self._model_var,
-            bg=t.bg_input, fg=t.fg_text, font=t.font("normal"),
-            insertbackground=t.fg_accent, bd=1, relief=tk.FLAT, width=22,
+            values=[current_model, "Loading models..."],
+            state="readonly", width=26,
         )
-        model_entry.grid(row=row, column=1, sticky="w", pady=6)
-        row += 1
+        self._model_combo.grid(row=row, column=1, sticky="w", pady=6)
+
+        self._model_status = tk.Label(
+            frame, text="⟳ Fetching models...",
+            bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+        )
+        self._model_status.grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
+        row += 2
+
+        # kick off background fetch after widget is created
+        if self._api_key:
+            self.after(100, self._fetch_models)
+        else:
+            self._model_status.config(text="No API key — using fallback list")
+            from gassi.core.ai.gemini_backend import _FALLBACK_MODELS
+            self._model_combo.config(values=_FALLBACK_MODELS)
 
         # advisor input source
         tk.Label(
@@ -339,6 +355,50 @@ class SettingsDialog(tk.Toplevel):
             calibration_service=self._calibration_service,  # type: ignore[arg-type]
             game_id=self._game_id,
         )
+
+    def _fetch_models(self) -> None:
+        """Fetch available Gemini models and populate the combobox."""
+        def _on_done(models: list[str]) -> None:
+            # marshal back to tkinter thread via after()
+            self.after(0, lambda: self._update_model_combo(models))
+
+        def _on_error(msg: str) -> None:
+            from gassi.core.ai.gemini_backend import _FALLBACK_MODELS
+            self.after(0, lambda: self._update_model_combo(
+                _FALLBACK_MODELS, error=True
+            ))
+
+        fetch_available_models(self._api_key, _on_done, _on_error)
+
+    def _update_model_combo(
+        self, models: list[str], error: bool = False
+    ) -> None:
+        """Update combobox values after background fetch completes."""
+        try:
+            current = self._model_var.get()
+            # ensure current selection is in the list
+            if current not in models:
+                models = [current] + models
+            self._model_combo.config(values=models, state="readonly")
+            # keep current selection if still valid, else default
+            if current in models:
+                self._model_var.set(current)
+            else:
+                self._model_var.set(models[0])
+
+            t = self._theme
+            if error:
+                self._model_status.config(
+                    text="⚠ Fetch failed — showing fallback models",
+                    fg=t.fg_warning,
+                )
+            else:
+                self._model_status.config(
+                    text=f"✓ {len(models)} models available",
+                    fg=t.fg_accent,
+                )
+        except tk.TclError:
+            pass  # dialog was closed before fetch completed
 
     def _save(self) -> None:
         """Collect all settings and save."""

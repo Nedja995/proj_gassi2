@@ -421,10 +421,12 @@ class MainOverlay(tk.Tk):
         self,
         calibration_service: object,
         game_id: str,
+        api_key: str = "",
     ) -> None:
-        """Wire CalibrationService for the settings dialog Calibrate HUD button."""
+        """Wire CalibrationService and API key for the settings dialog."""
         self._calibration_service = calibration_service
         self._calibration_game_id = game_id
+        self._api_key = api_key
 
     def set_settings_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Set the callback for when settings are saved."""
@@ -458,6 +460,7 @@ class MainOverlay(tk.Tk):
             self, self._theme, current, on_save=_on_save,
             calibration_service=getattr(self, "_calibration_service", None),
             game_id=getattr(self, "_calibration_game_id", ""),
+            api_key=getattr(self, "_api_key", ""),
         )
 
     def _on_close_click(self) -> None:

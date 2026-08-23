@@ -1,139 +1,130 @@
 # TODO — GASSI Roadmap
 
-## v0.1.3 — Debugging & Prompt Polish ✅ Complete (pending prompt iteration gameplay session)
-
-### Debug Tools ✅ Done
-- [x] Debug capture viewer: hotkey (F4) saves last captured frame as PNG to disk
-- [x] Show what was sent to Gemini (frame stored per capture source, saved on F4)
-- [x] Log viewer panel in overlay (collapsible ⌨ button, shows last N log lines)
-
-### Prompt Quality ✅ Done
-- [x] Tighten advisor prompts: max 4 lines output, RULES clause
-- [x] Removed duplicate GAME KNOWLEDGE block (was identical in both advisor prompts)
-- [x] Add early-game context recognition (Day 1–15 = beginner focus) in both advisor prompts
-- [x] Prompt iteration tool: `tests/prompt_iteration.py` CLI for testing against saved screenshots
-- [x] Markdown rendering expanded: ## headings, - bullets, **bold** rendered natively in OverlayCanvas
-- [x] Prompts use markdown structure (heading + bullets + bold) for readability
-
-### Prompt Iteration ✅ Done (based on real gameplay screenshots)
-- [x] Reviewed 6 gameplay screenshots: Cycle 2 Day 1 through Cycle 11 Day 14
-- [x] Defined 3 real stages from actual progression (Early/Mid/Pre-Late)
-- [x] Stage signals: cycle number + planks scarcity + drought bar visibility + pop count
-- [x] advisor_ocr.txt: full rewrite with real stage clauses, planks/floodgate/badwater knowledge
-- [x] advisor_screenshot.txt: full rewrite, references drought countdown timer top-right, map state
-- [x] placement.txt: expanded spatial rules (badwater canals, battery height bonus, irrigation canals)
-- [x] All prompts grounded in observed player behavior across 11 cycles
-
-### Window Behavior ✅ Done
-- [x] "Ready" indicator in green after cooldown expires (before clearing)
-- [x] Window resizable: ◢ grip in bottom-right, drag to resize, min size enforced
-
-### HUD Calibration ✅ Done (manual, from screenshots)
-- [x] manifest.yaml updated: resource_bar, population_panel, cycle_and_time regions
-- [x] Regions measured from 1456×816 gameplay screenshots
-- [x] advisor_ocr.txt updated to document region labels and their contents
-
 ---
 
-## v0.2.0 — OCR & Auto-Calibration
+## v0.3.0 — Input Improvements
 
-**Goal:** make OCR advisor actually reliable. Auto-calibration is the prerequisite —
-without correct regions, OCR accuracy is undefined. Build calibration first, then tune OCR.
+Small UX improvements to the placement and advisor flow. Code-only, no gameplay needed.
 
-### Auto-Calibration ✅ Done
-- [x] `CalibrationService`: one-shot Gemini call with `response_schema` for deterministic JSON
-- [x] Validation: OCR run on each returned region, reject if confidence < threshold or geometry invalid
-- [x] Persist accepted regions to `game_packs/<id>/hud_regions_user.yaml`
-- [x] `GamePackLoader`: checks `hud_regions_user.yaml` first, falls back to manifest.yaml defaults
-- [x] `CalibrationDialog`: progress indicator, per-region accept/reject results with confidence scores
-- [x] "Calibrate HUD" button in Settings → General tab (only shown when service is wired)
-- [x] "Clear User Calibration" button in dialog reverts to manifest.yaml defaults
-- [x] AD-22 added to architecture.md
-
-### OCR Pipeline ✅ Done
-- [x] `core/ocr/preprocessor.py`: full preprocessing pipeline (upscale 3×, grayscale,
-      adaptive threshold, sharpen, padding) with per-region config
-- [x] Three named configs: DEFAULT, POPULATION_CONFIG, CYCLE_TIME_CONFIG tuned per HUD area
-- [x] `LABEL_CONFIGS` registry: looked up by region label at runtime, falls back to DEFAULT
-- [x] `RapidOcrEngine.extract()`: applies preprocessing before OCR, logs timing
-- [x] `opencv-python-headless` added to dependencies
-- [x] F4 debug save now stores preprocessed crop (not raw) for visual verification
-- [x] Preprocessing grounded in Timberborn HUD analysis: 12px white text, icon noise,
-      dark gradient backgrounds across all 3 calibrated regions
-
-### Input Improvements
 - [ ] Inline text entry in the overlay body (replace popup dialog for F2)
-- [ ] Prompt history (last 5 placement queries, selectable)
-- [ ] Predefined quick-prompts per game pack (e.g. "Where to build next?", "Water strategy?")
+- [ ] Prompt history: last 5 placement queries stored, selectable via dropdown
+- [ ] Predefined quick-prompts per game pack defined in manifest.yaml
+      (e.g. "Where to build next?", "Water strategy?", "Dam placement?")
 
 ---
 
-## v0.3.0 — Spatial & Visual Feedback
+## v0.3.1 — Grid Overlay (Spatial Placement v2)
 
-### Grid Overlay (v2 placement)
-- [ ] Draw A-Z / 1-N grid on captured screenshot before sending to Gemini
-- [ ] Parse Gemini's cell references (e.g. "D5") from structured response
-- [ ] Cell → screen pixel conversion using capture_rect + scale_factor
-- [ ] Bounding box rendering on overlay at target coordinates
+Adds a coordinate grid to screenshots sent for placement advice, enabling
+Gemini to return cell references that GASSI can render as bounding boxes.
 
-### Tutorial Overlays
+- [ ] Draw A–Z / 1–N grid on captured screenshot before sending to Gemini
+- [ ] Update placement prompt: instruct Gemini to return a cell reference (e.g. "D5")
+      in a structured response field alongside the natural language advice
+- [ ] Parse cell reference from response (response_schema JSON)
+- [ ] Cell → screen pixel conversion using monitor_rect + grid dimensions
+- [ ] Bounding box rendered on overlay canvas at target cell coordinates
+- [ ] Grid overlay toggle: on/off setting in settings dialog
+
+---
+
+## v0.3.2 — Tutorial Overlays
+
+Arrow and highlight system for guided in-game instructions.
+Builds on the v2 canvas layers already scaffolded in OverlayCanvas.
+
 - [ ] Arrow rendering: directional arrows pointing to game UI elements
-- [ ] Tutorial step system: "click here" highlights with instruction text
-- [ ] Tutorial sequences defined in game pack YAML (per-game tutorials)
-- [ ] Dim background + highlighted region for focused guidance
+- [ ] Highlight region rendering: dim background + lit bounding box
+- [ ] Tutorial step system: sequence of steps, each with instruction text
+- [ ] Tutorial sequences defined in game pack YAML (per-game)
+- [ ] Step navigation: next/prev buttons in overlay footer
 
 ---
 
-## v0.4.0 — Multi-Game & RAG
+## v0.4.0 — Second Game Pack
 
-### Second Game Pack
-- [ ] Pick second game (RimWorld or Factorio)
-- [ ] Run auto-calibration on it as first real-world test of CalibrationService
-- [ ] Validate pack structure generalizes (manifest, prompts, HUD regions)
-- [ ] Identify what's truly game-specific vs. core engine
-- [ ] Extract common prompt patterns into reusable templates
+Real-world validation that the game pack architecture generalizes.
+Auto-calibration is the first step for any new game.
 
-### RAG Pipeline
+- [ ] Pick second game (RimWorld or Factorio — Factorio preferred for clean UI)
+- [ ] Run CalibrationService on it: first real test outside Timberborn
+- [ ] Write manifest.yaml + 3 prompts (advisor_ocr, advisor_screenshot, placement)
+- [ ] Define early/mid/late stages for the new game (same process as Timberborn)
+- [ ] Identify what's truly game-specific vs. reusable in prompt templates
+- [ ] Extract common prompt structure into a reusable base template
+
+---
+
+## v0.4.1 — RAG Pipeline
+
+Local knowledge retrieval to replace static game knowledge in system prompts.
+Allows deeper, formula-level advice without bloating prompt token count.
+
 - [ ] Chroma + sentence-transformers for game knowledge retrieval
-- [ ] Wiki/formula ingestion pipeline (chunking, embedding, persistence)
-- [ ] Pre-baked Chroma collections shipped per game pack
-- [ ] RAG-augmented prompts replacing static system prompt knowledge
+- [ ] Wiki/formula ingestion pipeline: chunking, embedding, persistence to disk
+- [ ] Pre-baked Chroma collections shipped per game pack folder
+- [ ] RAG-augmented prompts: retrieved chunks injected into system prompt at query time
 - [ ] patch_version metadata filtering in Chroma queries
+- [ ] Fallback: if no RAG collection found, use static prompt as before
 
 ---
 
-## v0.5.0 — Multi-Backend & Local Models
+## v0.5.0 — Multi-Backend (Cloud)
 
-### AI Backend Expansion
-- [ ] Claude API backend (ClaudeBackend implementing AiBackend Protocol)
-- [ ] Backend selector in settings UI
-- [ ] Cost tracking / token usage display per session
+Protocol-based AI backend swap. ClaudeBackend as the second implementation,
+validates that AiBackend Protocol is truly backend-agnostic.
 
-### Local SLM Support
-- [ ] Ollama backend (OllamaBackend implementing AiBackend Protocol)
-- [ ] Qwen2.5-VL / Llama 3.2 Vision support
-- [ ] Freemium model: local SLM free, cloud paid
-- [ ] GPU detection and model recommendation
+- [ ] ClaudeBackend implementing AiBackend Protocol (Anthropic SDK)
+- [ ] Backend selector dropdown in Settings → General
+- [ ] Cost tracking: token usage display per session in overlay footer
+- [ ] Per-backend model list in settings dropdown (reuse fetch pattern from Gemini)
 
 ---
 
-## v0.6.0 — Platform & Distribution
+## v0.5.1 — Local SLM Support
 
-### Platform Support
+Freemium tier: local model for users with capable GPUs, no API key required.
+
+- [ ] OllamaBackend implementing AiBackend Protocol
+- [ ] Qwen2.5-VL / Llama 3.2 Vision support via Ollama
+- [ ] GPU detection at startup: suggest local model if capable GPU found
+- [ ] Freemium framing: local SLM free, cloud API paid
+- [ ] Quality comparison guide: local vs cloud advice quality per game
+
+---
+
+## v0.6.0 — Platform Support
+
+Expand beyond Windows + X11. Native window detection replaces manual positioning.
+
 - [ ] Wayland capture backend (PipeWire/portal)
-- [ ] Native window detection: per-OS window handle lookup (NativeWindowRegionProvider)
+- [ ] NativeWindowRegionProvider: per-OS window handle lookup (pywin32/pyobjc/Xlib)
+      replaces manual overlay positioning for game window detection
 - [ ] SteamOS / Steam Deck testing
-- [ ] macOS Screen Recording permission first-run prompt
+- [ ] macOS Screen Recording permission: first-run prompt and guidance
 
-### Anti-Cheat Posture
-- [ ] SetWindowDisplayAffinity (Windows — hide overlay from screen captures)
-- [ ] Document per-game anti-cheat compatibility
+---
 
-### Distribution
-- [ ] PyInstaller packaging and testing
+## v0.6.1 — Anti-Cheat Posture
+
+For games with anti-cheat. Pure overlay approach already avoids memory reading;
+this adds capture hiding and documentation.
+
+- [ ] SetWindowDisplayAffinity (Windows): hide overlay from other screen captures
+- [ ] Adjustable window class/enumeration behavior
+- [ ] Per-game anti-cheat compatibility notes in game pack manifest
+
+---
+
+## v0.6.2 — Distribution
+
+Packaging and installer for end-users who don't have Python/uv.
+
+- [ ] PyInstaller packaging: single-folder build, test on clean Windows VM
 - [ ] Auto-updater mechanism
-- [ ] Installer for Windows (MSI or NSIS)
-- [ ] TTS voice readout (edge-tts integration, optional)
+- [ ] Installer for Windows (NSIS or MSI)
+- [ ] TTS voice readout: edge-tts integration, toggle in settings (optional)
+- [ ] First-run wizard: API key entry, model selection, first calibration
 
 ---
 
@@ -143,13 +134,34 @@ without correct regions, OCR accuracy is undefined. Build calibration first, the
 - [x] Update README.md and docs/architecture.md with each version
 - [ ] Performance profiling (memory, CPU during capture + OCR)
 - [ ] Gemini API cost monitoring and optimization
-- [ ] AFC warning: evaluate migrating to AsyncChat.send_message (low priority — SDK style preference)
-- [ ] Free tier quota (20 req/day gemini-3.6-flash): document model alternatives in README
-      (gemini-2.0-flash has higher free limits; paid tier removes the cap entirely)
+- [ ] AFC warning: evaluate migrating to AsyncChat.send_message (low priority)
+- [ ] Free tier quota: document model alternatives in README
+      (gemini-2.0-flash: 1500 req/day free; paid tier removes cap)
 
 ---
 
 ## Completed
+
+### v0.2.0 (2026-08-23)
+- [x] CalibrationService: Gemini multimodal + response_schema + OCR validation
+- [x] hud_regions_user.yaml override: per-game user calibration, never overwrites defaults
+- [x] GamePackLoader: user calibration priority, manifest fallback, logs source at startup
+- [x] CalibrationDialog: background thread, progress bar, ✓/✗ per-region results
+- [x] "Calibrate HUD" button in Settings → General (only shown when service wired)
+- [x] OCR preprocessor: upscale 3×, grayscale, adaptive threshold, sharpen, padding
+- [x] Per-region preprocessing configs (DEFAULT, POPULATION, CYCLE_TIME)
+- [x] opencv-python-headless added to dependencies
+- [x] OCR region bug fixed: monitor rect used instead of overlay rect (was 0.00 confidence)
+- [x] OCR flicker fixed: single withdraw/deiconify wraps all region captures
+- [x] Model dropdown: live Gemini API fetch, flash-first, fallback list
+- [x] Default model: gemini-2.0-flash (1500 req/day free tier)
+- [x] 429 handling: readable message with retry delay, string-based detection
+- [x] AFC warning suppressed on all calls
+- [x] Logging: model + source + size on every API call
+- [x] Version from importlib.metadata (pyproject.toml single source of truth)
+- [x] get_monitor_rect() added to OverlayAnchoredRegionProvider
+- [x] Timberborn prompts: full rewrite based on 6 real gameplay screenshots
+      (Cycle 2–11), 3 real stages, floodgate/badwater/battery mechanics
 
 ### v0.1.3 (2026-08-23)
 - [x] Window resizable: ◢ grip in bottom-right, drag to resize, min size enforced
