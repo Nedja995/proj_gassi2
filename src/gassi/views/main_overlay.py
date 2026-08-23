@@ -417,6 +417,15 @@ class MainOverlay(tk.Tk):
     def set_close_handler(self, handler: object) -> None:
         self._close_handler = handler
 
+    def set_calibration_service(
+        self,
+        calibration_service: object,
+        game_id: str,
+    ) -> None:
+        """Wire CalibrationService for the settings dialog Calibrate HUD button."""
+        self._calibration_service = calibration_service
+        self._calibration_game_id = game_id
+
     def set_settings_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Set the callback for when settings are saved."""
         self._settings_handler = handler
@@ -445,7 +454,11 @@ class MainOverlay(tk.Tk):
             if hasattr(self, "_settings_handler") and self._settings_handler:
                 self._settings_handler(settings)
 
-        SettingsDialog(self, self._theme, current, on_save=_on_save)
+        SettingsDialog(
+            self, self._theme, current, on_save=_on_save,
+            calibration_service=getattr(self, "_calibration_service", None),
+            game_id=getattr(self, "_calibration_game_id", ""),
+        )
 
     def _on_close_click(self) -> None:
         self._destroy_pull_tab()

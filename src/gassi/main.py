@@ -5,12 +5,14 @@ Wires all components together and starts the tkinter mainloop.
 
 import logging
 import sys
+from importlib.metadata import version as _pkg_version
 from typing import Any
 
 import keyring
 
 from gassi.core.ai.gemini_backend import GeminiBackend
 from gassi.core.async_bridge import AsyncBridge
+from gassi.core.calibration_service import CalibrationService
 from gassi.core.capture.mss_backend import MssCaptureBackend
 from gassi.core.capture.region_provider import OverlayAnchoredRegionProvider
 from gassi.core.debug_manager import DebugManager
@@ -75,6 +77,13 @@ def main() -> None:
     ocr_engine = RapidOcrEngine()
     pack_loader = GamePackLoader()
     debug_manager = DebugManager()
+    calibration_service = CalibrationService(
+        api_key=api_key,
+        model=settings.gemini_model,
+        capture_backend=capture_backend,
+        ocr_engine=ocr_engine,
+        ocr_confidence_threshold=settings.ocr_confidence_threshold,
+    )
 
     # ── UI ────────────────────────────────────────────────────────────
     overlay = MainOverlay(theme=theme, log_handler=overlay_log_handler)
@@ -127,6 +136,7 @@ def main() -> None:
             )
 
     overlay.set_settings_handler(_on_settings_saved)
+    overlay.set_calibration_service(calibration_service, settings.active_game_id)
 
     # ── cleanup on close ──────────────────────────────────────────────
     def _on_close() -> None:
@@ -138,7 +148,8 @@ def main() -> None:
     overlay.set_close_handler(_on_close)
 
     logger.info(
-        "GASSI v0.1.3 started — game: %s | debug frames: %s",
+        "GASSI v%s started — game: %s | debug frames: %s",
+        _pkg_version("gassi"),
         settings.active_game_id,
         debug_manager.get_debug_dir(),
     )

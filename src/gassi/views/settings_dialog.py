@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable
 
+from gassi.core.calibration_service import CalibrationService
 from gassi.core.theme.theme import Theme, THEMES, DARK_THEME
 from gassi.core.settings_manager import load_saved_settings, save_settings
 
@@ -127,11 +128,15 @@ class SettingsDialog(tk.Toplevel):
         theme: Theme,
         current_settings: dict[str, Any],
         on_save: Callable[[dict[str, Any]], None],
+        calibration_service: CalibrationService | None = None,
+        game_id: str = "",
     ) -> None:
         super().__init__(parent)
         self._theme = theme
         self._on_save = on_save
         self._current = current_settings
+        self._calibration_service = calibration_service
+        self._game_id = game_id
         t = theme
 
         self.title("GASSI — Settings")
@@ -298,8 +303,42 @@ class SettingsDialog(tk.Toplevel):
         source_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
+        # calibration button — only shown when CalibrationService is wired in
+        if self._calibration_service is not None:
+            separator = ttk.Separator(frame, orient=tk.HORIZONTAL)
+            separator.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
+            row += 1
+
+            calib_frame = tk.Frame(frame, bg=t.bg_primary)
+            calib_frame.grid(row=row, column=0, columnspan=2, sticky="w")
+
+            tk.Label(
+                calib_frame,
+                text="Auto-detect HUD regions from a live screenshot.",
+                bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+            ).pack(anchor="w")
+
+            tk.Button(
+                calib_frame, text="📏  Calibrate HUD",
+                bg=t.bg_header, fg=t.fg_accent,
+                font=t.font("normal", bold=True),
+                bd=0, activebackground=t.bg_button_hover,
+                cursor="hand2", padx=10, pady=4,
+                command=self._open_calibration_dialog,
+            ).pack(anchor="w", pady=(6, 0))
+            row += 1
+
         frame.columnconfigure(1, weight=1)
         return frame
+
+    def _open_calibration_dialog(self) -> None:
+        from gassi.views.calibration_dialog import CalibrationDialog
+        CalibrationDialog(
+            parent=self,
+            theme=self._theme,
+            calibration_service=self._calibration_service,  # type: ignore[arg-type]
+            game_id=self._game_id,
+        )
 
     def _save(self) -> None:
         """Collect all settings and save."""

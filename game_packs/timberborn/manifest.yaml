@@ -10,7 +10,7 @@ rag_collection_name: null
 # or re-measure with F4 debug frame + docs/adding_game_pack.md workflow.
 
 hud_regions:
-  - label: "resource_bar"
+  - label: "top_resource_bar"
     # Top strip: logs, planks, food, water, science counts (left ~37% of screen)
     x_pct: 0.0
     y_pct: 0.0
@@ -24,7 +24,7 @@ hud_regions:
     width_pct: 0.145
     height_pct: 0.145
 
-  - label: "cycle_and_time"
+  - label: "cycle_time_panel"
     # Top-right: "Cycle X, day Y", time remaining, season/weather strip
     x_pct: 0.78
     y_pct: 0.0

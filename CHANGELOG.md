@@ -9,6 +9,37 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.2.0] - 2026-08-23
+
+### Fixed
+- **OCR advisor capturing wrong screen area** — HUD region fractions were being
+  resolved against the overlay window rect instead of the primary monitor dimensions.
+  All OCR regions returned confidence 0.00 and fell back to screenshot every time.
+  Fixed: `_process_ocr_advisor` now calls `region_provider.get_monitor_rect()` for
+  region resolution; `get_monitor_rect()` added to `OverlayAnchoredRegionProvider`.
+- **Overlay flickering during OCR** — overlay was withdrawn/deiconified once per
+  HUD region (N times). Fixed: single withdraw before the capture loop, restore in
+  `finally` block. All region crops happen in one hidden window cycle.
+- **Stale `capture_rect` parameter** — `_process_ocr_advisor` and
+  `_process_screenshot_advisor` both had an unused `capture_rect` param from v1
+  design. Removed; callers simplified.
+
+### Added
+- **`CalibrationService`** (`core/calibration_service.py`): one-shot Gemini multimodal call with
+  `response_schema` that returns HUD region bounding boxes as fractions. Each region immediately
+  validated by RapidOCR — rejected if confidence below threshold or geometry is invalid.
+- **`hud_regions_user.yaml`** override: calibration result saved per game pack, never overwrites
+  `manifest.yaml` developer defaults. Delete to revert to defaults.
+- **`GamePackLoader`** updated: checks `hud_regions_user.yaml` first, falls back to `manifest.yaml`.
+  Logs which source is active at startup.
+- **`CalibrationDialog`** (`views/calibration_dialog.py`): modal dialog with indeterminate progress
+  bar, per-region ✓/✗ result list with confidence scores, "Clear User Calibration" button.
+  Runs calibration in a background thread — UI stays responsive.
+- **"Calibrate HUD" button** in Settings → General tab. Separator + description text. Only rendered
+  when `CalibrationService` is wired (graceful degradation if not available).
+- `MainOverlay.set_calibration_service()` setter — same pattern as `set_close_handler`.
+- AD-22 added to `docs/architecture.md`.
+
 ## [0.1.3] - 2026-08-23
 
 ### Added

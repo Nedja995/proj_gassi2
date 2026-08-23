@@ -39,16 +39,15 @@
 **Goal:** make OCR advisor actually reliable. Auto-calibration is the prerequisite —
 without correct regions, OCR accuracy is undefined. Build calibration first, then tune OCR.
 
-### Auto-Calibration (prerequisite for OCR work)
-- [ ] `CalibrationService`: one-shot Gemini call with full screenshot + structured JSON response schema
-      asking for HUD region bounding boxes as fractions (uses `response_schema` in google-genai SDK)
-- [ ] JSON response schema: `{regions: [{label, x_pct, y_pct, width_pct, height_pct}]}`
-- [ ] Validation step: run OCR on each returned region immediately, reject if confidence < threshold
-- [ ] Persist result to `game_packs/<id>/hud_regions_user.yaml` (separate from manifest.yaml defaults)
-- [ ] GamePackLoader: check for `hud_regions_user.yaml` first, fall back to manifest.yaml
-- [ ] "Calibrate HUD" button in settings dialog → triggers CalibrationService → shows result summary
-- [ ] Calibration result shows which regions were accepted/rejected + confidence scores
-- [ ] Re-calibrate option: run again to overwrite previous user calibration
+### Auto-Calibration ✅ Done
+- [x] `CalibrationService`: one-shot Gemini call with `response_schema` for deterministic JSON
+- [x] Validation: OCR run on each returned region, reject if confidence < threshold or geometry invalid
+- [x] Persist accepted regions to `game_packs/<id>/hud_regions_user.yaml`
+- [x] `GamePackLoader`: checks `hud_regions_user.yaml` first, falls back to manifest.yaml defaults
+- [x] `CalibrationDialog`: progress indicator, per-region accept/reject results with confidence scores
+- [x] "Calibrate HUD" button in Settings → General tab (only shown when service is wired)
+- [x] "Clear User Calibration" button in dialog reverts to manifest.yaml defaults
+- [x] AD-22 added to architecture.md
 
 ### OCR Pipeline (after calibration)
 - [ ] OCR preprocessing: contrast boost, binarization, upscaling crops before OCR

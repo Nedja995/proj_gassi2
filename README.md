@@ -102,6 +102,16 @@ uv run python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key'
 ## Usage
 
 ```bash
+# Activate venv first (recommended for daily use)
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Run
+gassi
+
+# Or without activating
 uv run gassi
 ```
 

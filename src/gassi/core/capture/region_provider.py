@@ -1,6 +1,7 @@
 """Capture region providers — how we know where the game window is."""
 
 import tkinter as tk
+import mss
 
 
 class OverlayAnchoredRegionProvider:
@@ -24,3 +25,13 @@ class OverlayAnchoredRegionProvider:
             self._overlay.winfo_width(),
             self._overlay.winfo_height(),
         )
+
+    def get_monitor_rect(self) -> tuple[int, int, int, int]:
+        """Return (x, y, width, height) of the primary monitor.
+
+        Used for HUD region resolution — fractional coordinates in
+        manifest/calibration are relative to the full screen, not the overlay.
+        """
+        with mss.mss() as sct:
+            m = sct.monitors[1]  # primary monitor
+            return (m["left"], m["top"], m["width"], m["height"])

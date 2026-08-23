@@ -87,12 +87,10 @@ class AssistantViewModel:
         self._canvas.update_status("ADVISOR", self._input_source.value)
         self._canvas.show_advice("Capturing and analyzing...", is_loading=True)
 
-        capture_rect = self._region_provider.get_capture_rect()
-
         if self._input_source == AdvisorInputSource.OCR:
-            self._process_ocr_advisor(capture_rect)
+            self._process_ocr_advisor()
         else:
-            self._process_screenshot_advisor(capture_rect)
+            self._process_screenshot_advisor()
 
     def switch_advisor_source(self) -> None:
         """Shift+F1: cycle advisor input source (OCR <-> SCREENSHOT)."""
@@ -152,31 +150,42 @@ class AssistantViewModel:
 
     # ── advisor internals ─────────────────────────────────────────────
 
-    def _process_ocr_advisor(
-        self, capture_rect: tuple[int, int, int, int]
-    ) -> None:
+    def _process_ocr_advisor(self) -> None:
         """OCR all HUD regions, combine text, send ONE call to Gemini."""
+        # HUD region fractions are relative to the full primary monitor,
+        # not the overlay window rect.
+        monitor_rect = self._region_provider.get_monitor_rect()
         combined_text_parts: list[str] = []
         any_low_confidence = False
         last_frame: np.ndarray | None = None
 
-        for hud_region in self._manifest.hud_regions:
-            cropped_rect = self._resolve_hud_region(capture_rect, hud_region)
-            frame = self._capture_without_overlay(cropped_rect)
-            last_frame = frame  # keep last frame for debug storage
-            ocr_result = self._ocr.extract(frame, hud_region.label)
+        # hide overlay once for all region captures
+        overlay = self._canvas.winfo_toplevel()
+        overlay.withdraw()
+        overlay.update_idletasks()
+        time.sleep(0.15)
 
-            if ocr_result.confidence < self._settings.ocr_confidence_threshold:
-                logger.info(
-                    "OCR confidence %.2f below threshold for '%s'",
-                    ocr_result.confidence,
-                    hud_region.label,
-                )
-                any_low_confidence = True
-            else:
-                combined_text_parts.append(
-                    f"[{hud_region.label}]: {ocr_result.text}"
-                )
+        try:
+            for hud_region in self._manifest.hud_regions:
+                cropped_rect = self._resolve_hud_region(monitor_rect, hud_region)
+                frame = self._capture.grab(cropped_rect)
+                last_frame = frame
+                ocr_result = self._ocr.extract(frame, hud_region.label)
+
+                if ocr_result.confidence < self._settings.ocr_confidence_threshold:
+                    logger.info(
+                        "OCR confidence %.2f below threshold for '%s'",
+                        ocr_result.confidence,
+                        hud_region.label,
+                    )
+                    any_low_confidence = True
+                else:
+                    combined_text_parts.append(
+                        f"[{hud_region.label}]: {ocr_result.text}"
+                    )
+        finally:
+            overlay.deiconify()
+            overlay.attributes("-topmost", True)
 
         # store last captured region for debug frame save (F4)
         if last_frame is not None:
@@ -185,7 +194,7 @@ class AssistantViewModel:
         # if all regions had low confidence, fall back to screenshot
         if not combined_text_parts or any_low_confidence:
             logger.info("OCR unreliable, falling back to screenshot for this cycle")
-            self._process_screenshot_advisor(capture_rect)
+            self._process_screenshot_advisor()
             return
 
         combined_prompt = "Current HUD readings:\n" + "\n".join(combined_text_parts)
@@ -199,9 +208,7 @@ class AssistantViewModel:
             on_error=self._on_api_error,
         )
 
-    def _process_screenshot_advisor(
-        self, capture_rect: tuple[int, int, int, int]
-    ) -> None:
+    def _process_screenshot_advisor(self) -> None:
         """Capture full screen, send ONE image call to Gemini."""
         # Full screen capture — Gemini needs to see the entire HUD,
         # not just the overlay region which may be small/mispositioned
