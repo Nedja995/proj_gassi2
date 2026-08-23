@@ -121,6 +121,8 @@ game_packs/
 - **Protocol-based abstractions**: `AiBackend`, `CaptureBackend`, `CaptureRegionProvider` — swap implementations without touching ViewModel
 - **Async bridge**: dedicated asyncio thread + queue → tkinter `after()` polling. AI calls never block the UI.
 - **Game packs**: folder convention with manifest.yaml + prompt files. No dynamic plugin loader — just add a folder.
+- **Theme system**: all visual constants in `Theme` model, 3 presets (dark/midnight/forest), selectable via settings dialog
+- **Persistent settings**: JSON config in OS app data dir, merged with env var defaults at startup
 
 See `docs/architecture.md` for detailed decisions and rationale.
 

@@ -97,3 +97,21 @@ This document captures the key architecture decisions made for GASSI and the rat
 **Decision:** Pin to Python `>=3.12,<3.13` (stable release). Use `uv` (Astral) for venv creation and dependency management.
 
 **Rationale:** 3.12 is the current stable with mature ecosystem support. Avoids 3.13+ breaking changes in dependencies (especially compiled ones like ONNX runtime, mss, numpy). `uv` chosen over Poetry because (a) it was already installed on the dev machine managing Python, (b) faster installs/resolution, (c) simpler mental model (no separate shell/plugin ecosystem), (d) standard PEP 621 `pyproject.toml` with no tool-specific lock-in. Hatchling as build backend — lightweight, standard-compliant.
+
+## AD-17: Persistent settings via JSON + pydantic-settings merge
+
+**Decision:** User settings saved to a JSON file in the OS app data directory (`%LOCALAPPDATA%\gassi\settings.json` on Windows). At startup, saved JSON is loaded first, then merged into `AppSettings` (pydantic-settings) which also reads `GASSI_*` env vars. Env vars override saved settings.
+
+**Rationale:** pydantic-settings is read-only from env vars — it has no write-back mechanism. A runtime settings dialog needs persistence. JSON was chosen over YAML/TOML because it requires no additional dependency (json is stdlib), the config is flat key-value pairs (no nesting), and human-editability is not a primary concern (the settings dialog is the UI). The merge order (JSON → env vars → defaults) preserves the escape hatch of env var overrides for CI/testing.
+
+## AD-18: Custom frameless window with overrideredirect
+
+**Decision:** Use `overrideredirect(True)` to remove the native OS titlebar entirely. All window chrome (title, drag, close, collapse, settings) is custom tkinter.
+
+**Rationale:** The overlay needs a compact, themed toolbar that blends with the game. Native titlebars waste vertical space, can't be themed, and their minimize/maximize buttons are irrelevant for an overlay. Trade-off: custom drag handling, custom close button, and `withdraw()`/`deiconify()` instead of native minimize (since `overrideredirect` windows don't participate in the OS window manager's minimize/restore).
+
+## AD-19: Settings dialog over config-file-only
+
+**Decision:** Build a full settings dialog (gear icon → tabbed window) rather than config-file-only or env-var-only settings.
+
+**Rationale:** The hotkey conflict with Timberborn (F1/F2 are used by the game) made configurable hotkeys a blocking usability issue. A config file would work but requires the user to know pynput's key string format, find the file, edit it, and restart. The dialog with a key-capture widget ("press Set, then press your key") is the correct UX for a desktop app. Once the dialog exists, adding theme picker, cooldown slider, and model selector is marginal cost.

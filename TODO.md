@@ -1,16 +1,6 @@
 # TODO — GASSI Roadmap
 
-## v0.1.2 — Usability & Debugging (IN PROGRESS)
-
-### Settings UI
-- [x] Settings dialog accessible from toolbar (gear icon)
-- [x] Configurable hotkeys with key capture widget
-- [x] Theme picker (dark/midnight/forest)
-- [x] Cooldown interval slider
-- [x] API model selector
-- [x] Default input source selector (ocr/screenshot)
-- [x] Persistent settings (JSON config file in OS app data directory)
-- [x] Window position/size remembered across sessions
+## v0.1.3 — Debugging & Prompt Polish (NEXT)
 
 ### Debug Tools
 - [ ] Debug capture viewer: hotkey to save last captured frame as PNG to disk
@@ -110,19 +100,20 @@
 
 ## Completed
 
-### v0.1.2 (2026-08-22) — Settings & Persistence
+### v0.1.2 (2026-08-23)
 - [x] Settings dialog with two tabs (Hotkeys, General)
-- [x] Key capture widget for hotkey rebinding
-- [x] Theme picker dropdown
-- [x] Cooldown slider (5-60s)
-- [x] AI model text field
-- [x] Default input source dropdown
-- [x] Gear icon (⚙) in toolbar
-- [x] Persistent JSON config in OS app data directory
-- [x] Window geometry saved on close, restored on launch
-- [x] Settings manager module (load/save/window geometry)
+- [x] Configurable hotkeys via key-capture widget (press "Set" → press key)
+- [x] Theme picker dropdown (dark/midnight/forest)
+- [x] Cooldown interval slider (5–60 seconds)
+- [x] AI model selector text field
+- [x] Default advisor input source selector (ocr/screenshot)
+- [x] Gear icon (⚙) in toolbar opens settings
+- [x] Persistent settings: JSON config file in OS app data directory
+- [x] Window position/size remembered across sessions
+- [x] Settings loaded at startup, merged with defaults
+- [x] Hotkey changes note: "requires restart" shown in dialog
 
-### v0.1.1 (2026-08-22) — Theme & Overlay UX
+### v0.1.1 (2026-08-22)
 - [x] Theme system extracted (Theme model + 3 presets)
 - [x] Collapsible overlay (▲/▼ toggle)
 - [x] Slide-off-screen (◀ hide + ▶ pull-tab)
@@ -142,7 +133,7 @@
 - [x] Fixed overlay self-capture in screenshots
 - [x] Fixed slide-off-screen reliability (withdraw/deiconify)
 
-### v0.1.0 (2026-08-22) — Initial Scaffold
+### v0.1.0 (2026-08-22)
 - [x] MVVM project scaffold with Protocol abstractions
 - [x] Advisor mode (OCR + Screenshot sources)
 - [x] Placement mode (free-text spatial advice)

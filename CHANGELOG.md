@@ -9,39 +9,56 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.1.2] - 2026-08-23
+
+### Added
+- Settings dialog accessible via ⚙ gear icon in toolbar
+- Hotkeys tab: rebindable key capture for all 4 hotkeys (advisor, source switch, placement, lock)
+- General tab: theme picker, cooldown slider, AI model field, default input source
+- Persistent settings: saved to JSON in OS app data dir (`%LOCALAPPDATA%\gassi\settings.json` on Windows)
+- Window position/size saved on close and restored on next launch
+- Settings loaded at startup and merged with env var / pydantic defaults
+- Settings manager module (`core/settings_manager.py`)
+
+### Changed
+- Toolbar now includes ⚙ gear button between lock and close
+- Startup reads saved settings.json before constructing components
+- Cooldown changes from settings dialog apply immediately without restart
+
 ## [0.1.1] - 2026-08-22
 
 ### Added
 - Theme system: all visual constants extracted to `Theme` model with 3 presets (dark, midnight, forest)
 - Theme selection via `GASSI_THEME_NAME` env var
 - Collapsible overlay: ▲/▼ button toggles toolbar-only strip; auto-expands when results arrive
-- Slide-off-screen: ◀ button hides overlay entirely, leaving a small ▶ pull-tab at the left edge to restore
+- Slide-off-screen: ◀ button hides overlay entirely, leaving a small ▶ pull-tab to restore
 - Custom frameless window (overrideredirect) — no native titlebar, fully custom toolbar
-- Custom toolbar: ◀ slide | ▲ collapse | GASSI status | 🔓 lock | ✕ close
+- Custom toolbar layout: ◀ slide | ▲ collapse | GASSI status | ⚙ settings | 🔓 lock | ✕ close
 - Markdown bold rendering: `**text**` in Gemini responses renders as actual bold
 - Auto-hide during capture: overlay withdraws before screenshot to avoid capturing itself
 - Cooldown timer in footer bar with visible countdown after each API call
-- Footer hotkey hints in accent green: `F1 Advisor │ F2 Placement │ F3 Lock`
+- Footer hotkey hints in accent green
 - F3 hotkey for click-through lock toggle
-- PlacementPromptDialog: themed modal for typing placement questions (F2)
-- Close button with proper cleanup handler (replaces native window close)
+- PlacementPromptDialog: themed modal for typing placement questions
+- Close button with proper cleanup handler
 
 ### Changed
-- Toolbar compact (22px) with icon-only buttons, smaller dimmer title
+- Toolbar compact (22px) with icon-only buttons
 - Footer guaranteed visible (packed before canvas in layout order)
 - All captures (F1 screenshot fallback, F2 placement) now use full-screen grab
 - Single-shot query model: no auto-polling, each hotkey press = one API call + cooldown
-- Combined all HUD regions into single API call per advisor query (was 3 separate calls)
-- Default Gemini model: gemini-3.6-flash (2.5-flash unavailable for new accounts)
-- Default cooldown: 15 seconds between queries (rate limit protection)
-- Migrated from Poetry to uv (pyproject.toml converted to PEP 621 standard)
+- Combined all HUD regions into single API call per advisor query
+- Default Gemini model: gemini-3.6-flash
+- Default cooldown: 15 seconds
+- Migrated from Poetry to uv (PEP 621 pyproject.toml)
 
 ### Fixed
 - Overlay no longer captures itself in screenshots (withdraw/deiconify pattern)
 - Advisor results no longer overwrite each other (single combined call)
-- Rate limiting: was hitting 429 RESOURCE_EXHAUSTED at 36 req/min, now ~4 req/min max
+- Rate limiting: reduced from 36 req/min to ~4 req/min max
 - Click-through was always-on at startup making window unmovable
-- Slide-off-screen now uses withdraw/deiconify (negative coordinates were unreliable on Windows)
+- Slide-off-screen uses withdraw/deiconify (negative coordinates were unreliable)
+- Footer visibility guaranteed regardless of window size
 
 ## [0.1.0] - 2026-08-22
 
