@@ -4,21 +4,29 @@ window_title_pattern: "Timberborn"
 game_version: "0.6"
 rag_collection_name: null
 
-hud_regions:
-  - label: "top_resource_bar"
-    x_pct: 0.15
-    y_pct: 0.0
-    width_pct: 0.70
-    height_pct: 0.04
+# HUD regions calibrated from 1456x816 screenshots (Cycle 1, day 3).
+# Fractions are relative to full captured screen — survive window resize.
+# If your resolution differs significantly, use auto-calibration (v0.2.0)
+# or re-measure with F4 debug frame + docs/adding_game_pack.md workflow.
 
-  - label: "population_panel"
+hud_regions:
+  - label: "resource_bar"
+    # Top strip: logs, planks, food, water, science counts (left ~37% of screen)
     x_pct: 0.0
     y_pct: 0.0
-    width_pct: 0.15
-    height_pct: 0.06
+    width_pct: 0.37
+    height_pct: 0.035
 
-  - label: "day_season_indicator"
-    x_pct: 0.85
+  - label: "population_panel"
+    # Top-left panel: worker counts, population, wellness, idle beavers
+    x_pct: 0.0
+    y_pct: 0.033
+    width_pct: 0.145
+    height_pct: 0.145
+
+  - label: "cycle_and_time"
+    # Top-right: "Cycle X, day Y", time remaining, season/weather strip
+    x_pct: 0.78
     y_pct: 0.0
-    width_pct: 0.15
-    height_pct: 0.04
+    width_pct: 0.22
+    height_pct: 0.035
