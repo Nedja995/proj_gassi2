@@ -25,6 +25,15 @@ See [TODO.md](TODO.md) for the full roadmap.
 - `debug_log_max_lines` setting (default 200) added to `AppSettings`.
 - Footer hint updated: `F4 DbgSave` added.
 - Startup log now includes debug frames directory path.
+- **Prompt rewrite — all three Timberborn prompts tightened:**
+  - Removed duplicate GAME KNOWLEDGE blocks (same block was in both advisor prompts verbatim).
+  - Eliminated numbered task lists and "RESPONSE FORMAT" headers; replaced with a single RULES line.
+  - Removed example quotes from advisor prompts; kept one spatially-specific example in placement prompt.
+  - Added explicit early-game detection clause (Day 1–15 → beginner focus) in both advisor prompts.
+  - Hard output constraint: "plain sentences only — no markdown, no bullet points, no headers. Max 4 lines."
+  - Token reduction: ~40% fewer prompt tokens per advisor call vs. previous version.
+- **Prompt iteration tool** (`tests/prompt_iteration.py`): standalone CLI for testing prompts against
+  saved screenshots or OCR text without running the full app. Reads prompts live from disk.
 
 ### Changed
 - `AssistantViewModel.__init__` accepts `debug_manager: DebugManager` parameter.

@@ -11,6 +11,14 @@ from tkinter import ttk
 
 from gassi.core.theme.theme import Theme
 
+# inline bold pattern — matches **text**
+_RE_BOLD = re.compile(r"(\*\*.*?\*\*)")
+
+# line-level markdown patterns (checked in order, first match wins)
+_RE_H2 = re.compile(r"^##\s+(.+)")
+_RE_H3 = re.compile(r"^###\s+(.+)")
+_RE_BULLET = re.compile(r"^[-*]\s+(.+)")
+
 
 class OverlayCanvas(tk.Frame):
     """Multi-layer overlay surface with scrollable advice text."""
@@ -41,7 +49,7 @@ class OverlayCanvas(tk.Frame):
             state=tk.DISABLED,
             cursor="arrow",
             spacing1=2,
-            spacing3=2,
+            spacing3=3,
         )
 
         scrollbar = ttk.Scrollbar(self, command=self._text_area.yview)
@@ -50,19 +58,65 @@ class OverlayCanvas(tk.Frame):
         self._text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # text tags for styling
-        self._text_area.tag_configure("advice", foreground=theme.fg_accent)
-        self._text_area.tag_configure("bold", foreground=theme.fg_accent, font=theme.font("normal", bold=True))
-        self._text_area.tag_configure("loading", foreground=theme.fg_loading)
-        self._text_area.tag_configure("error", foreground=theme.fg_error)
-        self._text_area.tag_configure("dim", foreground=theme.fg_dim)
+        # ── text tags ─────────────────────────────────────────────
+        t = theme
+        self._text_area.tag_configure(
+            "advice", foreground=t.fg_accent,
+        )
+        self._text_area.tag_configure(
+            "bold", foreground=t.fg_accent, font=t.font("normal", bold=True),
+        )
+        self._text_area.tag_configure(
+            "h2",
+            foreground=t.fg_accent,
+            font=t.font("normal", bold=True),
+            spacing1=6,    # px above the heading line
+            spacing3=2,    # px below
+        )
+        self._text_area.tag_configure(
+            "h3",
+            foreground=t.fg_text if hasattr(t, "fg_text") else t.fg_dim,
+            font=t.font("normal", bold=True),
+            spacing1=4,
+            spacing3=1,
+        )
+        self._text_area.tag_configure(
+            "bullet",
+            foreground=t.fg_accent,
+            lmargin1=t.padding_x + 2,   # hanging indent — first line
+            lmargin2=t.padding_x + 14,  # continuation lines line up after bullet
+            spacing1=1,
+            spacing3=1,
+        )
+        self._text_area.tag_configure(
+            "bullet_bold",
+            foreground=t.fg_accent,
+            font=t.font("normal", bold=True),
+            lmargin1=t.padding_x + 2,
+            lmargin2=t.padding_x + 14,
+            spacing1=1,
+            spacing3=1,
+        )
+        self._text_area.tag_configure(
+            "loading", foreground=t.fg_loading,
+        )
+        self._text_area.tag_configure(
+            "error", foreground=t.fg_error,
+        )
+        self._text_area.tag_configure(
+            "dim", foreground=t.fg_dim,
+        )
 
     # ── v1: text display ──────────────────────────────────────────────
 
     def show_advice(self, text: str, is_loading: bool = False) -> None:
-        """Display advice text in the scrollable area.
+        """Display advice text with markdown rendering.
 
-        Parses **bold** markdown markers into proper bold rendering.
+        Supported markdown:
+            ## Heading       → bold accent heading
+            ### Heading      → bold dim subheading
+            - item / * item  → • bullet with indent
+            **bold**         → inline bold (inside any line type)
         """
         self._text_area.config(state=tk.NORMAL)
         self._text_area.delete("1.0", tk.END)
@@ -70,19 +124,65 @@ class OverlayCanvas(tk.Frame):
         if is_loading:
             self._text_area.insert("1.0", text, "loading")
         else:
-            self._insert_with_bold(text)
+            self._render_markdown(text)
 
         self._text_area.config(state=tk.DISABLED)
         self._text_area.see("1.0")
 
-    def _insert_with_bold(self, text: str) -> None:
-        """Parse **bold** markers and insert with proper tags."""
-        parts = re.split(r"(\*\*.*?\*\*)", text)
+    def _render_markdown(self, text: str) -> None:
+        """Parse and render markdown line-by-line into the Text widget."""
+        lines = text.splitlines()
+        first_line = True
+
+        for raw_line in lines:
+            line = raw_line.rstrip()
+
+            # blank line — just a newline spacer
+            if not line:
+                if not first_line:
+                    self._text_area.insert(tk.END, "\n")
+                continue
+
+            if not first_line:
+                self._text_area.insert(tk.END, "\n")
+            first_line = False
+
+            # ## heading
+            m = _RE_H2.match(line)
+            if m:
+                self._insert_inline(m.group(1), base_tag="h2")
+                continue
+
+            # ### heading
+            m = _RE_H3.match(line)
+            if m:
+                self._insert_inline(m.group(1), base_tag="h3")
+                continue
+
+            # - / * bullet
+            m = _RE_BULLET.match(line)
+            if m:
+                self._text_area.insert(tk.END, "• ", "bullet")
+                self._insert_inline(m.group(1), base_tag="bullet")
+                continue
+
+            # plain paragraph line
+            self._insert_inline(line, base_tag="advice")
+
+    def _insert_inline(self, text: str, base_tag: str) -> None:
+        """Insert a text fragment, rendering **bold** spans inline.
+
+        base_tag controls the non-bold style; bold spans use a derived tag
+        that preserves the base tag's indent/spacing while adding bold font.
+        """
+        bold_tag = "bold" if base_tag in ("advice", "h2", "h3") else "bullet_bold"
+
+        parts = _RE_BOLD.split(text)
         for part in parts:
-            if part.startswith("**") and part.endswith("**"):
-                self._text_area.insert(tk.END, part[2:-2], "bold")
+            if part.startswith("**") and part.endswith("**") and len(part) > 4:
+                self._text_area.insert(tk.END, part[2:-2], bold_tag)
             else:
-                self._text_area.insert(tk.END, part, "advice")
+                self._text_area.insert(tk.END, part, base_tag)
 
     def append_advice(self, text: str, tag: str = "advice") -> None:
         """Append text without clearing existing content."""

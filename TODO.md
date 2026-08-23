@@ -7,10 +7,17 @@
 - [x] Show what was sent to Gemini (frame stored per capture source, saved on F4)
 - [x] Log viewer panel in overlay (collapsible ⌨ button, shows last N log lines)
 
-### Prompt Quality
-- [ ] Tighten advisor prompt: max 3-4 lines, no markdown formatting instruction
-- [ ] Add early-game context recognition (Cycle 1/Day 1 = beginner advice)
-- [ ] Prompt iteration against real Timberborn gameplay screenshots
+### Prompt Quality ✅ Done
+- [x] Tighten advisor prompts: max 4 lines output, no markdown formatting, RULES clause
+- [x] Removed duplicate GAME KNOWLEDGE block (was identical in both advisor prompts)
+- [x] Add early-game context recognition (Day 1–15 = beginner focus) in both advisor prompts
+- [x] Prompt iteration tool: `tests/prompt_iteration.py` CLI for testing against saved screenshots
+
+### Prompt Iteration (ongoing — requires gameplay)
+- [ ] Run prompt_iteration.py against real Timberborn screenshots (early, mid, late game)
+- [ ] Verify markdown renders correctly (heading + bullets + bold) in overlay panel
+- [ ] Verify early-game clause fires correctly on Day 1–5 HUD data
+- [ ] Tune placement prompt example if spatial references are still too generic
 
 ### Window Behavior
 - [ ] "Ready" indicator in green after cooldown expires (before clearing)
@@ -108,6 +115,11 @@
 - [x] Log panel toggle (⌨) in toolbar
 - [x] hotkey_debug_save_frame added to AppSettings (default F4)
 - [x] debug_log_max_lines added to AppSettings (default 200)
+- [x] Advisor prompts rewritten: ~40% fewer tokens, no duplicate knowledge block
+- [x] Early-game context recognition clause (Day 1–15) in both advisor prompts
+- [x] Markdown rendering expanded: ## headings, - bullets, **bold** all rendered natively in OverlayCanvas
+- [x] Prompts updated to use markdown structure (heading + bullets + bold) for readability
+- [x] Prompt iteration CLI: tests/prompt_iteration.py
 
 ### v0.1.2 (2026-08-23)
 - [x] Settings dialog with two tabs (Hotkeys, General)
