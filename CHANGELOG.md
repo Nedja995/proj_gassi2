@@ -11,8 +11,17 @@ See [TODO.md](TODO.md) for the full roadmap.
 
 ## [0.3.0] - 2026-08-23
 
+### Added
+- **Game window focus check** in `_can_trigger`: hotkeys are silently ignored when the
+  game window is not in the foreground. Windows-only via `win32gui.GetForegroundWindow()`;
+  fails open on non-Windows or if pywin32 is missing. Uses `window_title_pattern` from
+  `manifest.yaml` — prevents accidental API calls when alt-tabbed to VS Code or desktop.
+- **OCR elapse fix**: `elapse` from RapidOCR is a list of per-stage timings, not a float.
+  Fixed `TypeError: must be real number, not list` crash in logging by using `sum(elapse)`.
+- **OCR confidence logging** promoted from DEBUG to INFO so it appears in the overlay log panel.
+
 ### In Progress
-- v0.3.0 — Spatial & Visual Feedback (next milestone)
+- v0.3.0 remaining: inline F2 entry, prompt history, quick-prompts
 
 ## [0.2.0] - 2026-08-23
 

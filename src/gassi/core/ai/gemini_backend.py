@@ -21,10 +21,11 @@ _RETRY_DELAY_RE = re.compile(r"retry[^\d]*(\d+(?:\.\d+)?)\s*s", re.IGNORECASE)
 
 # models shown in dropdown when API fetch fails
 _FALLBACK_MODELS = [
-    "gemini-2.0-flash",
     "gemini-2.5-flash",
-    "gemini-1.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
     "gemini-3.6-flash",
+    "gemini-2.5-pro",
 ]
 
 
@@ -109,7 +110,7 @@ def _build_quota_error(exc: Exception) -> Exception:
     retry_seconds = _parse_retry_seconds(exc)
     if retry_seconds is not None:
         wait = int(retry_seconds) + 1
-        msg = f"API quota exceeded — retry in {wait}s (free tier: 20 req/day on gemini-3.6-flash)"
+        msg = f"API quota exceeded — retry in {wait}s. Check https://ai.dev/rate-limit for your model's quota."
     else:
         msg = "API quota exceeded — check your Gemini plan at https://ai.dev/rate-limit"
     logger.warning("Gemini 429: %s", msg)
@@ -133,29 +134,38 @@ def fetch_available_models(
     def _fetch() -> None:
         try:
             client = genai.Client(api_key=api_key)
-            models = client.models.list()
+            models = list(client.models.list())
             names: list[str] = []
             for m in models:
                 name = m.name or ""
-                # strip "models/" prefix if present
                 if name.startswith("models/"):
                     name = name[len("models/"):]
-                # only generative gemini models
                 if "gemini" not in name.lower():
                     continue
+                # log every candidate so we can see what the API returns
                 supported = getattr(m, "supported_actions", None) or []
+                logger.debug(
+                    "Model candidate: %s | supported_actions=%s",
+                    name, supported,
+                )
+                # only filter out if supported_actions is explicitly set
+                # AND does not include generateContent — avoids dropping
+                # models where the SDK returns an empty or missing list
                 if supported and "generateContent" not in supported:
+                    logger.debug("Skipping %s (no generateContent)", name)
                     continue
                 names.append(name)
 
-            # sort: flash first, then pro, alphabetical within each group
             flash = sorted(n for n in names if "flash" in n.lower())
             pro = sorted(n for n in names if "flash" not in n.lower())
             result = flash + pro
 
+            logger.info(
+                "Fetched %d Gemini models (%d total returned by API): %s",
+                len(result), len(models), ", ".join(result),
+            )
             if not result:
                 result = _FALLBACK_MODELS
-            logger.info("Fetched %d Gemini models", len(result))
             on_done(result)
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to fetch model list: %s", exc)

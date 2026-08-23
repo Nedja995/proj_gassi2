@@ -17,7 +17,7 @@ class AppSettings(BaseSettings):
     model_config = {"env_prefix": "GASSI_"}
 
     # AI backend
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"
 
     # Advisor mode
     advisor_input_source: AdvisorInputSource = AdvisorInputSource.OCR

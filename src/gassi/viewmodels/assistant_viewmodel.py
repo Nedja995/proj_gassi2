@@ -281,19 +281,51 @@ class AssistantViewModel:
     # ── cooldown / rate limiting ──────────────────────────────────────
 
     def _can_trigger(self) -> bool:
-        """Check if a new query is allowed (not busy, cooldown elapsed)."""
+        """Check if a new query is allowed (not busy, cooldown elapsed,
+        and the game window is in the foreground)."""
         if self._busy:
             logger.debug("Ignored hotkey — API call in progress")
             return False
 
         elapsed = time.monotonic() - self._last_call_time
         remaining = self._settings.cooldown_seconds - elapsed
-
         if remaining > 0:
             logger.debug("Ignored hotkey — cooldown %.1fs remaining", remaining)
             return False
 
+        if not self._is_game_focused():
+            logger.info(
+                "Ignored hotkey — game window '%s' not in foreground",
+                self._manifest.window_title_pattern,
+            )
+            return False
+
         return True
+
+    def _is_game_focused(self) -> bool:
+        """Return True if the game window is currently in the foreground.
+
+        Windows-only check via pywin32. Returns True on non-Windows or
+        if pywin32 is not installed (fail open — don't block the hotkey).
+        Falls back to True if window_title_pattern is not set in manifest.
+        """
+        pattern = getattr(self._manifest, "window_title_pattern", "") or ""
+        if not pattern:
+            return True
+
+        try:
+            import win32gui  # type: ignore[import-untyped]
+            hwnd = win32gui.GetForegroundWindow()
+            title = win32gui.GetWindowText(hwnd)
+            focused = pattern.lower() in title.lower()
+            if not focused:
+                logger.debug(
+                    "Foreground window: '%s' (expected pattern: '%s')",
+                    title, pattern,
+                )
+            return focused
+        except Exception:  # noqa: BLE001
+            return True  # fail open on any error
 
     def _start_cooldown(self) -> None:
         """Record call time and start the visible countdown on the overlay."""

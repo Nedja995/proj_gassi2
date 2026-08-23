@@ -6,6 +6,11 @@
 
 Small UX improvements to the placement and advisor flow. Code-only, no gameplay needed.
 
+### Completed
+- [x] Game window focus check: hotkeys ignored when game not in foreground (Windows via pywin32,
+      fails open on non-Windows or missing pywin32). Uses `window_title_pattern` from manifest.
+
+### Remaining
 - [ ] Inline text entry in the overlay body (replace popup dialog for F2)
 - [ ] Prompt history: last 5 placement queries stored, selectable via dropdown
 - [ ] Predefined quick-prompts per game pack defined in manifest.yaml

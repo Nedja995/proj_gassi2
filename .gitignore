@@ -43,3 +43,5 @@ htmlcov/
 
 # Game pack user overrides (not tracked)
 game_packs/*/user_overrides/
+docs/LOW_PRIORITY_TODO/vscode_console.txt
+docs/LOW_PRIORITY_TODO/vscode_console2.txt

@@ -63,12 +63,15 @@ class RapidOcrEngine:
         combined_text = " ".join(texts)
         average_confidence = sum(confidences) / len(confidences) if confidences else 0.0
 
-        logger.debug(
-            "OCR region '%s': confidence=%.2f text='%s' (%.0fms)",
+        # elapse is a list of per-stage timings from RapidOCR
+        total_ms = sum(elapse) * 1000 if elapse else 0.0
+
+        logger.info(
+            "OCR region '%s': conf=%.2f text='%s' (%.0fms)",
             region_label,
             average_confidence,
             combined_text[:80],
-            elapse * 1000 if elapse else 0,
+            total_ms,
         )
 
         return OcrResult(
