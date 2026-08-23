@@ -47,3 +47,7 @@ class AppSettings(BaseSettings):
     hotkey_advisor_source_switch: str = "<shift>+<f1>"
     hotkey_placement: str = "<f2>"
     hotkey_lock_overlay: str = "<f3>"
+    hotkey_debug_save_frame: str = "<f4>"
+
+    # Debug
+    debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

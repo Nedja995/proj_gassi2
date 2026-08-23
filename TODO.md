@@ -1,11 +1,11 @@
 # TODO — GASSI Roadmap
 
-## v0.1.3 — Debugging & Prompt Polish (NEXT)
+## v0.1.3 — Debugging & Prompt Polish (IN PROGRESS)
 
-### Debug Tools
-- [ ] Debug capture viewer: hotkey to save last captured frame as PNG to disk
-- [ ] Show what was sent to Gemini (captured region outline or saved image)
-- [ ] Log viewer panel in overlay (collapsible, shows last N log lines)
+### Debug Tools ✅ Done
+- [x] Debug capture viewer: hotkey (F4) saves last captured frame as PNG to disk
+- [x] Show what was sent to Gemini (frame stored per capture source, saved on F4)
+- [x] Log viewer panel in overlay (collapsible ⌨ button, shows last N log lines)
 
 ### Prompt Quality
 - [ ] Tighten advisor prompt: max 3-4 lines, no markdown formatting instruction
@@ -100,6 +100,15 @@
 
 ## Completed
 
+### v0.1.3 (2026-08-23)
+- [x] Debug frame save: F4 hotkey saves last captured frame as timestamped PNG
+- [x] DebugManager: frame storage, disk save, auto-prune (50 frames), debug dir
+- [x] OverlayLogHandler: in-memory logging.Handler feeding log panel
+- [x] LogPanel: collapsible scrollable log viewer, per-level colour, CLR button
+- [x] Log panel toggle (⌨) in toolbar
+- [x] hotkey_debug_save_frame added to AppSettings (default F4)
+- [x] debug_log_max_lines added to AppSettings (default 200)
+
 ### v0.1.2 (2026-08-23)
 - [x] Settings dialog with two tabs (Hotkeys, General)
 - [x] Configurable hotkeys via key-capture widget (press "Set" → press key)
@@ -150,3 +159,5 @@
 - [x] pydantic-settings config
 - [x] OCR confidence fallback
 - [x] API error backoff
+
+---

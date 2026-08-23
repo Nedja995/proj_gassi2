@@ -11,8 +11,10 @@ import platform
 import tkinter as tk
 from typing import Any, Callable
 
+from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
+from gassi.views.log_panel import LogPanel
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +23,21 @@ _TAB_HEIGHT = 80
 
 
 class MainOverlay(tk.Tk):
-    """Root overlay window — hosts toolbar, canvas, and footer."""
+    """Root overlay window — hosts toolbar, canvas, footer, and log panel."""
 
-    def __init__(self, theme: Theme | None = None) -> None:
+    def __init__(
+        self,
+        theme: Theme | None = None,
+        log_handler: OverlayLogHandler | None = None,
+    ) -> None:
         super().__init__()
 
         self._theme = theme or DARK_THEME
+        self._log_handler = log_handler
         self._click_through_active = False
         self._collapsed = False
         self._offscreen = False
+        self._log_panel_visible = False
         self._system = platform.system()
         self._drag_offset_x = 0
         self._drag_offset_y = 0
@@ -61,7 +69,7 @@ class MainOverlay(tk.Tk):
             padx=3, pady=0,
         )
 
-        # LEFT group: slide-off + collapse (window visibility controls)
+        # LEFT group: slide-off + collapse
         self._slide_btn = tk.Button(
             self._toolbar, text="◀", command=self.toggle_offscreen, **btn_opts,
         )
@@ -79,14 +87,14 @@ class MainOverlay(tk.Tk):
         )
         self._title_label.pack(side=tk.LEFT, padx=(4, 0))
 
-        # status (next to title)
+        # status
         self._status_label = tk.Label(
             self._toolbar, text="IDLE", bg=t.bg_header,
             fg=t.fg_dim, font=t.font("small"),
         )
         self._status_label.pack(side=tk.LEFT, padx=(4, 0))
 
-        # RIGHT group: lock + close
+        # RIGHT group: log toggle + settings + lock + close
         self._close_btn = tk.Button(
             self._toolbar, text="✕", command=self._on_close_click,
             bg=t.bg_header, fg=t.fg_error, font=t.font("small"),
@@ -105,6 +113,14 @@ class MainOverlay(tk.Tk):
         )
         self._settings_btn.pack(side=tk.RIGHT, padx=1)
 
+        # log panel toggle button — only shown when a log_handler is provided
+        self._log_btn: tk.Button | None = None
+        if self._log_handler is not None:
+            self._log_btn = tk.Button(
+                self._toolbar, text="⌨", command=self.toggle_log_panel, **btn_opts,
+            )
+            self._log_btn.pack(side=tk.RIGHT, padx=1)
+
         # draggable toolbar
         for widget in (self._toolbar, self._title_label, self._status_label):
             widget.bind("<Button-1>", self._start_drag)
@@ -114,14 +130,14 @@ class MainOverlay(tk.Tk):
         self._body = tk.Frame(self, bg=t.bg_primary)
         self._body.pack(fill=tk.BOTH, expand=True)
 
-        # footer (pack FIRST so it always has space, even in small windows)
+        # footer (pack FIRST so it always has space)
         self._footer = tk.Frame(self._body, bg=t.bg_footer, height=t.footer_height)
         self._footer.pack(fill=tk.X, side=tk.BOTTOM)
         self._footer.pack_propagate(False)
 
         self._hints_label = tk.Label(
             self._footer,
-            text="F1 Advisor  │  F2 Placement  │  F3 Lock",
+            text="F1 Advisor  │  F2 Place  │  F3 Lock  │  F4 DbgSave",
             bg=t.bg_footer, fg=t.fg_accent, font=t.font("small"),
         )
         self._hints_label.pack(side=tk.LEFT, padx=t.padding_x)
@@ -132,12 +148,18 @@ class MainOverlay(tk.Tk):
         )
         self._cooldown_label.pack(side=tk.RIGHT, padx=t.padding_x)
 
-        # canvas / advice area (pack AFTER footer so footer is guaranteed)
+        # log panel (packed before canvas so it anchors to bottom of body,
+        # above footer — starts hidden)
+        self._log_panel: LogPanel | None = None
+        if self._log_handler is not None:
+            self._log_panel = LogPanel(self._body, theme=t, log_handler=self._log_handler)
+            # not packed yet — toggled on demand
+
+        # canvas / advice area (pack AFTER footer & log panel)
         self.canvas = OverlayCanvas(self._body, theme=t)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # ── pull-back tab (visible when offscreen) ────────────────
-        # This is a tiny bar that sticks out from the left screen edge
         self._tab_window: tk.Toplevel | None = None
 
     # ── status ────────────────────────────────────────────────────────
@@ -154,6 +176,39 @@ class MainOverlay(tk.Tk):
 
     def update_cooldown(self, text: str) -> None:
         self._cooldown_label.config(text=text)
+
+    # ── log panel ─────────────────────────────────────────────────────
+
+    def toggle_log_panel(self) -> None:
+        if self._log_panel is None:
+            return
+        if self._log_panel_visible:
+            self._hide_log_panel()
+        else:
+            self._show_log_panel()
+
+    def _show_log_panel(self) -> None:
+        if self._log_panel is None or self._log_panel_visible:
+            return
+        self._log_panel_visible = True
+        # pack between canvas and footer (before canvas in pack order)
+        self.canvas.pack_forget()
+        self._log_panel.pack(fill=tk.X, side=tk.BOTTOM, before=self._footer)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self._log_panel.show()
+        if self._log_btn is not None:
+            self._log_btn.config(fg=self._theme.fg_accent)
+        logger.debug("Log panel opened")
+
+    def _hide_log_panel(self) -> None:
+        if self._log_panel is None or not self._log_panel_visible:
+            return
+        self._log_panel_visible = False
+        self._log_panel.hide()
+        self._log_panel.pack_forget()
+        if self._log_btn is not None:
+            self._log_btn.config(fg=self._theme.fg_button)
+        logger.debug("Log panel closed")
 
     # ── collapse / expand ─────────────────────────────────────────────
 
@@ -339,12 +394,12 @@ class MainOverlay(tk.Tk):
         from gassi.core.settings_manager import load_saved_settings
 
         current = load_saved_settings()
-        # merge runtime defaults for fields not yet saved
         defaults = {
             "hotkey_advisor_toggle": "<f1>",
             "hotkey_advisor_source_switch": "<shift>+<f1>",
             "hotkey_placement": "<f2>",
             "hotkey_lock_overlay": "<f3>",
+            "hotkey_debug_save_frame": "<f4>",
             "theme_name": self._theme.name,
             "cooldown_seconds": 15.0,
             "gemini_model": "gemini-3.6-flash",

@@ -115,3 +115,15 @@ This document captures the key architecture decisions made for GASSI and the rat
 **Decision:** Build a full settings dialog (gear icon → tabbed window) rather than config-file-only or env-var-only settings.
 
 **Rationale:** The hotkey conflict with Timberborn (F1/F2 are used by the game) made configurable hotkeys a blocking usability issue. A config file would work but requires the user to know pynput's key string format, find the file, edit it, and restart. The dialog with a key-capture widget ("press Set, then press your key") is the correct UX for a desktop app. Once the dialog exists, adding theme picker, cooldown slider, and model selector is marginal cost.
+
+## AD-20: In-memory log handler, not file-based, for overlay log panel
+
+**Decision:** `OverlayLogHandler` is a `logging.Handler` subclass that buffers formatted records in a `collections.deque(maxlen=N)`. The overlay log panel polls this buffer. No file I/O path is involved for the in-overlay display.
+
+**Rationale:** A file-based approach (`logging.FileHandler` + tail) introduces filesystem polling, file handles, and OS-specific path concerns. The deque is zero-cost for writes, constant memory (maxlen caps it), and produces no I/O during normal operation — which matters for a gaming overlay running alongside a GPU-bound game. The `OverlayLogHandler` also doubles as the source for debug inspection without requiring the user to find a log file. Actual log file output is still available by attaching a `FileHandler` separately (future option under v0.6.0 distribution).
+
+## AD-21: Debug frames co-located with settings in the config directory
+
+**Decision:** Debug frame PNGs are saved to `<config_dir>/debug_frames/` — same root as `settings.json` (e.g. `%LOCALAPPDATA%\gassi\debug_frames\` on Windows). Auto-pruned to 50 files (oldest first).
+
+**Rationale:** Using the OS app data directory keeps debug output off the user's desktop and out of the project repo. Co-locating with settings means `_get_config_dir()` from `settings_manager` is the single source for the app's writable directory — no new path logic. The 50-frame cap prevents unbounded disk growth during active debugging sessions; frames are timestamped so the user can correlate them with log output. The ViewModel stores the frame reference immediately after every capture so F4 always reflects the most recent API submission, regardless of source.

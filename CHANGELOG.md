@@ -9,6 +9,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.1.3] - 2026-08-23
+
+### Added
+- **Debug frame save (F4):** saves last captured frame (advisor or placement) as timestamped PNG to
+  `<config_dir>/debug_frames/`. Auto-prunes to 50 frames. Confirmation shown in overlay.
+- **DebugManager** (`core/debug_manager.py`): frame storage, save-to-disk, auto-prune, debug dir resolution.
+- **OverlayLogHandler** (`core/log_handler.py`): in-memory `logging.Handler` that buffers last N
+  formatted records in a `deque`; feeds the overlay log panel without any file I/O.
+- **LogPanel** (`views/log_panel.py`): collapsible scrollable log viewer panel inside the overlay.
+  Auto-refreshes at 500ms intervals when visible. Per-level colour coding (DEBUG/INFO/WARNING/ERROR).
+  Clear button. Horizontal scroll for long lines.
+- **Log panel toggle (⌨ button)** in toolbar — button only visible when log handler is wired in.
+- `hotkey_debug_save_frame` setting (default `<f4>`) added to `AppSettings`.
+- `debug_log_max_lines` setting (default 200) added to `AppSettings`.
+- Footer hint updated: `F4 DbgSave` added.
+- Startup log now includes debug frames directory path.
+
+### Changed
+- `AssistantViewModel.__init__` accepts `debug_manager: DebugManager` parameter.
+- `MainOverlay.__init__` accepts optional `log_handler: OverlayLogHandler` parameter.
+- Every `_capture_without_overlay` call in the ViewModel now stores the frame in `DebugManager`.
+- `main.py` logging setup: `OverlayLogHandler` attached to root logger before `basicConfig`
+  so all records (including startup) are captured.
+- `main.py` logger moved inside `main()` to ensure handler is attached first.
+
 ## [0.1.2] - 2026-08-23
 
 ### Added

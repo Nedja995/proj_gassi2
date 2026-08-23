@@ -16,6 +16,7 @@ from PIL import Image
 from gassi.core.ai.protocol import AiBackend
 from gassi.core.async_bridge import AsyncBridge
 from gassi.core.capture.protocol import CaptureBackend, CaptureRegionProvider
+from gassi.core.debug_manager import DebugManager
 from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
@@ -39,6 +40,7 @@ class AssistantViewModel:
         pack_loader: GamePackLoader,
         canvas: OverlayCanvas,
         async_bridge: AsyncBridge,
+        debug_manager: DebugManager,
     ) -> None:
         self._settings = settings
         self._ai = ai_backend
@@ -48,6 +50,7 @@ class AssistantViewModel:
         self._pack_loader = pack_loader
         self._canvas = canvas
         self._bridge = async_bridge
+        self._debug = debug_manager
 
         # state
         self._mode = AssistantMode.IDLE
@@ -111,6 +114,7 @@ class AssistantViewModel:
 
         # capture full primary monitor, not just the overlay region
         frame = self._capture_without_overlay(region=None)
+        self._debug.store_frame(frame, label="placement")
         image_bytes = self._frame_to_png_bytes(frame)
 
         self._bridge.submit(
@@ -123,6 +127,27 @@ class AssistantViewModel:
             on_error=self._on_api_error,
         )
 
+    def save_debug_frame(self) -> None:
+        """F4: save the last captured frame as PNG to the debug directory."""
+        if not self._debug.has_frame():
+            self._canvas.show_advice(
+                "No frame captured yet — trigger Advisor or Placement first.",
+                is_loading=False,
+            )
+            logger.info("Debug save requested but no frame stored")
+            return
+
+        saved_path = self._debug.save_last_frame()
+        if saved_path:
+            short_path = str(saved_path)
+            self._canvas.show_advice(
+                f"Debug frame saved:\n{short_path}", is_loading=False
+            )
+        else:
+            self._canvas.show_advice(
+                "Failed to save debug frame — check logs.", is_loading=False
+            )
+
     # ── advisor internals ─────────────────────────────────────────────
 
     def _process_ocr_advisor(
@@ -131,10 +156,12 @@ class AssistantViewModel:
         """OCR all HUD regions, combine text, send ONE call to Gemini."""
         combined_text_parts: list[str] = []
         any_low_confidence = False
+        last_frame: np.ndarray | None = None
 
         for hud_region in self._manifest.hud_regions:
             cropped_rect = self._resolve_hud_region(capture_rect, hud_region)
             frame = self._capture_without_overlay(cropped_rect)
+            last_frame = frame  # keep last frame for debug storage
             ocr_result = self._ocr.extract(frame, hud_region.label)
 
             if ocr_result.confidence < self._settings.ocr_confidence_threshold:
@@ -148,6 +175,10 @@ class AssistantViewModel:
                 combined_text_parts.append(
                     f"[{hud_region.label}]: {ocr_result.text}"
                 )
+
+        # store last captured region for debug frame save (F4)
+        if last_frame is not None:
+            self._debug.store_frame(last_frame, label="advisor_ocr")
 
         # if all regions had low confidence, fall back to screenshot
         if not combined_text_parts or any_low_confidence:
@@ -173,6 +204,7 @@ class AssistantViewModel:
         # Full screen capture — Gemini needs to see the entire HUD,
         # not just the overlay region which may be small/mispositioned
         frame = self._capture_without_overlay(region=None)
+        self._debug.store_frame(frame, label="advisor_screenshot")
         image_bytes = self._frame_to_png_bytes(frame)
 
         self._bridge.submit(
