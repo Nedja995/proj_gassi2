@@ -5,13 +5,11 @@ error response and surfacing a human-readable message with the wait time.
 AFC is explicitly disabled since GASSI does not use function calling tools.
 """
 
-import asyncio
 import logging
 import re
 
 from google import genai
 from google.genai import types
-from google.api_core.exceptions import ResourceExhausted
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +54,10 @@ class GeminiBackend:
                 ),
             )
             return response.text or ""
-        except ResourceExhausted as exc:
-            raise _build_quota_error(exc) from exc
+        except Exception as exc:
+            if _is_quota_error(exc):
+                raise _build_quota_error(exc) from exc
+            raise
 
     async def complete_with_image(
         self,
@@ -83,11 +83,19 @@ class GeminiBackend:
                 ),
             )
             return response.text or ""
-        except ResourceExhausted as exc:
-            raise _build_quota_error(exc) from exc
+        except Exception as exc:
+            if _is_quota_error(exc):
+                raise _build_quota_error(exc) from exc
+            raise
 
 
-def _build_quota_error(exc: ResourceExhausted) -> Exception:
+def _is_quota_error(exc: Exception) -> bool:
+    """Return True if exception is a 429 quota/rate-limit error."""
+    msg = str(exc).lower()
+    return "429" in msg or "resource_exhausted" in msg or "quota" in msg
+
+
+def _build_quota_error(exc: Exception) -> Exception:
     """Convert a raw 429 into a readable error with retry wait time."""
     retry_seconds = _parse_retry_seconds(exc)
     if retry_seconds is not None:
