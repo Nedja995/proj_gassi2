@@ -12,16 +12,21 @@ See [TODO.md](TODO.md) for the full roadmap.
 ## [0.3.0] - 2026-08-23
 
 ### Added
-- **Game window focus check** in `_can_trigger`: hotkeys are silently ignored when the
-  game window is not in the foreground. Windows-only via `win32gui.GetForegroundWindow()`;
-  fails open on non-Windows or if pywin32 is missing. Uses `window_title_pattern` from
-  `manifest.yaml` — prevents accidental API calls when alt-tabbed to VS Code or desktop.
-- **OCR elapse fix**: `elapse` from RapidOCR is a list of per-stage timings, not a float.
-  Fixed `TypeError: must be real number, not list` crash in logging by using `sum(elapse)`.
-- **OCR confidence logging** promoted from DEBUG to INFO so it appears in the overlay log panel.
-
-### In Progress
-- v0.3.0 remaining: inline F2 entry, prompt history, quick-prompts
+- **Inline placement strip** (`views/placement_strip.py`): F2 toggles a `PlacementInputStrip`
+  bar inside the overlay body. `ttk.Combobox` (editable) with dropdown showing history +
+  quick-prompts. Dismiss with ✕ or Escape, submit with Enter or Ask button.
+  Auto-hides when overlay slides offscreen. Restores overlay if offscreen/collapsed when F2 pressed.
+- **Prompt history**: last 5 placement queries persisted to `settings.json`, deduplicated
+  (newest first). Loaded at startup, saved on every submit.
+- **Quick-prompts**: `quick_prompts: list[str]` added to `GamePackManifest` and `manifest.yaml`.
+  5 Timberborn-specific prompts. Shown in dropdown below history items.
+- `get_prompt_suggestions()` on `AssistantViewModel`: merges history + quick-prompts, deduplicates.
+- `save_prompt_history()` / `load_prompt_history()` added to `settings_manager.py`.
+- **Game window focus check** in `trigger_advisor` only: hotkeys ignored when game not in foreground.
+  Windows-only via `win32gui`. Fails open on non-Windows or missing pywin32. Does NOT block
+  placement submit (user is deliberately interacting with GASSI overlay).
+- **OCR elapse fix**: `elapse` from RapidOCR is a list — fixed `TypeError` by using `sum(elapse)`.
+- **OCR confidence logging** promoted from DEBUG to INFO.
 
 ## [0.2.0] - 2026-08-23
 

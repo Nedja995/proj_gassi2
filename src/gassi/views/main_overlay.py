@@ -15,6 +15,7 @@ from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
 from gassi.views.log_panel import LogPanel
+from gassi.views.placement_strip import PlacementInputStrip
 
 logger = logging.getLogger(__name__)
 
@@ -156,9 +157,18 @@ class MainOverlay(tk.Tk):
             self._log_panel = LogPanel(self._body, theme=t, log_handler=self._log_handler)
             # not packed yet — toggled on demand
 
+        # placement input strip (above footer, below canvas — starts hidden)
+        self._placement_strip = PlacementInputStrip(
+            self._body, theme=t,
+            on_submit=self._on_placement_submit,
+        )
+
         # canvas / advice area (pack AFTER footer & log panel)
         self.canvas = OverlayCanvas(self._body, theme=t)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # give strip a reference to canvas for repack-on-show
+        self._placement_strip._canvas_ref = self.canvas
 
         # ── pull-back tab (visible when offscreen) ────────────────
         self._tab_window: tk.Toplevel | None = None
@@ -193,6 +203,26 @@ class MainOverlay(tk.Tk):
         """Update the cooldown label text and optional foreground colour."""
         colour = fg if fg is not None else self._theme.fg_warning
         self._cooldown_label.config(text=text, fg=colour)
+
+    # ── placement strip ───────────────────────────────────────────────
+
+    def toggle_placement_strip(self, suggestions: list[str]) -> None:
+        """Show or hide the inline placement input strip."""
+        if self._offscreen:
+            self.slide_onscreen()
+        if self._collapsed:
+            self.expand()
+        self._placement_strip.toggle(suggestions)
+
+    def set_placement_handler(
+        self, handler: Callable[[str], None]
+    ) -> None:
+        """Wire the placement submit callback."""
+        self._placement_handler = handler
+
+    def _on_placement_submit(self, prompt: str) -> None:
+        if hasattr(self, "_placement_handler") and self._placement_handler:
+            self._placement_handler(prompt)
 
     # ── log panel ─────────────────────────────────────────────────────
 
@@ -283,6 +313,9 @@ class MainOverlay(tk.Tk):
         self._offscreen = True
         self._onscreen_x = self.winfo_x()
         self._onscreen_y = self.winfo_y()
+
+        # hide placement strip before withdrawing
+        self._placement_strip.hide()
 
         self.withdraw()
         self._create_pull_tab()

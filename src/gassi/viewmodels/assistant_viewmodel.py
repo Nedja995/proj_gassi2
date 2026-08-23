@@ -9,6 +9,7 @@ import io
 import logging
 import tkinter as tk
 import time
+from collections import deque
 
 import numpy as np
 from PIL import Image
@@ -21,6 +22,7 @@ from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.ocr.preprocessor import config_for_label, preprocess
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
+from gassi.core.settings_manager import load_prompt_history, save_prompt_history
 from gassi.models.config import AppSettings
 from gassi.models.enums import AdvisorInputSource, AssistantMode
 from gassi.models.game_pack import GamePackManifest, HudRegion
@@ -59,8 +61,11 @@ class AssistantViewModel:
         self._busy = False
         self._last_call_time: float = 0.0
         self._cooldown_after_id: str | None = None
-        # resolve ready-indicator colour from canvas theme at construction time
         self._ready_colour: str = getattr(canvas._theme, "fg_accent", "#00ff88")
+
+        # prompt history — persisted across sessions
+        _saved_history = load_prompt_history()
+        self._prompt_history: deque[str] = deque(_saved_history, maxlen=5)
 
         # load game pack
         self._manifest: GamePackManifest = self._pack_loader.load_manifest(
@@ -81,6 +86,12 @@ class AssistantViewModel:
     def trigger_advisor(self) -> None:
         """F1: single-shot advisor query."""
         if not self._can_trigger():
+            return
+        if not self._is_game_focused():
+            logger.info(
+                "Ignored hotkey — game window '%s' not in foreground",
+                self._manifest.window_title_pattern,
+            )
             return
 
         self._mode = AssistantMode.ADVISOR
@@ -118,6 +129,12 @@ class AssistantViewModel:
         if not self._can_trigger():
             return
 
+        # save to history (newest first, deduplicated)
+        if user_prompt in self._prompt_history:
+            self._prompt_history.remove(user_prompt)
+        self._prompt_history.appendleft(user_prompt)
+        save_prompt_history(list(self._prompt_history))
+
         self._mode = AssistantMode.PLACEMENT
         self._busy = True
         self._canvas.update_status("PLACEMENT")
@@ -143,6 +160,18 @@ class AssistantViewModel:
             on_done=self._on_result,
             on_error=self._on_api_error,
         )
+
+    def get_prompt_suggestions(self) -> list[str]:
+        """Return prompt suggestions: recent history first, then quick-prompts.
+
+        Deduplicates — quick-prompts already in history are not repeated.
+        """
+        history = list(self._prompt_history)
+        quick = [
+            p for p in self._manifest.quick_prompts
+            if p not in history
+        ]
+        return history + quick
 
     def save_debug_frame(self) -> None:
         """F4: save the last captured frame as PNG to the debug directory."""
@@ -281,8 +310,7 @@ class AssistantViewModel:
     # ── cooldown / rate limiting ──────────────────────────────────────
 
     def _can_trigger(self) -> bool:
-        """Check if a new query is allowed (not busy, cooldown elapsed,
-        and the game window is in the foreground)."""
+        """Check if a new query is allowed (not busy, cooldown elapsed)."""
         if self._busy:
             logger.debug("Ignored hotkey — API call in progress")
             return False
@@ -291,13 +319,6 @@ class AssistantViewModel:
         remaining = self._settings.cooldown_seconds - elapsed
         if remaining > 0:
             logger.debug("Ignored hotkey — cooldown %.1fs remaining", remaining)
-            return False
-
-        if not self._is_game_focused():
-            logger.info(
-                "Ignored hotkey — game window '%s' not in foreground",
-                self._manifest.window_title_pattern,
-            )
             return False
 
         return True

@@ -4,6 +4,13 @@ window_title_pattern: "Timberborn"
 game_version: "0.6"
 rag_collection_name: null
 
+quick_prompts:
+  - "Where should I build my next water pump?"
+  - "Where is the best spot for a new dam or floodgate?"
+  - "Where should I place my next forester?"
+  - "Where can I expand my farm fields?"
+  - "Where should I put a mechanical battery for maximum capacity?"
+
 # HUD regions calibrated from 1456x816 screenshots (Cycle 1, day 3).
 # Fractions are relative to full captured screen — survive window resize.
 # If your resolution differs significantly, use auto-calibration (v0.2.0)

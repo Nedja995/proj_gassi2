@@ -2,19 +2,29 @@
 
 ---
 
-## v0.3.0 — Input Improvements
+## v0.3.0 — Input Improvements ✅ Complete
 
 Small UX improvements to the placement and advisor flow. Code-only, no gameplay needed.
 
 ### Completed
 - [x] Game window focus check: hotkeys ignored when game not in foreground (Windows via pywin32,
       fails open on non-Windows or missing pywin32). Uses `window_title_pattern` from manifest.
+- [x] Inline placement input strip: F2 now toggles a `PlacementInputStrip` bar inside the overlay
+      body — no popup dialog. Combobox with dropdown showing history + quick-prompts.
+- [x] Placement strip auto-hides when overlay slides offscreen
+- [x] Placement strip restores overlay if offscreen when F2 pressed
+- [x] Placement strip expands overlay if collapsed when F2 pressed
+- [x] Focus check moved to `trigger_advisor` only — placement submit no longer blocked when
+      GASSI overlay has focus (user typing in strip)
+- [x] Prompt history: last 5 placement queries persisted to `settings.json`, deduplicated,
+      newest first. Loaded at startup, updated on every placement query.
+- [x] Quick-prompts: `quick_prompts` list added to `GamePackManifest` and `manifest.yaml`.
+      5 Timberborn-specific prompts added. Shown in dropdown after history items.
+- [x] `get_prompt_suggestions()` on ViewModel: merges history + quick-prompts, deduplicates.
+- [x] `save_prompt_history()` / `load_prompt_history()` added to `settings_manager.py`.
 
 ### Remaining
-- [ ] Inline text entry in the overlay body (replace popup dialog for F2)
-- [ ] Prompt history: last 5 placement queries stored, selectable via dropdown
-- [ ] Predefined quick-prompts per game pack defined in manifest.yaml
-      (e.g. "Where to build next?", "Water strategy?", "Dam placement?")
+- (all items complete)
 
 ---
 
@@ -130,6 +140,35 @@ Packaging and installer for end-users who don't have Python/uv.
 - [ ] Installer for Windows (NSIS or MSI)
 - [ ] TTS voice readout: edge-tts integration, toggle in settings (optional)
 - [ ] First-run wizard: API key entry, model selection, first calibration
+
+---
+
+## v0.7.0 — UX Polish (post-first-release)
+
+Refinements to the interaction model after the core product is stable and released.
+All items here are low architectural risk — UI-only changes on top of existing infrastructure.
+
+### Floating Advice Window
+- [ ] When overlay is slid offscreen and F1 (Advisor) fires, show advice in a
+      separate centered `tk.Toplevel` instead of restoring the full overlay.
+      Topmost, semi-transparent, auto-dismisses after N seconds or on click.
+      Position: upper-center of screen (not covering game HUD).
+- [ ] Toggle in settings: "Show advice in floating window when overlay is hidden"
+- [ ] Floating window respects current theme and markdown rendering
+
+### Floating Placement Dialog
+- [ ] When overlay is slid offscreen and F2 fires, show a centered `tk.Toplevel`
+      dialog (larger than the inline strip) with the combobox + history + quick-prompts.
+      Full keyboard focus, Escape dismisses, Enter submits.
+- [ ] Same `PlacementInputStrip` data (history, quick-prompts) reused — only the
+      container widget changes. No ViewModel changes needed.
+- [ ] Toggle in settings: `placement_input_style: strip | dialog`
+      (strip = current inline bar; dialog = centered Toplevel)
+
+### General UX
+- [ ] Advisor result auto-copy to clipboard option (settings toggle)
+- [ ] Response font size setting (accessibility)
+- [ ] Overlay opacity slider in toolbar (quick access without opening settings)
 
 ---
 

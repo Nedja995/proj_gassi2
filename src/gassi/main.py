@@ -24,7 +24,6 @@ from gassi.core.settings_manager import load_saved_settings, save_window_geometr
 from gassi.core.theme.theme import THEMES, FOREST_THEME
 from gassi.models.config import AppSettings
 from gassi.viewmodels.assistant_viewmodel import AssistantViewModel
-from gassi.views.dialogs import PlacementPromptDialog
 from gassi.views.main_overlay import MainOverlay
 
 _KEYRING_SERVICE = "gassi"
@@ -47,8 +46,6 @@ def _get_api_key() -> str:
 def main() -> None:
     """Application entry point — compose and start."""
     # ── logging setup ─────────────────────────────────────────────────
-    # OverlayLogHandler must be attached BEFORE basicConfig so it captures
-    # all records including those from import-time module loggers.
     overlay_log_handler = OverlayLogHandler(max_lines=200)
     overlay_log_handler.setLevel(logging.DEBUG)
 
@@ -116,15 +113,20 @@ def main() -> None:
         settings.hotkey_advisor_source_switch, viewmodel.switch_advisor_source
     )
 
-    def _open_placement_dialog() -> None:
-        overlay.auto_expand_for_result()
-        PlacementPromptDialog(overlay, on_submit=viewmodel.trigger_placement)
+    def _open_placement() -> None:
+        suggestions = viewmodel.get_prompt_suggestions()
+        overlay.after(0, lambda: overlay.toggle_placement_strip(suggestions))
 
-    hotkey_manager.register(settings.hotkey_placement, _open_placement_dialog)
-    hotkey_manager.register(settings.hotkey_lock_overlay, overlay.toggle_click_through)
+    hotkey_manager.register(settings.hotkey_placement, _open_placement)
     hotkey_manager.register(
-        settings.hotkey_debug_save_frame, viewmodel.save_debug_frame
+        settings.hotkey_lock_overlay,
+        lambda: overlay.after(0, overlay.toggle_click_through),
     )
+    hotkey_manager.register(
+        settings.hotkey_debug_save_frame,
+        lambda: overlay.after(0, viewmodel.save_debug_frame),
+    )
+    overlay.set_placement_handler(viewmodel.trigger_placement)
     hotkey_manager.start()
 
     # ── settings save handler ─────────────────────────────────────────

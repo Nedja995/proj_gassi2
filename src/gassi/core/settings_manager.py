@@ -71,3 +71,16 @@ def load_window_geometry() -> str | None:
     """Load saved window geometry string."""
     data = load_saved_settings()
     return data.get("_window_geometry")
+
+
+def save_prompt_history(history: list[str]) -> None:
+    """Persist the last N placement prompt queries."""
+    data = load_saved_settings()
+    data["_prompt_history"] = history
+    save_settings(data)
+
+
+def load_prompt_history() -> list[str]:
+    """Load persisted placement prompt history."""
+    data = load_saved_settings()
+    return data.get("_prompt_history", [])

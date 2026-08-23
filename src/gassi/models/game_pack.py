@@ -28,6 +28,7 @@ class GamePackManifest(BaseModel):
     window_title_pattern: str
     game_version: str
     hud_regions: list[HudRegion] = Field(default_factory=list)
+    quick_prompts: list[str] = Field(default_factory=list)
 
     # v2: will point to a Chroma collection; v1 uses static prompt text
     rag_collection_name: str | None = None
