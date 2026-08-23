@@ -12,6 +12,15 @@ See [TODO.md](TODO.md) for the full roadmap.
 ## [0.1.3] - 2026-08-23
 
 ### Added
+- **Window resizable:** `◢` grip in bottom-right corner, drag to resize. Respects `window_min_width`/`window_min_height` from theme. Uses `x_root`/`y_root` for stable delta tracking.
+- **Footer cooldown label:** fixed `width=12, anchor="e"` so it always has reserved space; hints text shortened to prevent clipping.
+- **`docs/adding_game_pack.md`:** complete guide for new game packs — folder convention, manifest
+  calibration walkthrough (F4 → measure → fractions), prompt templates for all 3 modes,
+  early/mid/late stage design process (signal identification, stage clause format, synthetic HUD testing),
+  and a go/no-go checklist.
+- **README.md** rewritten to v0.1.3: full hotkey table, all current features, updated project
+  structure tree, prompt iteration usage, link to adding_game_pack.md.
+- `update_cooldown(text, fg)` accepts an optional foreground colour; propagates through `OverlayCanvas` delegate to `MainOverlay`. Countdown stays amber (`fg_warning`); ready flash uses `fg_accent` (theme-aware).
 - **Debug frame save (F4):** saves last captured frame (advisor or placement) as timestamped PNG to
   `<config_dir>/debug_frames/`. Auto-prunes to 50 frames. Confirmation shown in overlay.
 - **DebugManager** (`core/debug_manager.py`): frame storage, save-to-disk, auto-prune, debug dir resolution.

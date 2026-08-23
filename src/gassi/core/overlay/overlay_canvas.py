@@ -197,11 +197,11 @@ class OverlayCanvas(tk.Frame):
         if hasattr(parent, "update_status"):
             parent.update_status(mode, source)
 
-    def update_cooldown(self, text: str) -> None:
+    def update_cooldown(self, text: str, fg: str | None = None) -> None:
         """Delegate cooldown update to parent overlay."""
         parent = self.winfo_toplevel()
         if hasattr(parent, "update_cooldown"):
-            parent.update_cooldown(text)
+            parent.update_cooldown(text, fg=fg)
 
     # ── layer management (v2) ─────────────────────────────────────────
 

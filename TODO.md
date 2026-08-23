@@ -1,6 +1,6 @@
 # TODO — GASSI Roadmap
 
-## v0.1.3 — Debugging & Prompt Polish (IN PROGRESS)
+## v0.1.3 — Debugging & Prompt Polish ✅ Complete (pending prompt iteration gameplay session)
 
 ### Debug Tools ✅ Done
 - [x] Debug capture viewer: hotkey (F4) saves last captured frame as PNG to disk
@@ -13,14 +13,16 @@
 - [x] Add early-game context recognition (Day 1–15 = beginner focus) in both advisor prompts
 - [x] Prompt iteration tool: `tests/prompt_iteration.py` CLI for testing against saved screenshots
 
-### Prompt Iteration (ongoing — requires gameplay)
-- [ ] Run prompt_iteration.py against real Timberborn screenshots (early, mid, late game)
-- [ ] Verify markdown renders correctly (heading + bullets + bold) in overlay panel
-- [ ] Verify early-game clause fires correctly on Day 1–5 HUD data
-- [ ] Tune placement prompt example if spatial references are still too generic
+### Prompt Iteration (requires gameplay session — not a code task) ⏸ SKIPPED
+- [ ] Play Timberborn to early/mid/late game states, save frames with F4
+- [ ] Run prompt_iteration.py against each saved frame (all 3 modes)
+- [ ] Check: ## heading matches situation, bullets are actionable, early-game clause fires on Day 1–10
+- [ ] Check: placement references actual visible landmarks, not generic directions
+- [ ] Edit prompts on failures, re-run immediately (tool reads from disk, no restart)
+- [ ] Sign off when all 3 modes produce consistent, correct output across game stages
 
-### Window Behavior
-- [ ] "Ready" indicator in green after cooldown expires (before clearing)
+### Window Behavior ✅ Done
+- [x] "Ready" indicator in green after cooldown expires (before clearing)
 
 ## v0.2.0 — OCR & Input Improvements
 
@@ -99,7 +101,7 @@
 ## Ongoing / Cross-Cutting
 
 - [ ] Unit tests for new features (maintain test coverage)
-- [ ] Update README.md and docs/architecture.md with each version
+- [x] Update README.md and docs/architecture.md with each version
 - [ ] Performance profiling (memory, CPU during capture + OCR)
 - [ ] Gemini API cost monitoring and optimization
 
@@ -108,6 +110,12 @@
 ## Completed
 
 ### v0.1.3 (2026-08-23)
+- [x] Window resizable: ◢ grip in bottom-right, drag to resize, min size enforced
+- [x] Footer cooldown label: fixed width=12 reserved space, hints text shortened to prevent clipping
+- [x] _can_trigger: removed show_advice() call (canvas was showing stale cooldown text over AI responses)
+- [x] docs/adding_game_pack.md: complete tutorial for new game packs (folder structure, manifest
+      calibration, prompt templates, early/mid/late game stage design, testing checklist)
+- [x] README.md rewritten to v0.1.3: full hotkey table, all features, updated project structure
 - [x] Debug frame save: F4 hotkey saves last captured frame as timestamped PNG
 - [x] DebugManager: frame storage, disk save, auto-prune (50 frames), debug dir
 - [x] OverlayLogHandler: in-memory logging.Handler feeding log panel

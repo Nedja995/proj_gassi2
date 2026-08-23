@@ -58,6 +58,8 @@ class AssistantViewModel:
         self._busy = False
         self._last_call_time: float = 0.0
         self._cooldown_after_id: str | None = None
+        # resolve ready-indicator colour from canvas theme at construction time
+        self._ready_colour: str = getattr(canvas._theme, "fg_accent", "#00ff88")
 
         # load game pack
         self._manifest: GamePackManifest = self._pack_loader.load_manifest(
@@ -251,9 +253,6 @@ class AssistantViewModel:
 
         if remaining > 0:
             logger.debug("Ignored hotkey — cooldown %.1fs remaining", remaining)
-            self._canvas.show_advice(
-                f"Cooldown: {remaining:.0f}s remaining", is_loading=True
-            )
             return False
 
         return True
@@ -265,9 +264,14 @@ class AssistantViewModel:
         self._tick_cooldown(cooldown_sec)
 
     def _tick_cooldown(self, remaining: int) -> None:
-        """Update the cooldown display every second."""
+        """Update the cooldown display every second.
+
+        When remaining hits zero, show a green '✓ Ready' indicator briefly
+        before clearing the label entirely.
+        """
         if remaining <= 0:
-            self._canvas.update_cooldown("")
+            self._canvas.update_cooldown("✓ Ready", fg=self._ready_colour)
+            self._canvas.after(1500, lambda: self._canvas.update_cooldown(""))
             return
 
         self._canvas.update_cooldown(f"Ready in {remaining}s")

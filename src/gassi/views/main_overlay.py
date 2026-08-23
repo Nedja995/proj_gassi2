@@ -137,7 +137,7 @@ class MainOverlay(tk.Tk):
 
         self._hints_label = tk.Label(
             self._footer,
-            text="F1 Advisor  │  F2 Place  │  F3 Lock  │  F4 DbgSave",
+            text="F1 Adv │ F2 Place │ F3 Lock │ F4 Dbg",
             bg=t.bg_footer, fg=t.fg_accent, font=t.font("small"),
         )
         self._hints_label.pack(side=tk.LEFT, padx=t.padding_x)
@@ -145,6 +145,7 @@ class MainOverlay(tk.Tk):
         self._cooldown_label = tk.Label(
             self._footer, text="", bg=t.bg_footer,
             fg=t.fg_warning, font=t.font("small", bold=True),
+            width=12, anchor="e",
         )
         self._cooldown_label.pack(side=tk.RIGHT, padx=t.padding_x)
 
@@ -162,6 +163,20 @@ class MainOverlay(tk.Tk):
         # ── pull-back tab (visible when offscreen) ────────────────
         self._tab_window: tk.Toplevel | None = None
 
+        # ── resize grip (bottom-right corner) ────────────────────
+        self._resize_grip = tk.Label(
+            self, text="◢", bg=t.bg_footer, fg=t.fg_dim,
+            font=t.font("small"), cursor="sizing",
+            padx=1, pady=0,
+        )
+        self._resize_grip.place(relx=1.0, rely=1.0, anchor="se")
+        self._resize_grip.bind("<Button-1>", self._resize_start)
+        self._resize_grip.bind("<B1-Motion>", self._on_resize)
+        self._resize_start_x = 0
+        self._resize_start_y = 0
+        self._resize_start_w = 0
+        self._resize_start_h = 0
+
     # ── status ────────────────────────────────────────────────────────
 
     def update_status(self, mode: str, source: str = "") -> None:
@@ -174,8 +189,10 @@ class MainOverlay(tk.Tk):
             text=text, fg=t.fg_accent if is_active else t.fg_dim,
         )
 
-    def update_cooldown(self, text: str) -> None:
-        self._cooldown_label.config(text=text)
+    def update_cooldown(self, text: str, fg: str | None = None) -> None:
+        """Update the cooldown label text and optional foreground colour."""
+        colour = fg if fg is not None else self._theme.fg_warning
+        self._cooldown_label.config(text=text, fg=colour)
 
     # ── log panel ─────────────────────────────────────────────────────
 
@@ -378,6 +395,22 @@ class MainOverlay(tk.Tk):
         x = self.winfo_x() + event.x - self._drag_offset_x
         y = self.winfo_y() + event.y - self._drag_offset_y
         self.geometry(f"+{x}+{y}")
+
+    # ── window resizing ───────────────────────────────────────────
+
+    def _resize_start(self, event: tk.Event) -> None:  # type: ignore[type-arg]
+        self._resize_start_x = event.x_root
+        self._resize_start_y = event.y_root
+        self._resize_start_w = self.winfo_width()
+        self._resize_start_h = self.winfo_height()
+
+    def _on_resize(self, event: tk.Event) -> None:  # type: ignore[type-arg]
+        t = self._theme
+        delta_x = event.x_root - self._resize_start_x
+        delta_y = event.y_root - self._resize_start_y
+        new_w = max(t.window_min_width, self._resize_start_w + delta_x)
+        new_h = max(t.window_min_height, self._resize_start_h + delta_y)
+        self.geometry(f"{new_w}x{new_h}")
 
     # ── close ─────────────────────────────────────────────────────────
 
