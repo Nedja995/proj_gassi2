@@ -486,6 +486,10 @@ class MainOverlay(tk.Tk):
         self._calibration_game_id = game_id
         self._api_key = api_key
 
+    def set_pack_loader(self, pack_loader: object) -> None:
+        """Wire GamePackLoader for the active game selector in settings."""
+        self._pack_loader = pack_loader
+
     def set_settings_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Set the callback for when settings are saved."""
         self._settings_handler = handler
@@ -519,6 +523,7 @@ class MainOverlay(tk.Tk):
             calibration_service=getattr(self, "_calibration_service", None),
             game_id=getattr(self, "_calibration_game_id", ""),
             api_key=getattr(self, "_api_key", ""),
+            pack_loader=getattr(self, "_pack_loader", None),
         )
 
     def _on_close_click(self) -> None:

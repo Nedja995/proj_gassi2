@@ -84,6 +84,33 @@ class GamePackLoader:
         """Return True if a user calibration file exists for this game."""
         return (self._packs_dir / game_id / _USER_REGIONS_FILENAME).exists()
 
+    def list_available_packs(self) -> list[tuple[str, str]]:
+        """Return list of (game_id, display_name) for all installed game packs.
+
+        A valid pack is any subdirectory of game_packs/ that contains a
+        manifest.yaml. Sorted alphabetically by display_name.
+        """
+        result: list[tuple[str, str]] = []
+        if not self._packs_dir.exists():
+            return result
+
+        for entry in sorted(self._packs_dir.iterdir()):
+            if not entry.is_dir():
+                continue
+            manifest_path = entry / "manifest.yaml"
+            if not manifest_path.exists():
+                continue
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                game_id = data.get("game_id", entry.name)
+                display_name = data.get("display_name", game_id)
+                result.append((game_id, display_name))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Skipping invalid pack at %s: %s", entry, exc)
+
+        return sorted(result, key=lambda x: x[1])
+
     def load_prompt(self, game_id: str, prompt_name: str) -> str:
         """Load a prompt template file from game_packs/<game_id>/prompts/."""
         prompt_path = self._packs_dir / game_id / "prompts" / f"{prompt_name}.txt"

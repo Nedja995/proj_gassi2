@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 from gassi.core.calibration_service import CalibrationService
 from gassi.core.ai.gemini_backend import fetch_available_models
+from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.theme.theme import Theme, THEMES, DARK_THEME
 from gassi.core.settings_manager import load_saved_settings, save_settings
 
@@ -132,6 +133,7 @@ class SettingsDialog(tk.Toplevel):
         calibration_service: CalibrationService | None = None,
         game_id: str = "",
         api_key: str = "",
+        pack_loader: GamePackLoader | None = None,
     ) -> None:
         super().__init__(parent)
         self._theme = theme
@@ -140,6 +142,7 @@ class SettingsDialog(tk.Toplevel):
         self._calibration_service = calibration_service
         self._game_id = game_id
         self._api_key = api_key
+        self._pack_loader = pack_loader
         t = theme
 
         self.title("GASSI — Settings")
@@ -236,6 +239,38 @@ class SettingsDialog(tk.Toplevel):
     def _build_general_tab(self, parent: tk.Widget, t: Theme) -> tk.Frame:
         frame = tk.Frame(parent, bg=t.bg_primary, padx=16, pady=16)
         row = 0
+
+        # active game pack selector
+        tk.Label(
+            frame, text="Active game", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        current_game = self._current.get("active_game_id", "timberborn")
+        if self._pack_loader is not None:
+            packs = self._pack_loader.list_available_packs()
+            pack_display = [display for _, display in packs]
+            pack_ids = [gid for gid, _ in packs]
+            # find index of current game
+            try:
+                current_display = pack_display[pack_ids.index(current_game)]
+            except ValueError:
+                current_display = current_game
+                pack_display = [current_game] + pack_display
+                pack_ids = [current_game] + pack_ids
+        else:
+            pack_display = [current_game]
+            pack_ids = [current_game]
+            current_display = current_game
+
+        self._game_display_to_id = dict(zip(pack_display, pack_ids))
+        self._game_var = tk.StringVar(value=current_display)
+        game_menu = ttk.Combobox(
+            frame, textvariable=self._game_var,
+            values=pack_display, state="readonly", width=26,
+        )
+        game_menu.grid(row=row, column=1, sticky="w", pady=6)
+        row += 1
 
         # theme picker
         tk.Label(
@@ -431,6 +466,9 @@ class SettingsDialog(tk.Toplevel):
         settings["gemini_model"] = self._model_var.get()
         settings["advisor_input_source"] = self._source_var.get()
         settings["grid_overlay_enabled"] = self._grid_var.get()
+        settings["active_game_id"] = self._game_display_to_id.get(
+            self._game_var.get(), self._game_var.get()
+        )
 
         save_settings(settings)
         self._on_save(settings)
