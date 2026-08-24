@@ -38,13 +38,17 @@ class PlacementResult(BaseModel):
     """Response from a Placement mode query.
 
     v1: free-text advice using landmarks/directions.
-    v2: will add target_direction, target_offset_pct, confidence for
-        grid-based coordinate rendering and arrow overlays.
+    v0.3.1: cell_reference populated when grid overlay is enabled.
+    v0.3.2: target_direction, target_offset_pct used for canvas bounding box
+            rendering once the transparent overlay layer is implemented.
     """
 
     advice_text: str
 
-    # v2 additions (reserved, not populated in v1):
+    # v0.3.1: grid cell reference returned by Gemini when grid is enabled
+    cell_reference: str | None = None
+
+    # v0.3.2 additions (reserved — canvas rendering deferred, see AD-23):
     target_direction: str | None = None
     target_offset_pct: tuple[float, float] | None = None
     confidence: float = 1.0

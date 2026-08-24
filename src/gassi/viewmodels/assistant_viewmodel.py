@@ -6,12 +6,14 @@ A cooldown timer prevents rapid re-triggering (rate limit protection).
 """
 
 import io
+import json
 import logging
 import tkinter as tk
 import time
 from collections import deque
 
 import numpy as np
+from google.genai import types
 from PIL import Image
 
 from gassi.core.ai.protocol import AiBackend
@@ -19,6 +21,7 @@ from gassi.core.async_bridge import AsyncBridge
 from gassi.core.capture.protocol import CaptureBackend, CaptureRegionProvider
 from gassi.core.debug_manager import DebugManager
 from gassi.core.game_pack_loader import GamePackLoader
+from gassi.core.grid_overlay import cell_to_screen_pixels, draw_grid_on_frame, parse_cell_reference
 from gassi.core.ocr.preprocessor import config_for_label, preprocess
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
@@ -26,6 +29,7 @@ from gassi.core.settings_manager import load_prompt_history, save_prompt_history
 from gassi.models.config import AppSettings
 from gassi.models.enums import AdvisorInputSource, AssistantMode
 from gassi.models.game_pack import GamePackManifest, HudRegion
+from gassi.models.results import PlacementResult
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +129,12 @@ class AssistantViewModel:
         logger.info("Advisor source switched to: %s", self._input_source.value)
 
     def trigger_placement(self, user_prompt: str) -> None:
-        """F2: single-shot placement advice from FULL SCREEN screenshot."""
+        """F2: single-shot placement advice from FULL SCREEN screenshot.
+
+        When grid_overlay_enabled, draws a coordinate grid on the frame before
+        sending to Gemini and requests a structured JSON response containing
+        both a cell reference and advice text.
+        """
         if not self._can_trigger():
             return
 
@@ -142,22 +151,37 @@ class AssistantViewModel:
 
         # capture full primary monitor, not just the overlay region
         frame = self._capture_without_overlay(region=None)
-        self._debug.store_frame(frame, label="placement")
-        image_bytes = self._frame_to_png_bytes(frame)
+
+        grid_enabled = self._settings.grid_overlay_enabled
+        cols = self._settings.grid_cols
+        rows = self._settings.grid_rows
+
+        if grid_enabled:
+            annotated_frame = draw_grid_on_frame(frame, cols, rows)
+            self._debug.store_frame(annotated_frame, label="placement")
+            image_bytes = self._frame_to_png_bytes(annotated_frame)
+        else:
+            self._debug.store_frame(frame, label="placement")
+            image_bytes = self._frame_to_png_bytes(frame)
 
         logger.info(
-            "Placement: Screenshot mode — model=%s game=%s",
+            "Placement: model=%s game=%s grid=%s (%dx%d)",
             self._settings.gemini_model,
             self._settings.active_game_id,
+            "on" if grid_enabled else "off",
+            cols, rows,
         )
+
+        response_schema = _build_placement_schema() if grid_enabled else None
 
         self._bridge.submit(
             self._ai.complete_with_image(
                 system_prompt=self._placement_prompt,
                 user_prompt=user_prompt,
                 image_bytes=image_bytes,
+                response_schema=response_schema,
             ),
-            on_done=self._on_result,
+            on_done=lambda text: self._on_placement_result(text, grid_enabled, cols, rows),
             on_error=self._on_api_error,
         )
 
@@ -299,6 +323,61 @@ class AssistantViewModel:
         self._mode = AssistantMode.IDLE
         self._canvas.update_status("IDLE", self._input_source.value)
 
+    def _on_placement_result(
+        self,
+        response_text: str,
+        grid_enabled: bool,
+        cols: int,
+        rows: int,
+    ) -> None:
+        """Handle placement API response — parse cell reference when grid is on."""
+        self._busy = False
+        overlay = self._canvas.winfo_toplevel()
+        if hasattr(overlay, "auto_expand_for_result"):
+            overlay.auto_expand_for_result()
+
+        if not grid_enabled:
+            # no grid — plain text response, same as advisor
+            self._canvas.show_advice(response_text)
+            self._start_cooldown()
+            self._mode = AssistantMode.IDLE
+            self._canvas.update_status("IDLE", self._input_source.value)
+            return
+
+        # grid enabled — response is JSON {cell, advice}
+        result = _parse_placement_response(response_text)
+
+        if result.cell_reference:
+            monitor_rect = self._region_provider.get_monitor_rect()
+            pixel_rect = cell_to_screen_pixels(
+                result.cell_reference, monitor_rect, cols, rows
+            )
+            if pixel_rect:
+                logger.info(
+                    "Placement cell %s → screen rect %s",
+                    result.cell_reference, pixel_rect,
+                )
+            else:
+                logger.warning(
+                    "Cell %s could not be mapped to screen pixels",
+                    result.cell_reference,
+                )
+
+            # v0.3.2: pass pixel_rect to canvas bounding box renderer here
+            # For now: append cell reference to advice text
+            display_text = result.advice_text
+            if not display_text.strip():
+                display_text = f"Recommended cell: **{result.cell_reference}**"
+            elif result.cell_reference not in display_text:
+                display_text += f"\n\n📍 Target cell: **{result.cell_reference}**"
+        else:
+            display_text = result.advice_text or response_text
+
+        self._canvas.show_advice(display_text)
+        self._start_cooldown()
+        self._mode = AssistantMode.IDLE
+        self._canvas.update_status("IDLE", self._input_source.value)
+
     def _on_api_error(self, error: Exception) -> None:
         self._busy = False
         logger.error("API error: %s", error)
@@ -413,3 +492,63 @@ class AssistantViewModel:
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         return buffer.getvalue()
+
+
+# ── module-level helpers (no ViewModel state needed) ────────────────────────────────
+
+def _build_placement_schema() -> types.Schema:
+    """Build Gemini response_schema for structured placement response.
+
+    Enforces: {"cell": "<letter><number>", "advice": "<markdown text>"}
+    """
+    return types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "cell": types.Schema(
+                type=types.Type.STRING,
+                description="Single best grid cell reference, e.g. 'D5'.",
+            ),
+            "advice": types.Schema(
+                type=types.Type.STRING,
+                description=(
+                    "Markdown placement advice. 1 ## heading + 1–2 bullets. "
+                    "Include the cell reference in the heading."
+                ),
+            ),
+        },
+        required=["cell", "advice"],
+    )
+
+
+def _parse_placement_response(response_text: str) -> PlacementResult:
+    """Parse a structured JSON placement response from Gemini.
+
+    Expected shape: {"cell": "D5", "advice": "## ..."}
+
+    Falls back gracefully: if JSON is malformed or fields are missing,
+    returns PlacementResult with advice_text set to raw response_text
+    and cell_reference=None so the caller can still display something.
+    """
+    try:
+        data = json.loads(response_text)
+        raw_cell = str(data.get("cell") or "").strip()
+        advice = str(data.get("advice") or "").strip()
+
+        validated_cell = None
+        if raw_cell:
+            parsed = parse_cell_reference(raw_cell)
+            if parsed is not None:
+                validated_cell = raw_cell.upper()
+            else:
+                logger.warning(
+                    "Gemini returned unparseable cell reference: '%s'", raw_cell
+                )
+
+        return PlacementResult(
+            advice_text=advice or response_text,
+            cell_reference=validated_cell,
+        )
+
+    except (json.JSONDecodeError, ValueError, TypeError) as exc:
+        logger.warning("Failed to parse placement JSON response: %s", exc)
+        return PlacementResult(advice_text=response_text, cell_reference=None)

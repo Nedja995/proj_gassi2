@@ -15,7 +15,7 @@ always-on-top overlay on top of your game.
 
 ---
 
-## Features (v0.1.3)
+## Features (v0.3.1)
 
 ### Advisor Mode (`F1`)
 
@@ -29,8 +29,14 @@ switches to screenshot automatically.
 
 ### Placement Mode (`F2`)
 
-On-demand: captures full game window + your typed question → Gemini returns spatial advice
-referencing visible landmarks and directions on screen.
+On-demand: captures full game window + your typed question → Gemini returns spatial advice.
+
+**Grid overlay** (enabled by default): a coordinate grid (A–L columns, 1–8 rows) is drawn on
+the screenshot before sending to Gemini. Gemini returns a specific cell reference (e.g. `D5`)
+alongside markdown advice. The cell reference is appended to the displayed advice and logged
+with its screen pixel rect — ready for bounding box rendering in v0.3.2.
+
+Toggle grid overlay in Settings → General.
 
 ### Overlay Controls
 
@@ -38,7 +44,7 @@ referencing visible landmarks and directions on screen.
 |--------|--------|
 | `F1` | Advisor query (one-shot) |
 | `Shift+F1` | Switch Advisor source (OCR ↔ Screenshot) |
-| `F2` | Placement query (full screen + question) |
+| `F2` | Placement query (full screen + grid overlay + question) |
 | `F3` | Toggle click-through lock |
 | `F4` | Save last captured frame to debug folder |
 | `⚙` (toolbar) | Open settings dialog |

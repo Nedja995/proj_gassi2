@@ -8,6 +8,7 @@ AFC is explicitly disabled since GASSI does not use function calling tools.
 import logging
 import re
 from collections.abc import Callable
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -75,22 +76,35 @@ class GeminiBackend:
         user_prompt: str,
         image_bytes: bytes,
         image_mime: str = "image/png",
+        response_schema: Any | None = None,
     ) -> str:
-        """Send prompt with image to Gemini multimodal endpoint."""
+        """Send prompt with image to Gemini multimodal endpoint.
+
+        Args:
+            response_schema: Optional google.genai.types.Schema instance.
+                When provided, enforces structured JSON output via
+                response_mime_type='application/json'. Used by placement
+                mode when grid overlay is enabled.
+        """
         image_part = types.Part.from_bytes(
             data=image_bytes,
             mime_type=image_mime,
         )
         text_part = types.Part.from_text(text=user_prompt)
 
+        config_kwargs: dict[str, Any] = {
+            "system_instruction": system_prompt,
+            "automatic_function_calling": _AFC_CONFIG,
+        }
+        if response_schema is not None:
+            config_kwargs["response_mime_type"] = "application/json"
+            config_kwargs["response_schema"] = response_schema
+
         try:
             response = await self._client.aio.models.generate_content(
                 model=self._model,
                 contents=[image_part, text_part],
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    automatic_function_calling=_AFC_CONFIG,
-                ),
+                config=types.GenerateContentConfig(**config_kwargs),
             )
             return response.text or ""
         except Exception as exc:

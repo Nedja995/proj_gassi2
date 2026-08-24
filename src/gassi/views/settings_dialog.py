@@ -319,6 +319,23 @@ class SettingsDialog(tk.Toplevel):
         source_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
+        # grid overlay toggle
+        tk.Label(
+            frame, text="Grid overlay", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        self._grid_var = tk.BooleanVar(
+            value=bool(self._current.get("grid_overlay_enabled", True))
+        )
+        grid_check = ttk.Checkbutton(
+            frame,
+            text="Draw coordinate grid on placement screenshots",
+            variable=self._grid_var,
+        )
+        grid_check.grid(row=row, column=1, sticky="w", pady=6)
+        row += 1
+
         # calibration button — only shown when CalibrationService is wired in
         if self._calibration_service is not None:
             separator = ttk.Separator(frame, orient=tk.HORIZONTAL)
@@ -413,6 +430,7 @@ class SettingsDialog(tk.Toplevel):
         settings["cooldown_seconds"] = self._cooldown_var.get()
         settings["gemini_model"] = self._model_var.get()
         settings["advisor_input_source"] = self._source_var.get()
+        settings["grid_overlay_enabled"] = self._grid_var.get()
 
         save_settings(settings)
         self._on_save(settings)

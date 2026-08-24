@@ -28,18 +28,24 @@ Small UX improvements to the placement and advisor flow. Code-only, no gameplay 
 
 ---
 
-## v0.3.1 — Grid Overlay (Spatial Placement v2)
+## v0.3.1 — Grid Overlay (Spatial Placement v2) ✅ Complete
 
 Adds a coordinate grid to screenshots sent for placement advice, enabling
-Gemini to return cell references that GASSI can render as bounding boxes.
+Gemini to return cell references alongside advice text.
 
-- [ ] Draw A–Z / 1–N grid on captured screenshot before sending to Gemini
-- [ ] Update placement prompt: instruct Gemini to return a cell reference (e.g. "D5")
-      in a structured response field alongside the natural language advice
-- [ ] Parse cell reference from response (response_schema JSON)
-- [ ] Cell → screen pixel conversion using monitor_rect + grid dimensions
+### Completed
+- [x] Draw A–Z / 1–N grid on captured screenshot before sending to Gemini
+      (`core/grid_overlay.py`, `draw_grid_on_frame()`)
+- [x] Update placement prompt: Gemini returns `{"cell": "D5", "advice": "..."}` JSON
+- [x] Parse cell reference from response (`response_schema` + `_parse_placement_response()`)
+- [x] Cell → screen pixel conversion (`cell_to_screen_pixels()`) — logs rect, ready for v0.3.2
+- [x] Grid overlay toggle in Settings → General tab (persisted to settings.json)
+- [x] `GeminiBackend.complete_with_image()` accepts optional `response_schema`
+- [x] AD-23 added to architecture.md
+
+### Deferred to v0.3.2 (by design — see AD-23)
 - [ ] Bounding box rendered on overlay canvas at target cell coordinates
-- [ ] Grid overlay toggle: on/off setting in settings dialog
+      (requires transparent Toplevel canvas solution, justified by tutorial overlay system)
 
 ---
 
@@ -185,6 +191,17 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.3.1 (2026-08-24)
+- [x] Grid overlay drawn on placement screenshots before Gemini submission
+- [x] Structured JSON response (`response_schema`) for placement mode
+- [x] `cell_to_screen_pixels()` — pixel rect conversion, logged, ready for v0.3.2 canvas
+- [x] `parse_cell_reference()` — validates Gemini cell strings
+- [x] `PlacementResult.cell_reference` field
+- [x] `grid_overlay_enabled` setting + Settings dialog toggle
+- [x] `GeminiBackend` and `AiBackend` Protocol updated for optional `response_schema`
+- [x] Timberborn placement.txt rewritten for grid + JSON response format
+- [x] AD-23 documenting canvas deferral decision
 
 ### v0.2.0 (2026-08-23)
 - [x] CalibrationService: Gemini multimodal + response_schema + OCR validation

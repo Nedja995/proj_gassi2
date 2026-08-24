@@ -49,5 +49,10 @@ class AppSettings(BaseSettings):
     hotkey_lock_overlay: str = "<f3>"
     hotkey_debug_save_frame: str = "<f4>"
 
+    # Grid overlay (v0.3.1)
+    grid_overlay_enabled: bool = True
+    grid_cols: int = Field(default=12, ge=4, le=26)   # A–L default (A–Z max)
+    grid_rows: int = Field(default=8, ge=2, le=20)
+
     # Debug
     debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

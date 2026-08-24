@@ -1,6 +1,6 @@
 """AI backend protocol — interface contract for all AI providers."""
 
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class AiBackend(Protocol):
@@ -20,6 +20,13 @@ class AiBackend(Protocol):
         user_prompt: str,
         image_bytes: bytes,
         image_mime: str = "image/png",
+        response_schema: Any | None = None,
     ) -> str:
-        """Send a prompt with an attached image and return the response text."""
+        """Send a prompt with an attached image and return the response text.
+
+        Args:
+            response_schema: Optional structured output schema (provider-specific).
+                When provided, the backend enforces JSON output matching the schema.
+                Used by placement mode when grid overlay is enabled.
+        """
         ...

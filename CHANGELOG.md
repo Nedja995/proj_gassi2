@@ -9,6 +9,42 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.3.1] - 2026-08-24
+
+### Added
+- **Grid overlay** (`core/grid_overlay.py`): OpenCV-based coordinate grid drawn on placement
+  screenshots before submission to Gemini. Columns A–Z (left→right), rows 1–N (top→bottom).
+  Yellow labels with dark outline for readability. Configurable via `grid_cols` / `grid_rows`
+  settings (defaults: 12×8).
+- **Structured placement response** (`response_schema`): when grid is enabled, Gemini returns
+  `{"cell": "D5", "advice": "## ..."}`. `_build_placement_schema()` constructs the
+  `types.Schema`; `_parse_placement_response()` validates and falls back gracefully on
+  malformed JSON.
+- **`cell_to_screen_pixels()`** in `grid_overlay.py`: converts a validated cell reference to
+  absolute screen pixel rect `(x, y, w, h)` using `get_monitor_rect()`. Ready for v0.3.2
+  canvas rendering without changes.
+- **`parse_cell_reference()`** in `grid_overlay.py`: validates raw cell strings from Gemini
+  into `(col_idx, row_idx)` or `None`. Single-letter columns only (A–Z, v0.3.1).
+- **`PlacementResult.cell_reference`** field added (`models/results.py`).
+- **`grid_overlay_enabled`** setting added to `AppSettings` (default `True`). Also `grid_cols`
+  (default 12) and `grid_rows` (default 8).
+- **Grid overlay toggle** in Settings → General tab: `ttk.Checkbutton` persists to
+  `settings.json`.
+- **`GeminiBackend.complete_with_image()`** accepts optional `response_schema` parameter.
+  When provided, sets `response_mime_type="application/json"` on the SDK config.
+  `AiBackend` Protocol updated to match.
+- **`_on_placement_result()`** on `AssistantViewModel`: separate placement callback that parses
+  the structured response, logs the resolved pixel rect, and appends the cell reference to the
+  displayed advice text. Non-grid path falls back to plain text display unchanged.
+- AD-23 added to `docs/architecture.md` (grid overlay design + canvas deferral rationale).
+- Timberborn `placement.txt` rewritten: instructs Gemini to use the grid, return JSON with
+  `cell` + `advice` fields. Previous plain-text format retained as fallback when grid is off.
+
+### Changed
+- F4 debug save stores the **grid-annotated frame** when grid overlay is enabled, so saved
+  PNGs show exactly what Gemini received.
+- `trigger_placement()` logs grid state: `grid=on (12x8)` or `grid=off`.
+
 ## [0.3.0] - 2026-08-23
 
 ### Added
