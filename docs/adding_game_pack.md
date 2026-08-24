@@ -1,7 +1,8 @@
 # Adding a New Game Pack to GASSI
 
 This guide covers everything needed to add support for a new game: folder structure,
-manifest calibration, prompt authoring, and the early/mid/late game design process.
+manifest requirements, prompt authoring, OCR preprocessor config, and the early/mid/late
+game stage design process.
 
 No code changes are required for a new game pack. Everything is data.
 
@@ -21,12 +22,13 @@ game_packs/
         └── placement.txt
 ```
 
-The `game_id` must match the folder name exactly. It is referenced in `AppSettings.active_game_id`
-(default: `"timberborn"`) and loaded by `GamePackLoader` at startup.
+The `game_id` must match the folder name exactly. It must also appear as the `game_id` field
+in `manifest.yaml` — `GamePackLoader.list_available_packs()` reads it to populate the
+Settings → General → Active game dropdown. Missing `game_id` in the manifest means the pack
+will not appear in the selector.
 
-To activate your pack, either:
-- Set env var: `GASSI_ACTIVE_GAME_ID=your_game_id`
-- Or edit `settings.json` in the OS app data dir: `"active_game_id": "your_game_id"`
+To activate your pack: open Settings → General → select from the **Active game** dropdown → Save
+& Close → restart GASSI. The overlay will show a restart notice automatically.
 
 ---
 
@@ -35,18 +37,23 @@ To activate your pack, either:
 Full schema with all fields:
 
 ```yaml
-game_id: your_game_id           # must match folder name
-display_name: "Your Game"       # shown in logs at startup
-window_title_pattern: "Your Game"  # reserved for v2 native window detection (unused in v1)
-game_version: "1.0"             # track which game version this pack targets
-rag_collection_name: null       # reserved for v2 RAG pipeline; leave null for now
+game_id: your_game_id              # must match folder name AND appear in manifest
+display_name: "Your Game"          # shown in Settings dropdown and startup log
+window_title_pattern: "Your Game"  # used by focus check (F1 advisor hotkey guard)
+game_version: "1.0"                # track which game version this pack targets
+rag_collection_name: null          # reserved for v0.5.0 RAG pipeline; leave null
+
+quick_prompts:
+  - "Where should I build X?"      # shown in F2 placement strip dropdown
+  - "Where is the best spot for Y?"
+  - "Where should I place Z?"
 
 hud_regions:
-  - label: "top_bar"            # short descriptor, used in OCR log output and prompt context
-    x_pct: 0.10                 # left edge, fraction of captured window width (0.0–1.0)
-    y_pct: 0.00                 # top edge, fraction of captured window height (0.0–1.0)
-    width_pct: 0.80             # region width as fraction
-    height_pct: 0.05            # region height as fraction
+  - label: "top_bar"               # used in OCR log output and prompt context
+    x_pct: 0.10                    # left edge, fraction of full monitor width (0.0–1.0)
+    y_pct: 0.00                    # top edge, fraction of full monitor height
+    width_pct: 0.80                # region width as fraction
+    height_pct: 0.05               # region height as fraction
 
   - label: "resource_panel"
     x_pct: 0.00
@@ -55,41 +62,86 @@ hud_regions:
     height_pct: 0.10
 ```
 
-### Calibrating HUD Regions
+### Bootstrapping HUD regions from internet screenshots
 
-HUD regions define where GASSI crops for OCR in Advisor mode. All coordinates are
-**fractional (0.0–1.0) relative to the full captured area** — they survive resolution
-changes without recalibration.
+You don't need to be at the game to write a first draft. Use review screenshots, Steam
+screenshots, or wiki images to estimate fractional coordinates:
 
-**Calibration process:**
+1. Open a reference screenshot at known resolution (e.g. 1456×816).
+2. Measure pixel positions of each HUD element you want to capture.
+3. Convert: `x_pct = x / W`, `y_pct = y / H`, `width_pct = w / W`, `height_pct = h / H`.
+4. Add ~5–10px margins on each side (expressed as fractions) for OCR breathing room.
+5. Mark all regions as estimated in a comment — run CalibrationService when at the game.
 
-1. Run GASSI and trigger a debug frame save with `F4` after pressing `F1` once.
-   The frame is saved to `%LOCALAPPDATA%\gassi\debug_frames\` (Windows).
-2. Open the saved PNG in any image editor. Note the total image dimensions (W × H pixels).
-3. For each HUD element you want to capture, measure:
-   - `x` = left edge in pixels → `x_pct = x / W`
-   - `y` = top edge in pixels → `y_pct = y / H`
-   - `w` = region width in pixels → `width_pct = w / W`
-   - `h` = region height in pixels → `height_pct = h / H`
-4. Add margins (~5–10px each side) so OCR has breathing room around text.
-5. Paste the fractions into `manifest.yaml`.
+This is exactly how the Nebuchadnezzar pack was bootstrapped before any live testing.
+
+### Calibrating HUD Regions (live game)
+
+**Recommended path:** use the built-in CalibrationService (Settings → Calibrate HUD).
+It sends a full screenshot to Gemini, detects HUD regions automatically, validates each
+with RapidOCR, and writes the result to `hud_regions_user.yaml` (never overwrites your
+manifest defaults).
+
+**Manual path (if calibration fails or you prefer control):**
+
+1. Run GASSI with the game open and press `F4` after pressing `F1` once.
+   The debug frame PNG is saved to `%LOCALAPPDATA%\gassi\debug_frames\` (Windows).
+2. Open the PNG in any image editor. Note total dimensions (W × H).
+3. Measure each HUD element (left edge, top edge, width, height in pixels).
+4. Convert to fractions and paste into `manifest.yaml`.
 
 **Tips:**
-- Prefer regions that contain **text only**, not icons or graphics — OCR accuracy drops on mixed content.
-- If the game has a scalable UI, test at 100% UI scale first. Fractional coords handle window
-  resize but not UI scale changes (that's a known limitation for v1).
-- Keep region count low (2–4). All regions are OCR'd and combined into one API call per F1 press.
-- Labels become part of the OCR context sent to the model: `[top_bar]: Day 3, Food: 45`.
-  Use descriptive labels that help the model understand what it is reading.
+- Prefer regions with **text only** — no icons or progress bars. OCR accuracy drops on mixed content.
+- Keep region count low (2–4). All regions are captured and sent in one API call per F1 press.
+- Labels become part of the OCR context: `[top_bar]: Day 3, Food: 45`. Use descriptive labels.
+- Fractions are relative to the **full primary monitor**, not the overlay window.
 
 ---
 
-## 3. Prompt Files
+## 3. OCR Preprocessor Config
+
+Each HUD region label is looked up in `LABEL_CONFIGS` in `core/ocr/preprocessor.py`.
+If your label isn't in the registry, `DEFAULT_CONFIG` is used (3× upscale, grayscale,
+adaptive threshold — tuned for Timberborn's small white text on dark backgrounds).
+
+If OCR confidence is consistently low for a region, add a custom config:
+
+```python
+# in core/ocr/preprocessor.py
+
+YOUR_GAME_BAR_CONFIG = OcrPreprocessConfig(
+    scale_factor=4.0,       # increase for very small text (<12px)
+    grayscale=True,
+    denoise=True,           # False for clean solid-colour backgrounds
+    adaptive_threshold=True,
+    adaptive_block_size=11, # smaller = tighter; use 11–15 for small digits
+    adaptive_c=6,           # lower = keeps bright pixels; use 6–10 for white-on-dark
+    sharpen=True,
+    padding_px=6,
+)
+
+LABEL_CONFIGS["your_region_label"] = YOUR_GAME_BAR_CONFIG
+```
+
+**Config guidance by HUD type:**
+
+| HUD type | scale_factor | block_size | C | denoise |
+|----------|-------------|------------|---|---------|
+| Small digits on dark icon strip | 4.0 | 11 | 6 | True |
+| Medium text on dark band | 3.0 | 13 | 8 | True |
+| Large clean text on solid dark | 2.5 | 15 | 10 | False |
+| White text on light/gradient bg | 3.0 | 17 | 12 | True |
+
+Use `F4` to save the preprocessed frame and visually confirm what RapidOCR receives.
+
+---
+
+## 4. Prompt Files
 
 Three prompt files are required. All live in `prompts/` and are plain `.txt` files.
 GASSI reads them from disk on every query — edit and re-test without restarting the app.
 
-### 3a. advisor_ocr.txt
+### 4a. advisor_ocr.txt
 
 Receives: formatted OCR text from all HUD regions, labelled by region name.
 
@@ -100,188 +152,140 @@ Current HUD readings:
 [resource_panel]: Workers: 8/10, Idle: 2
 ```
 
-**Template to start from:**
+**Template:**
 
 ```
-You are a <Game Name> strategy advisor. You receive OCR-extracted HUD text: <list what regions contain>.
+You are a <Game Name> strategy advisor. You receive OCR-extracted HUD text from: <list regions>.
 
-<Game Name>: <one dense sentence describing the genre, core loop, and primary threat/goal>.
-Core resources: <comma list>. Key buildings/units: <comma list>.
+<Game Name>: <one dense sentence — genre, core loop, primary threat/goal>.
+Core resources: <comma list>. Key buildings: <comma list>.
 
-TASK: Parse the HUD data, identify the most urgent issues, and give actionable recommendations in priority order.
+GAME STAGES — use <signal> as indicator:
+EARLY (<threshold>): focus on <3 survival priorities>.
+MID (<threshold>): focus on <3 growth priorities>.
+LATE (<threshold>): focus on <3 optimization priorities>.
 
-<GAME_STAGE_CLAUSE — see Section 4>
+TASK: Parse the HUD data. Identify the most urgent issue for the current stage.
+Give 1–3 specific actionable recommendations in priority order.
 
-RULES: Use markdown for readability — ## for a short situation heading, bullet points for recommendations, **bold** for the most critical item. Keep it concise: 1 heading + 2-4 bullets max. Use game terminology. Skip mechanics the player already knows.
+RULES: Use markdown — ## for a short situation heading, bullets for recommendations,
+**bold** for the most critical action. Max 1 heading + 3 bullets. Use game terminology.
+Lead with the most urgent item.
 ```
 
-### 3b. advisor_screenshot.txt
+### 4b. advisor_screenshot.txt
 
-Receives: full-screen PNG of the game. Same structure as `advisor_ocr.txt` but the model
-reads visually rather than from extracted text.
+Same structure as `advisor_ocr.txt` but for visual input. Key differences:
+- Opens with: "You receive a full screenshot. Read all visible HUD values, open panels, and map state."
+- Add to RULES: "If a value is unreadable, skip it."
 
-Differences from OCR prompt:
-- First line: "You receive a full screenshot of the game. Read all visible HUD values, open panels, and map state."
-- Add to RULES: "If a value is unreadable, skip it and advise on what you can see."
+### 4c. placement.txt
 
-### 3c. placement.txt
+Receives: full-screen PNG with coordinate grid overlaid + player's typed question.
 
-Receives: full-screen PNG + the player's typed question (e.g. "Where should I put my water pump?").
+Grid convention: columns A–Z (left→right), rows 1–N (top→bottom). Cells referenced as `"D5"`.
 
 **Template:**
 
 ```
-You are a <Game Name> placement advisor. You receive a screenshot and a player question about where to build or place something.
+You are a <Game Name> placement advisor. You receive a screenshot with a coordinate grid
+overlaid on it and a player question about where to build or place something.
 
-<Game Name> spatial rules: <bullet the key spatial constraints — terrain, adjacency, radius, connectivity, power>.
+The grid uses column letters (A, B, C…, left to right) and row numbers (1, 2, 3…, top to bottom).
+Reference cells as "<letter><number>", e.g. "D5" or "B3".
 
-TASK: Answer the placement question with a specific location the player can find on screen right now.
-Reference visible landmarks (buildings, terrain features, resources) and cardinal or relative directions.
-Explain why that spot is correct.
+<Game Name> spatial rules:
+- <Key spatial constraint 1 — terrain, adjacency, radius, connectivity>
+- <Key spatial constraint 2>
+- <Key spatial constraint 3>
 
-RULES: Use markdown for readability — ## for the recommended location, then 1-2 bullets explaining why
-and how to connect it. **Bold** the key landmark or direction. Be spatially precise — point to a real
-visible spot. No grid coordinates.
+TASK: Answer with a specific grid cell the player can find immediately.
+Reference the grid cell AND visible landmarks. Explain why that cell is correct.
 
-Example:
-## <Specific visible location name>
-- **<Key spatial reason>** — <why this spot works>.
-- <How to connect it / secondary consideration>.
+RULES: Respond in JSON with exactly two fields:
+- "cell": the single best grid cell reference (e.g. "D5")
+- "advice": markdown advice. ## heading with cell reference, 1–2 bullets explaining why.
+  **Bold** the key landmark or constraint. Max 1 heading + 2 bullets.
+
+Example response:
+{
+  "cell": "D5",
+  "advice": "## Cell D5 — <visible landmark>\n- **<Key reason>** — <why this cell>.\n- <How to connect or secondary step>."
+}
 ```
 
 ---
 
-## 4. Early / Mid / Late Game Design
+## 5. Early / Mid / Late Game Design
 
-The most important prompt design decision is **game stage detection**. Without it, the model
-gives the same advice regardless of whether the player is on day 1 or day 200.
+### Step 1: Define your stages
 
-### Principle
+| Stage | Trigger signals (visible in HUD) | Advice focus |
+|-------|----------------------------------|--------------|
+| Early | low turn/day/cycle, small resource counts | Survival basics, first infrastructure |
+| Mid | moderate resources, threat approaching | Efficiency, threat preparation |
+| Late | high resources, multiple systems active | Optimization, expansion, advanced systems |
 
-The AI cannot truly detect game stage — it reads what the HUD shows. Your job is to tell it
-**what signals map to which stage** and **what advice scope applies to each stage**.
+Use only signals that appear in the HUD text or screenshot — the model cannot see
+unlock state or past events.
 
-### Step 1: Define Your Game's Stages
+### Step 2: Write the stage clause
 
-Every game has a different progression. Before writing prompts, define your stages explicitly:
-
-| Stage | Trigger Signals | Advice Focus |
-|-------|----------------|--------------|
-| Early | Day/turn < X, low resource counts, few structures | Survival basics, first infrastructure |
-| Mid | Moderate resources, first threat approaching | Efficiency, threat preparation |
-| Late | High resource counts, multiple systems active | Optimization, expansion, advanced systems |
-
-**Timberborn example:**
-- Early: Day 1–15 → water access, food, first housing
-- Late: Day 16+ → drought prep, district expansion, power chains
-
-**RimWorld example** (hypothetical):
-- Early: Colony < 5 pawns, no threat events yet → base layout, first crops, stockpile
-- Mid: First raid warning, < 10 pawns → defenses, medicine, mood management
-- Late: 10+ pawns, mechanoids/infestations → automation, trade, advanced weapons
-
-### Step 2: Identify the Signals the Model Can Read
-
-The model only knows what is in the HUD text or visible in the screenshot. Your stage
-clause must use signals that actually appear in those inputs.
-
-**Good signals** (visible in HUD):
-- Day / turn / cycle number
-- Population count
-- Specific resource amounts (very low = early, high = late)
-- Active event names ("Drought incoming", "Raid: 3 days")
-
-**Bad signals** (not in HUD):
-- "When the player has unlocked X" (unlock state not in HUD text)
-- "After the first raid" (past events not visible)
-
-### Step 3: Write the Stage Clause
-
-Keep it to 1–2 lines in the prompt. Put it between TASK and RULES.
-
-**Format:**
-```
-EARLY GAME (<signal threshold>): focus on <3 survival priorities>.
-MID GAME (<signal threshold>): focus on <3 growth priorities>.
-LATE GAME (<signal threshold>): focus on <3 optimization priorities>.
-```
-
-Only include the stages your game actually has. Two stages (early/late) is fine if the
-game doesn't have a meaningful mid-game transition.
-
-**Examples:**
+Keep it to 3 lines in the prompt. Put it between the game knowledge block and TASK.
 
 ```
-# Two-stage (Timberborn style)
-EARLY GAME (Day 1–15): focus on water access, food, and first housing.
-LATE GAME (Day 16+): focus on drought prep, district expansion, power chains.
+GAME STAGES — use <signal> as indicator:
+EARLY (<threshold>): focus on <3 priorities>.
+MID (<threshold>): focus on <3 priorities>.
+LATE (<threshold>): focus on <3 priorities>.
 ```
 
-```
-# Three-stage (RimWorld style, hypothetical)
-EARLY GAME (< 5 colonists): focus on shelter, food, first power source.
-MID GAME (5–10 colonists, first threat warnings): focus on defenses, medicine, mood.
-LATE GAME (10+ colonists): focus on trade, research, mechanoid countermeasures.
-```
-
-```
-# Event-triggered (games with explicit event states)
-EARLY GAME (no active threats visible): focus on economy and infrastructure.
-CRISIS MODE (threat event visible in HUD): focus entirely on the active threat — defer all expansion.
-RECOVERY (threat resolved): stabilize supplies before resuming expansion.
-```
-
-### Step 4: Validate with the Iteration Tool
-
-After writing prompts, test them with synthetic HUD data before playing:
+### Step 3: Validate with prompt_iteration.py
 
 ```bash
 # Early game test
 uv run python tests/prompt_iteration.py --mode advisor_ocr \
-  --hud "[top_bar]: Day 3, Food: 12, Wood: 40 [resource_panel]: Workers: 4, Idle: 1"
+  --hud "[top_bar]: Day 3, Gold: 500, Pop: 120"
 
 # Late game test
 uv run python tests/prompt_iteration.py --mode advisor_ocr \
-  --hud "[top_bar]: Day 45, Food: 380, Wood: 1200 [resource_panel]: Workers: 28, Idle: 0"
+  --hud "[top_bar]: Day 180, Gold: 8000, Pop: 2800"
+
+# Screenshot test
+uv run python tests/prompt_iteration.py --mode advisor_screenshot \
+  --image path/to/saved_debug_frame.png
 ```
 
-Check that:
-- Early test → advice focuses on survival priorities, not advanced systems
-- Late test → advice focuses on optimization/expansion, not basics
-- The `##` heading correctly names the situation
-- Bullets are specific to the game, not generic ("build more defenses" is bad; "queue a Sandbag Wall at the north choke point" is good)
+Check that early test → survival advice, late test → optimization advice, and all bullets
+use game-specific terminology (not generic "build more food").
 
 ---
 
-## 5. Testing Checklist
+## 6. Testing Checklist
 
 Before considering a pack ready:
 
-- [ ] `manifest.yaml` parses without error: `uv run python -c "from gassi.core.game_pack_loader import GamePackLoader; GamePackLoader().load_manifest('your_game_id')"`
-- [ ] OCR regions cover the key HUD elements with no overlap
-- [ ] `advisor_ocr` prompt tested with early/mid/late synthetic HUD strings via `prompt_iteration.py`
-- [ ] `advisor_screenshot` prompt tested with at least 3 real screenshots (early/mid/late)
-- [ ] `placement` prompt tested with 2–3 real screenshots and different placement questions
-- [ ] Early-game clause fires correctly (beginner advice on Day 1 data)
-- [ ] Responses use game-specific terminology throughout
-- [ ] Response length stays within 1 heading + 4 bullets (no walls of text)
-- [ ] No generic advice ("build more food") — all bullets reference specific buildings or locations
+- [ ] `manifest.yaml` parses: `uv run python -c "from gassi.core.game_pack_loader import GamePackLoader; GamePackLoader().load_manifest('your_game_id')"`
+- [ ] Pack appears in Settings → General → Active game dropdown
+- [ ] CalibrationService runs without error (Settings → Calibrate HUD)
+- [ ] F4 debug frame shows correct HUD region crops for all labels
+- [ ] OCR confidence > threshold for all regions (check log panel after F1)
+- [ ] `advisor_ocr` tested with early/mid/late synthetic HUD via `prompt_iteration.py`
+- [ ] `advisor_screenshot` tested with 3 real screenshots (early/mid/late)
+- [ ] `placement` tested with 2–3 real screenshots + different placement questions
+- [ ] Yellow highlight box appears at the correct cell after F2 placement query
+- [ ] All response bullets use game-specific terminology — no generic advice
+- [ ] Response length stays within 1 heading + 3 bullets
 
 ---
 
-## 6. Activating and Switching Packs
+## 7. Switching Packs
 
+Open **Settings → General → Active game** dropdown → select your game → Save & Close.
+
+GASSI will show a restart notice in the overlay canvas. Restart to load the new pack.
+
+The env var override still works for CI/testing:
 ```bash
-# Env var (temporary, overrides saved settings)
 GASSI_ACTIVE_GAME_ID=your_game_id uv run gassi
-
-# Permanent: edit settings.json
-# Windows: %LOCALAPPDATA%\gassi\settings.json
-# macOS: ~/Library/Application Support/gassi/settings.json
-# Linux: ~/.config/gassi/settings.json
-{
-  "active_game_id": "your_game_id"
-}
 ```
-
-Only one game pack is active at a time. Multi-pack switching UI is planned for v0.4.0.
