@@ -21,6 +21,7 @@ class GamePackManifest(BaseModel):
     """Metadata and configuration for a single game pack.
 
     Loaded from game_packs/<game_id>/manifest.yaml at startup.
+    All optional fields default safely so existing packs don’t need updating.
     """
 
     game_id: str
@@ -30,5 +31,26 @@ class GamePackManifest(BaseModel):
     hud_regions: list[HudRegion] = Field(default_factory=list)
     quick_prompts: list[str] = Field(default_factory=list)
 
-    # v2: will point to a Chroma collection; v1 uses static prompt text
+    # v0.5.0: RAG pipeline — points to a Chroma collection name.
+    # None = use static prompt text (current default for all packs).
     rag_collection_name: str | None = None
+
+    # v0.5.0: per-game RAG chunk count override (default used if None)
+    rag_top_k: int | None = None
+
+    # v0.5.0: minimum game version for RAG collection compatibility.
+    # If game patches change mechanics significantly, old chunks can be filtered.
+    rag_min_game_version: str | None = None
+
+    # v0.6.0: preferred AI backend for this pack (None = use global setting).
+    # Allows a pack to specify "ollama" for local-only or "gemini" for cloud.
+    preferred_backend: str | None = None
+
+    # v0.7.0: native window detection — OS-specific window class or process name.
+    # Used by NativeWindowRegionProvider when implemented.
+    # Example: "UnityWndClass" (Timberborn), "Nebuchadnezzar" (Win32 class)
+    window_class: str | None = None
+
+    # v0.7.1: anti-cheat compatibility note for this game.
+    # Displayed in settings or logs if set. Pure informational.
+    anticheat_note: str | None = None
