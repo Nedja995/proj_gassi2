@@ -70,7 +70,7 @@ Transparent always-on-top cell highlight window over the game screen.
 
 ---
 
-## v0.4.0 — Second Game Pack (Nebuchadnezzar) 🚧 In Progress
+## v0.4.0 — Second Game Pack (Nebuchadnezzar) ✅ Complete
 
 Real-world validation that the game pack architecture generalizes.
 
@@ -83,16 +83,52 @@ Real-world validation that the game pack architecture generalizes.
       bazaar system, wells, labor pool, approval, prestige, 3 game stages)
 - [x] `prompts/advisor_screenshot.txt`: screenshot variant with spatial context
 - [x] `prompts/placement.txt`: grid overlay + JSON response, Nebuchadnezzar spatial rules
-      (road connectivity, bazaar coverage, granary placement, temple/well radii, monuments)
 - [x] 5 quick_prompts added to manifest
 
-### Remaining (needs Windows machine + game running)
+---
+
+## v0.4.1 — Active Game Selector ✅ Complete
+
+- [x] Active game selector in Settings → General: `ttk.Combobox` listing all installed packs
+- [x] `GamePackLoader.list_available_packs()`: scans `game_packs/`, returns `(game_id, display_name)` list
+- [x] `MainOverlay.set_pack_loader()` setter — same pattern as `set_calibration_service()`
+- [x] `active_game_id` saved to `settings.json` on Settings save
+- [x] `SettingsDialog` accepts optional `pack_loader` param (graceful fallback if absent)
+- [x] `main.py` wired: `overlay.set_pack_loader(pack_loader)`
+
+---
+
+## v0.4.2 — Nebuchadnezzar OCR Preprocessor Configs ✅ Complete
+
+- [x] `NEBU_RESOURCE_BAR_CONFIG`: 4× upscale, block=11, C=6 — small digits on dark icon strip
+- [x] `NEBU_STATUS_BAR_CONFIG`: 3× upscale, block=13, C=8 — medium text on dark band
+- [x] `NEBU_OBJECTIVES_CONFIG`: 2.5× upscale, no denoise — clean text on solid dark panel
+- [x] All three registered in `LABEL_CONFIGS` by region label — auto-applied at runtime
+
+---
+
+## v0.4.3 — Settings Dialog Height Fix ✅ Complete
+
+- [x] `SettingsDialog._HEIGHT` increased to accommodate game selector row
+- [x] Calibration button no longer clips on standard resolutions
+
+---
+
+## v0.4.4 — Game Switch Restart Notice ✅ Complete
+
+- [x] `_on_settings_saved` in `main.py` detects `active_game_id` change and logs clear
+      "restart required to switch game" message
+- [x] Overlay title bar updated to show active game name on startup
+
+---
+
+## v0.4.5 — Nebuchadnezzar Testing (needs Windows + game) 🚧 In Progress
 
 **First session checklist — do in this order:**
 - [ ] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
 - [ ] Save settings and restart GASSI
 - [ ] Run CalibrationService (Settings → Calibrate HUD) — first real test on non-Timberborn game
-- [ ] F4 debug frame after calibration — visually confirm `resource_bar` crop (small font, riskiest region)
+- [ ] F4 debug frame after calibration — visually confirm `resource_bar` crop
 - [ ] F1 advisor (OCR mode) mid-mission — check OCR confidence in log panel for all 3 regions
 - [ ] F1 advisor (Screenshot mode) — compare advice quality vs OCR mode
 - [ ] F2 placement with a real question (e.g. "Where should I place my next bazaar?")
@@ -101,15 +137,14 @@ Real-world validation that the game pack architecture generalizes.
 **Follow-up (based on first session results):**
 - [ ] Refine HUD region fractions if calibration missed any region
 - [ ] Tune OCR preprocessor config for `resource_bar` if confidence < threshold
-      (likely needs `POPULATION_CONFIG` or a new `RESOURCE_BAR_CONFIG` — small white digits on dark)
 - [ ] Prompt iteration: run `tests/prompt_iteration.py` against saved F4 frames
 - [ ] Refine stage clauses in advisor prompts based on real advice quality
 - [ ] Identify what’s reusable across Timberborn + Nebuchadnezzar — extract to base template if clear
-- [ ] Update `manifest.yaml` game_version if needed after checking actual installed version
+- [ ] Update `manifest.yaml` game_version after checking actual installed version
 
 ---
 
-## v0.4.1 — RAG Pipeline
+## v0.5.0 — RAG Pipeline
 
 Local knowledge retrieval to replace static game knowledge in system prompts.
 Allows deeper, formula-level advice without bloating prompt token count.
@@ -123,7 +158,7 @@ Allows deeper, formula-level advice without bloating prompt token count.
 
 ---
 
-## v0.5.0 — Multi-Backend (Cloud)
+## v0.6.0 — Multi-Backend (Cloud)
 
 Protocol-based AI backend swap. ClaudeBackend as the second implementation,
 validates that AiBackend Protocol is truly backend-agnostic.
@@ -135,7 +170,7 @@ validates that AiBackend Protocol is truly backend-agnostic.
 
 ---
 
-## v0.5.1 — Local SLM Support
+## v0.6.1 — Local SLM Support
 
 Freemium tier: local model for users with capable GPUs, no API key required.
 
@@ -147,7 +182,7 @@ Freemium tier: local model for users with capable GPUs, no API key required.
 
 ---
 
-## v0.6.0 — Platform Support
+## v0.7.0 — Platform Support
 
 Expand beyond Windows + X11. Native window detection replaces manual positioning.
 
@@ -159,7 +194,7 @@ Expand beyond Windows + X11. Native window detection replaces manual positioning
 
 ---
 
-## v0.6.1 — Anti-Cheat Posture
+## v0.7.1 — Anti-Cheat Posture
 
 For games with anti-cheat. Pure overlay approach already avoids memory reading;
 this adds capture hiding and documentation.
@@ -170,7 +205,7 @@ this adds capture hiding and documentation.
 
 ---
 
-## v0.6.2 — Distribution
+## v0.7.2 — Distribution
 
 Packaging and installer for end-users who don't have Python/uv.
 
@@ -182,7 +217,7 @@ Packaging and installer for end-users who don't have Python/uv.
 
 ---
 
-## v0.7.0 — UX Polish (post-first-release)
+## v0.8.0 — UX Polish (post-first-release)
 
 Refinements to the interaction model after the core product is stable and released.
 All items here are low architectural risk — UI-only changes on top of existing infrastructure.

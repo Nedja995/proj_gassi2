@@ -20,6 +20,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.4.4] - 2026-08-24
+
+### Added
+- **Game switch restart notice**: `_on_settings_saved` in `main.py` detects when
+  `active_game_id` changes and immediately shows a markdown notice in the overlay canvas:
+  `## Restart required / Active game changed to **<name>** / Save settings and restart GASSI`.
+- **Startup log** now includes pack display name: `GASSI v0.4.4 started — game: Nebuchadnezzar (nebuchadnezzar)`.
+
+## [0.4.3] - 2026-08-24
+
+### Fixed
+- `SettingsDialog._HEIGHT` increased from 420 to 470px to accommodate the new Active game
+  selector row. Previously the Calibrate HUD button clipped or was hidden on standard
+  display scaling.
+
 ## [0.4.2] - 2026-08-24
 
 ### Added
