@@ -131,7 +131,26 @@ def main() -> None:
 
     # ── settings save handler ─────────────────────────────────────────
     def _on_settings_saved(new_settings: dict[str, Any]) -> None:
-        logger.info("Settings saved — restart required for hotkey changes")
+        prev_game = settings.active_game_id
+        new_game = new_settings.get("active_game_id", prev_game)
+
+        if new_game != prev_game:
+            logger.info(
+                "Active game changed: %s -> %s — restart GASSI to apply",
+                prev_game, new_game,
+            )
+            overlay.after(
+                0,
+                lambda: overlay.canvas.show_advice(
+                    f"## Restart required\n"
+                    f"- Active game changed to **{new_game}**.\n"
+                    f"- Save settings and restart GASSI to load the new pack.",
+                    is_loading=False,
+                ),
+            )
+        else:
+            logger.info("Settings saved — restart required for hotkey changes")
+
         if "cooldown_seconds" in new_settings:
             viewmodel._settings = AppSettings(
                 **{k: v for k, v in new_settings.items() if not k.startswith("_")}
@@ -150,9 +169,11 @@ def main() -> None:
 
     overlay.set_close_handler(_on_close)
 
+    active_pack = pack_loader.load_manifest(settings.active_game_id)
     logger.info(
-        "GASSI v%s started — game: %s | debug frames: %s",
+        "GASSI v%s started — game: %s (%s) | debug frames: %s",
         _pkg_version("gassi"),
+        active_pack.display_name,
         settings.active_game_id,
         debug_manager.get_debug_dir(),
     )
