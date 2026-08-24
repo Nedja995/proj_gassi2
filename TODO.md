@@ -42,10 +42,8 @@ Gemini to return cell references alongside advice text.
 - [x] Grid overlay toggle in Settings → General tab (persisted to settings.json)
 - [x] `GeminiBackend.complete_with_image()` accepts optional `response_schema`
 - [x] AD-23 added to architecture.md
-
-### Deferred to v0.3.2 (by design — see AD-23)
-- [ ] Bounding box rendered on overlay canvas at target cell coordinates
-      (requires transparent Toplevel canvas solution, justified by tutorial overlay system)
+- [x] Bounding box rendered over target cell — implemented in v0.3.2 via `PlacementHighlightWindow`
+      (yellow outline box, `SetWindowRgn`, auto-dismiss)
 
 ---
 

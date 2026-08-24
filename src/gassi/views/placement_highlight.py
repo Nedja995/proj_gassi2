@@ -49,6 +49,8 @@ _LABEL_PAD = 6               # horizontal padding inside label
 
 # off-screen position used when "hidden" (no withdraw — preserves HWND)
 _OFFSCREEN = "-99999+-99999"
+## sufficiently negative to avoid all realistic multi-monitor arrangements
+#_OFFSCREEN = "-32000+-32000"
 
 
 class PlacementHighlightWindow:
@@ -101,7 +103,11 @@ class PlacementHighlightWindow:
         if self._system == "Windows":
             self._apply_region_and_clickthrough(pw, ph, label_w)
         else:
-            # non-Windows: semi-transparent window, no region clipping
+            # macOS / Linux: alpha fallback — interior is 75% visible (game shows through).
+            # macOS improvement path (v0.6.0): NSWindow.setOpaque_(False) +
+            #   NSColor.clearColor() background + CAShapeLayer mask for hollow region.
+            # Linux X11 improvement path (v0.6.0): XShapeCombineRectangles via python-xlib.
+            # Wayland: shape protocol extension or compositor-specific API.
             self._toplevel.attributes("-alpha", 0.75)
 
         self._toplevel.lift()
