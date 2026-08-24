@@ -165,6 +165,27 @@ Real-world validation that the game pack architecture generalizes.
 
 ---
 
+## v0.5.1 — GamePackManifest Forward Compatibility ✅ Complete
+
+- [x] `rag_top_k: int | None` — per-game RAG chunk count override
+- [x] `rag_min_game_version: str | None` — RAG chunk version filtering
+- [x] `preferred_backend: str | None` — pack-level AI backend preference
+- [x] `window_class: str | None` — OS window class for native detection
+- [x] `anticheat_note: str | None` — informational anti-cheat note
+- [x] All fields optional/None — existing packs unaffected
+
+---
+
+## v0.5.2 — Atomic Settings File Writes ✅ Complete
+
+- [x] `_write_atomic()` in `settings_manager.py` — write to `.tmp` then rename
+- [x] `save_settings`, `save_window_geometry`, `save_prompt_history` all use atomic write
+- [x] Eliminates corrupted `settings.json` on mid-write process kill
+- [x] `save_window_geometry` / `save_prompt_history` no longer call `save_settings`
+      internally — removes redundant read-modify-write round trip
+
+---
+
 ## v0.5.0 — RAG Pipeline
 
 Local knowledge retrieval to replace static game knowledge in system prompts.
@@ -280,6 +301,14 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.5.2 (2026-08-24)
+- [x] `_write_atomic()` in `settings_manager.py` — tmp+rename pattern, no corrupt settings.json
+- [x] All save functions use atomic write; geometry/history saves bypass redundant save_settings call
+
+### v0.5.1 (2026-08-24)
+- [x] `GamePackManifest` forward-compat fields: `rag_top_k`, `rag_min_game_version`,
+      `preferred_backend`, `window_class`, `anticheat_note` — all optional, all None default
 
 ### v0.4.6 (2026-08-24)
 - [x] `docs/v1_scope.md` updated to shipped state: Nebuchadnezzar added, all features

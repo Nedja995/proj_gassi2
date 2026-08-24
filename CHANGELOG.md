@@ -20,6 +20,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.5.2] - 2026-08-24
+
+### Changed
+- `core/settings_manager.py`: all writes now use `_write_atomic()` — writes to
+  `.tmp` then renames, preventing corrupted `settings.json` on mid-write process kill.
+  `save_window_geometry` and `save_prompt_history` now call `_write_atomic` directly
+  instead of routing through `save_settings`, avoiding a redundant `load_saved_settings`
+  call on every save.
+
+## [0.5.1] - 2026-08-24
+
+### Added
+- `GamePackManifest` forward-compatibility fields (all optional, default `None`):
+  - `rag_top_k: int | None` — per-game RAG chunk count override (v0.5.0)
+  - `rag_min_game_version: str | None` — minimum game version for RAG chunk filtering (v0.5.0)
+  - `preferred_backend: str | None` — pack-level AI backend preference (v0.6.0)
+  - `window_class: str | None` — OS window class for native detection (v0.7.0)
+  - `anticheat_note: str | None` — informational anti-cheat note (v0.7.1)
+- All existing packs unaffected — fields default safely, no manifest.yaml changes needed.
+
 ## [0.4.6] - 2026-08-24
 
 ### Changed
