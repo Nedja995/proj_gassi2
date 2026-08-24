@@ -85,6 +85,47 @@ POPULATION_CONFIG = OcrPreprocessConfig(
     padding_px=6,             # extra padding — multiple rows, tight crop
 )
 
+# ── Nebuchadnezzar configs ────────────────────────────────────────────────────
+
+# resource_bar: small white digits (~10-12px) on a dark icon strip with
+# decorative separators between resource categories. Most aggressive preprocessing.
+NEBU_RESOURCE_BAR_CONFIG = OcrPreprocessConfig(
+    scale_factor=4.0,         # extra upscale — digits are very small
+    grayscale=True,
+    denoise=True,
+    adaptive_threshold=True,
+    adaptive_block_size=11,   # small block — tight digit spacing
+    adaptive_c=6,             # lower C — digits are bright white on dark
+    sharpen=True,
+    padding_px=6,
+)
+
+# status_bar: treasury, month, approval%, population — medium white text on
+# dark band, cleaner than resource_bar. Similar to Timberborn top_resource_bar.
+NEBU_STATUS_BAR_CONFIG = OcrPreprocessConfig(
+    scale_factor=3.0,
+    grayscale=True,
+    denoise=True,
+    adaptive_threshold=True,
+    adaptive_block_size=13,
+    adaptive_c=8,
+    sharpen=True,
+    padding_px=4,
+)
+
+# objectives panel: clean white text on solid dark background, widest spacing.
+# Best OCR candidate — minimal preprocessing needed.
+NEBU_OBJECTIVES_CONFIG = OcrPreprocessConfig(
+    scale_factor=2.5,         # slightly less upscale — text is already larger
+    grayscale=True,
+    denoise=False,            # background is clean, denoise adds blur unnecessarily
+    adaptive_threshold=True,
+    adaptive_block_size=15,
+    adaptive_c=10,
+    sharpen=True,
+    padding_px=4,
+)
+
 
 def preprocess(
     image: np.ndarray,
@@ -170,9 +211,14 @@ def preprocess(
 
 # per-label config registry — looked up by region label at runtime
 LABEL_CONFIGS: dict[str, OcrPreprocessConfig] = {
+    # Timberborn
     "top_resource_bar": DEFAULT_CONFIG,
     "population_panel": POPULATION_CONFIG,
     "cycle_time_panel": CYCLE_TIME_CONFIG,
+    # Nebuchadnezzar
+    "resource_bar": NEBU_RESOURCE_BAR_CONFIG,
+    "status_bar": NEBU_STATUS_BAR_CONFIG,
+    "objectives": NEBU_OBJECTIVES_CONFIG,
 }
 
 
