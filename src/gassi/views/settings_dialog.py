@@ -122,7 +122,7 @@ class SettingsDialog(tk.Toplevel):
     """Modal settings dialog with tabs for different setting categories."""
 
     _WIDTH = 480
-    _HEIGHT = 420
+    _HEIGHT = 470  # increased from 420 to accommodate active game selector row
 
     def __init__(
         self,
