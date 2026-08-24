@@ -122,7 +122,28 @@ Real-world validation that the game pack architecture generalizes.
 
 ---
 
-## v0.4.5 — Nebuchadnezzar Testing (needs Windows + game) 🚧 In Progress
+## v0.4.5 — Docs: adding_game_pack.md rewrite ✅ Complete
+
+- [x] Section 1: `game_id` manifest requirement for Settings dropdown documented
+- [x] Section 2: bootstrap-from-screenshots workflow + CalibrationService as primary path
+- [x] Section 3 (new): OCR preprocessor config guide with tuning table by HUD type
+- [x] Section 4: placement prompt template updated for grid overlay JSON format
+- [x] Section 6: testing checklist updated (dropdown, calibration, highlight box)
+- [x] Section 7: Settings UI activation documented; env var override noted
+
+---
+
+## v0.4.6 — Docs: v1_scope.md update ✅ Complete
+
+- [x] Nebuchadnezzar added as second target game
+- [x] All features updated to reflect shipped state (grid overlay, cell highlight,
+      settings, calibration, debug tools, placement strip)
+- [x] Deferred items renumbered to match current roadmap (v0.5.0–v0.8.0)
+- [x] Known limitations updated (game switch restart, macOS fallback, Nebu OCR note)
+
+---
+
+## v0.4.7 — Nebuchadnezzar Testing (needs Windows + game) 🚧 In Progress
 
 **First session checklist — do in this order:**
 - [ ] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
@@ -259,6 +280,21 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.4.6 (2026-08-24)
+- [x] `docs/v1_scope.md` updated to shipped state: Nebuchadnezzar added, all features
+      updated, deferred items renumbered, known limitations updated
+
+### v0.4.5 (2026-08-24)
+- [x] `docs/adding_game_pack.md` rewritten: bootstrap workflow, OCR tuning guide,
+      grid JSON template, Settings UI activation, updated checklist
+
+### v0.4.4 (2026-08-24)
+- [x] Game switch restart notice in overlay canvas when `active_game_id` changes
+- [x] Startup log includes pack display name
+
+### v0.4.3 (2026-08-24)
+- [x] `SettingsDialog._HEIGHT` increased to 470px for game selector row
 
 ### v0.4.2 (2026-08-24)
 - [x] Nebuchadnezzar OCR preprocessor configs: `NEBU_RESOURCE_BAR_CONFIG` (4×, aggressive),

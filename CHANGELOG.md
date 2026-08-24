@@ -20,6 +20,29 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.4.6] - 2026-08-24
+
+### Changed
+- `docs/v1_scope.md` fully updated to reflect shipped state as of v0.4.4:
+  Nebuchadnezzar added as second target game, all features updated (grid overlay,
+  cell highlight, settings, calibration, debug tools), deferred items renumbered
+  to match current roadmap, known limitations updated.
+
+## [0.4.5] - 2026-08-24
+
+### Changed
+- `docs/adding_game_pack.md` fully rewritten for current state:
+  - Section 1: `game_id` in manifest required for Settings dropdown discovery.
+    Activation via Settings UI (not manual `settings.json` edit).
+  - Section 2: bootstrap-from-screenshots workflow documented (Nebuchadnezzar process).
+    CalibrationService as recommended path, manual F4 as fallback.
+  - Section 3 (new): OCR preprocessor config guide — per-region tuning table,
+    `LABEL_CONFIGS` registry, `scale_factor`/`block_size`/`C` guidance by HUD type.
+  - Section 4: placement prompt template updated for grid overlay JSON response format.
+  - Section 6: testing checklist updated (Settings dropdown, CalibrationService,
+    highlight box verification).
+  - Section 7: switching packs via Settings UI documented; env var override noted.
+
 ## [0.4.4] - 2026-08-24
 
 ### Added
