@@ -9,6 +9,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for the full roadmap.
 
+## [0.3.2] - 2026-08-24
+
+### Added
+- **`PlacementHighlightWindow`** (`views/placement_highlight.py`): always-on-top Toplevel
+  that draws a yellow solid outline + cell label over the game screen at the Gemini-returned
+  cell location. Auto-dismisses after `placement_highlight_seconds` (default 8s). Cleared
+  immediately on next F2 press.
+- **`SetWindowRgn` transparency** (Windows): window region clipped to hollow frame
+  (outer rect − inner rect) + label rect. Cell interior is outside the window region —
+  game fully visible through it. No layered window tricks.
+- **`WS_EX_TRANSPARENT`** (without `WS_EX_LAYERED`): click-through on outline strip.
+- **Non-Windows fallback**: `wm_attributes("-alpha", 0.75)` semi-transparent window.
+- **`placement_highlight_seconds`** setting added to `AppSettings` (default 8, range 2–30).
+- `MainOverlay.show_placement_highlight()` and `clear_placement_highlight()` public API.
+- `PlacementHighlightWindow.destroy()` called in `MainOverlay._on_close_click()`.
+- AD-24 updated in `docs/architecture.md`.
+
+### Fixed
+- `WS_EX_LAYERED` + `SetLayeredWindowAttributes(LWA_COLORKEY)` approach discarded —
+  GDI child windows (tkinter Canvas) do not composite correctly with DWM color keying
+  on Windows 10/11, causing solid black full-screen overlay. `SetWindowRgn` used instead.
+
 ## [0.3.1] - 2026-08-24
 
 ### Added

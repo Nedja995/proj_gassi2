@@ -15,6 +15,7 @@ from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
 from gassi.views.log_panel import LogPanel
+from gassi.views.placement_highlight import PlacementHighlightWindow
 from gassi.views.placement_strip import PlacementInputStrip
 
 logger = logging.getLogger(__name__)
@@ -173,6 +174,9 @@ class MainOverlay(tk.Tk):
         # ── pull-back tab (visible when offscreen) ────────────────
         self._tab_window: tk.Toplevel | None = None
 
+        # ── placement highlight (v0.3.2) ──────────────────────────
+        self._placement_highlight = PlacementHighlightWindow(self, theme=t)
+
         # ── resize grip (bottom-right corner) ────────────────────
         self._resize_grip = tk.Label(
             self, text="◢", bg=t.bg_footer, fg=t.fg_dim,
@@ -203,6 +207,27 @@ class MainOverlay(tk.Tk):
         """Update the cooldown label text and optional foreground colour."""
         colour = fg if fg is not None else self._theme.fg_warning
         self._cooldown_label.config(text=text, fg=colour)
+
+    # ── placement highlight (v0.3.2) ────────────────────────────────────
+
+    def show_placement_highlight(
+        self,
+        pixel_rect: tuple[int, int, int, int],
+        cell_ref: str,
+        monitor_rect: tuple[int, int, int, int],
+        auto_dismiss_ms: int = 8000,
+    ) -> None:
+        """Show the transparent cell bounding box over the game screen."""
+        self._placement_highlight.show(
+            pixel_rect=pixel_rect,
+            cell_ref=cell_ref,
+            monitor_rect=monitor_rect,
+            auto_dismiss_ms=auto_dismiss_ms,
+        )
+
+    def clear_placement_highlight(self) -> None:
+        """Immediately hide the placement highlight (e.g. on next query)."""
+        self._placement_highlight.clear()
 
     # ── placement strip ───────────────────────────────────────────────
 
@@ -498,6 +523,7 @@ class MainOverlay(tk.Tk):
 
     def _on_close_click(self) -> None:
         self._destroy_pull_tab()
+        self._placement_highlight.destroy()
         if hasattr(self, "_close_handler") and self._close_handler:
             self._close_handler()  # type: ignore[operator]
         else:

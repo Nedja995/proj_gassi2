@@ -15,7 +15,7 @@ always-on-top overlay on top of your game.
 
 ---
 
-## Features (v0.3.1)
+## Features (v0.3.2)
 
 ### Advisor Mode (`F1`)
 
@@ -32,11 +32,12 @@ switches to screenshot automatically.
 On-demand: captures full game window + your typed question → Gemini returns spatial advice.
 
 **Grid overlay** (enabled by default): a coordinate grid (A–L columns, 1–8 rows) is drawn on
-the screenshot before sending to Gemini. Gemini returns a specific cell reference (e.g. `D5`)
-alongside markdown advice. The cell reference is appended to the displayed advice and logged
-with its screen pixel rect — ready for bounding box rendering in v0.3.2.
+the screenshot before sending to Gemini. Gemini returns a specific cell reference (e.g. `H7`)
+alongside markdown advice.
 
-Toggle grid overlay in Settings → General.
+**Cell highlight**: a yellow outline box appears over the target cell on the game screen for
+8 seconds (configurable). The cell interior stays fully visible — only the outline is drawn.
+Click-through enabled; the highlight never blocks game input.
 
 ### Overlay Controls
 
@@ -58,6 +59,7 @@ Toggle grid overlay in Settings → General.
 - Switch theme (dark / midnight / forest)
 - Adjust cooldown interval (5–60s)
 - Select AI model and default input source
+- Toggle grid overlay for placement mode
 - Settings persist across sessions (`settings.json` in OS app data dir)
 
 ### Debug Tools

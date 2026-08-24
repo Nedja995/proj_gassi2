@@ -49,16 +49,25 @@ Gemini to return cell references alongside advice text.
 
 ---
 
-## v0.3.2 — Tutorial Overlays
+## v0.3.2 — Placement Bounding Box ✅ Complete
 
-Arrow and highlight system for guided in-game instructions.
-Builds on the v2 canvas layers already scaffolded in OverlayCanvas.
+Transparent always-on-top cell highlight window over the game screen.
 
-- [ ] Arrow rendering: directional arrows pointing to game UI elements
-- [ ] Highlight region rendering: dim background + lit bounding box
-- [ ] Tutorial step system: sequence of steps, each with instruction text
-- [ ] Tutorial sequences defined in game pack YAML (per-game)
-- [ ] Step navigation: next/prev buttons in overlay footer
+### Completed
+- [x] `PlacementHighlightWindow` — separate transparent `tk.Toplevel`, full monitor size
+- [x] Dashed yellow bounding box + cell label rendered at Gemini’s returned cell position
+- [x] Windows `-transparentcolor`, macOS `-transparent`, Linux `-alpha` fallback
+- [x] Click-through via `WS_EX_TRANSPARENT` on highlight HWND (separate from main overlay)
+- [x] Auto-dismiss after `placement_highlight_seconds` (default 8s)
+- [x] Cleared on next F2 press before capture
+- [x] `placement_highlight_seconds` in `AppSettings`
+- [x] AD-24 added to architecture.md
+
+### Deferred to v0.3.3 or later
+- [ ] Arrow rendering (directional arrows pointing to game UI elements)
+- [ ] Dim-background highlight region (tutorial step overlay)
+- [ ] Tutorial step system (sequence of steps with next/prev navigation)
+- [ ] Tutorial sequences defined in game pack YAML
 
 ---
 
@@ -191,6 +200,16 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.3.2 (2026-08-24)
+- [x] `PlacementHighlightWindow` — yellow outline box + label over game screen
+- [x] `SetWindowRgn` clips window to hollow frame: game fully visible inside cell
+- [x] `WS_EX_TRANSPARENT` (no `WS_EX_LAYERED`) for click-through on outline
+- [x] Non-Windows `-alpha 0.75` fallback
+- [x] Auto-dismiss timer + clear on next query
+- [x] `placement_highlight_seconds` setting
+- [x] AD-24 updated (WS_EX_LAYERED/LWA_COLORKEY failure documented)
+- [x] Fixed: `-transparentcolor` approach caused solid black screen on Windows 10/11 DWM
 
 ### v0.3.1 (2026-08-24)
 - [x] Grid overlay drawn on placement screenshots before Gemini submission

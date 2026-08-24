@@ -54,5 +54,8 @@ class AppSettings(BaseSettings):
     grid_cols: int = Field(default=12, ge=4, le=26)   # A–L default (A–Z max)
     grid_rows: int = Field(default=8, ge=2, le=20)
 
+    # Placement highlight (v0.3.2)
+    placement_highlight_seconds: int = Field(default=8, ge=2, le=30)
+
     # Debug
     debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

@@ -128,6 +128,12 @@ This document captures the key architecture decisions made for GASSI and the rat
 
 **Rationale:** Using the OS app data directory keeps debug output off the user's desktop and out of the project repo. Co-locating with settings means `_get_config_dir()` from `settings_manager` is the single source for the app's writable directory — no new path logic. The 50-frame cap prevents unbounded disk growth during active debugging sessions; frames are timestamped so the user can correlate them with log output. The ViewModel stores the frame reference immediately after every capture so F4 always reflects the most recent API submission, regardless of source.
 
+## AD-24: Placement highlight uses SetWindowRgn, not WS_EX_LAYERED / -transparentcolor
+
+**Decision:** `PlacementHighlightWindow` (`views/placement_highlight.py`) clips the window to a hollow frame region (outer rect minus inner rect, plus label rect) using `SetWindowRgn`. The cell interior is outside the window region — the OS never renders those pixels and the game shows through completely. `WS_EX_TRANSPARENT` (without `WS_EX_LAYERED`) provides click-through on the visible outline strip. Non-Windows falls back to `wm_attributes("-alpha", 0.75)` with a small semi-transparent window.
+
+**Rationale:** `WS_EX_LAYERED` + `SetLayeredWindowAttributes(LWA_COLORKEY)` + tkinter Canvas (GDI child window) is unreliable on Windows 10/11 with DWM compositing — the color key is not composited correctly and the window renders as a solid near-black rectangle regardless of ordering or timing of Win32 calls. `SetWindowRgn` avoids layered windows entirely: it is a pure hit-test and paint-clip operation that works correctly on all Windows versions with DWM. The HWND is never destroyed between calls (moved off-screen instead of withdrawn) to avoid region and style state being reset.
+
 ## AD-23: Grid overlay drawn on frame pre-submission; canvas bounding box deferred to v0.3.2
 
 **Decision:** In v0.3.1, the coordinate grid is drawn directly onto the captured frame (as a BGR image annotation via OpenCV) before that frame is sent to Gemini. Gemini returns a structured JSON response (`response_schema`) with a `cell` reference and `advice` text. The cell reference is validated and converted to screen pixel coordinates via `cell_to_screen_pixels()`, but no canvas bounding box is rendered — the cell reference is appended to the advice text instead.

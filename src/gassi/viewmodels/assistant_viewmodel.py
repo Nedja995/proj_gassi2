@@ -149,6 +149,11 @@ class AssistantViewModel:
         self._canvas.update_status("PLACEMENT")
         self._canvas.show_advice("Capturing full screen...", is_loading=True)
 
+        # clear any previous highlight before new capture
+        overlay = self._canvas.winfo_toplevel()
+        if hasattr(overlay, "clear_placement_highlight"):
+            overlay.clear_placement_highlight()
+
         # capture full primary monitor, not just the overlay region
         frame = self._capture_without_overlay(region=None)
 
@@ -357,14 +362,24 @@ class AssistantViewModel:
                     "Placement cell %s → screen rect %s",
                     result.cell_reference, pixel_rect,
                 )
+                # show transparent bounding box over game screen
+                overlay = self._canvas.winfo_toplevel()
+                if hasattr(overlay, "show_placement_highlight"):
+                    auto_dismiss_ms = int(
+                        getattr(self._settings, "placement_highlight_seconds", 8) * 1000
+                    )
+                    overlay.show_placement_highlight(
+                        pixel_rect=pixel_rect,
+                        cell_ref=result.cell_reference,
+                        monitor_rect=monitor_rect,
+                        auto_dismiss_ms=auto_dismiss_ms,
+                    )
             else:
                 logger.warning(
                     "Cell %s could not be mapped to screen pixels",
                     result.cell_reference,
                 )
 
-            # v0.3.2: pass pixel_rect to canvas bounding box renderer here
-            # For now: append cell reference to advice text
             display_text = result.advice_text
             if not display_text.strip():
                 display_text = f"Recommended cell: **{result.cell_reference}**"
