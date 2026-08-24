@@ -5,9 +5,23 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] — v0.4.0 Nebuchadnezzar Pack (in progress)
 
-See [TODO.md](TODO.md) for the full roadmap.
+### Added
+- `game_packs/nebuchadnezzar/` — second game pack, isometric city-builder (ancient Mesopotamia).
+- `manifest.yaml`: 3 HUD regions estimated from reference screenshots — `resource_bar`
+  (top-center resource counts), `status_bar` (treasury/month/approval/population),
+  `objectives` (top-right mission targets). Requires CalibrationService run to finalize fractions.
+- `prompts/advisor_ocr.txt`: full domain knowledge — resources, housing evolution chain,
+  bazaar walker system, wells, labor pool, approval delta priority, prestige, 3 game stages
+  (early/mid/late keyed to population and mission complexity).
+- `prompts/advisor_screenshot.txt`: screenshot variant with spatial building context.
+- `prompts/placement.txt`: grid overlay + JSON response format, Nebuchadnezzar spatial rules
+  (road-first constraint, bazaar centrality, granary dual-proximity, temple/well coverage radii,
+  monument footprint pre-planning).
+- 5 quick_prompts in manifest (bazaar, granary, housing expansion, temple, well placement).
+
+See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
 ## [0.3.2] - 2026-08-24
 

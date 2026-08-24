@@ -69,17 +69,41 @@ Transparent always-on-top cell highlight window over the game screen.
 
 ---
 
-## v0.4.0 — Second Game Pack
+## v0.4.0 — Second Game Pack (Nebuchadnezzar) 🚧 In Progress
 
 Real-world validation that the game pack architecture generalizes.
-Auto-calibration is the first step for any new game.
 
-- [ ] Pick second game (RimWorld or Factorio — Factorio preferred for clean UI)
-- [ ] Run CalibrationService on it: first real test outside Timberborn
-- [ ] Write manifest.yaml + 3 prompts (advisor_ocr, advisor_screenshot, placement)
-- [ ] Define early/mid/late stages for the new game (same process as Timberborn)
-- [ ] Identify what's truly game-specific vs. reusable in prompt templates
-- [ ] Extract common prompt structure into a reusable base template
+### Completed
+- [x] Game selected: Nebuchadnezzar (isometric city-builder, ancient Mesopotamia)
+- [x] `game_packs/nebuchadnezzar/` folder structure created
+- [x] `manifest.yaml`: 3 HUD regions estimated from reference screenshots
+      (`resource_bar`, `status_bar`, `objectives`) — needs calibration on real resolution
+- [x] `prompts/advisor_ocr.txt`: full domain knowledge (resources, housing evolution,
+      bazaar system, wells, labor pool, approval, prestige, 3 game stages)
+- [x] `prompts/advisor_screenshot.txt`: screenshot variant with spatial context
+- [x] `prompts/placement.txt`: grid overlay + JSON response, Nebuchadnezzar spatial rules
+      (road connectivity, bazaar coverage, granary placement, temple/well radii, monuments)
+- [x] 5 quick_prompts added to manifest
+
+### Remaining (needs Windows machine + game running)
+
+**First session checklist — do in this order:**
+- [ ] Switch active game to `nebuchadnezzar` in Settings → General → Active Game
+- [ ] Run CalibrationService (Settings → Calibrate HUD) — first real test on non-Timberborn game
+- [ ] F4 debug frame after calibration — visually confirm `resource_bar` crop (small font, riskiest region)
+- [ ] F1 advisor (OCR mode) mid-mission — check OCR confidence in log panel for all 3 regions
+- [ ] F1 advisor (Screenshot mode) — compare advice quality vs OCR mode
+- [ ] F2 placement with a real question (e.g. "Where should I place my next bazaar?")
+- [ ] Verify yellow highlight box appears at correct cell on Nebuchadnezzar screen
+
+**Follow-up (based on first session results):**
+- [ ] Refine HUD region fractions if calibration missed any region
+- [ ] Tune OCR preprocessor config for `resource_bar` if confidence < threshold
+      (likely needs `POPULATION_CONFIG` or a new `RESOURCE_BAR_CONFIG` — small white digits on dark)
+- [ ] Prompt iteration: run `tests/prompt_iteration.py` against saved F4 frames
+- [ ] Refine stage clauses in advisor prompts based on real advice quality
+- [ ] Identify what’s reusable across Timberborn + Nebuchadnezzar — extract to base template if clear
+- [ ] Update `manifest.yaml` game_version if needed after checking actual installed version
 
 ---
 

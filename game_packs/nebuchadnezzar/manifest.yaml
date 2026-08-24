@@ -1,0 +1,44 @@
+game_id: nebuchadnezzar
+display_name: "Nebuchadnezzar"
+window_title_pattern: "Nebuchadnezzar"
+game_version: "1.0"
+rag_collection_name: null
+
+quick_prompts:
+  - "Where should I place my next bazaar to cover more housing?"
+  - "Where is the best spot for a new granary or storehouse?"
+  - "Where should I expand my housing block?"
+  - "Where should I build the next temple or entertainment venue?"
+  - "Where should I place a new well or water supply building?"
+
+# HUD regions estimated from 1456x816 reference screenshots.
+# IMPORTANT: these are first estimates — run auto-calibration (Settings → Calibrate HUD)
+# on your actual resolution before relying on OCR advisor.
+# All fractions are relative to full primary monitor dimensions.
+
+hud_regions:
+  - label: "resource_bar"
+    # Top-center strip: resource category icons with stock counts
+    # e.g. "13 · 2 · 8 · 0 · 34 · 0 · 22 · 28" (food, materials, goods, etc.)
+    # Narrow band — needs 3x upscale and adaptive threshold in preprocessor
+    x_pct: 0.28
+    y_pct: 0.0
+    width_pct: 0.44
+    height_pct: 0.028
+
+  - label: "status_bar"
+    # Below resource icons: treasury | month | approval% | unemployment% | population
+    # e.g. "2,843 | August | 22%(-540) | 0%(0) | 2,460"
+    # Cleaner font than resource_bar — higher expected OCR confidence
+    x_pct: 0.28
+    y_pct: 0.028
+    width_pct: 0.44
+    height_pct: 0.032
+
+  - label: "objectives"
+    # Top-right panel: mission targets — Population x/y, Money x/y, Prestige x/y,
+    # house level targets. White text on dark background, most readable region.
+    x_pct: 0.78
+    y_pct: 0.0
+    width_pct: 0.22
+    height_pct: 0.12

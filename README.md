@@ -76,6 +76,7 @@ Click-through enabled; the highlight never blocks game input.
 | Game | Pack Version | Status |
 |------|-------------|--------|
 | Timberborn | 0.6 | Active |
+| Nebuchadnezzar | 1.0 | In progress (calibration pending) |
 
 ---
 
@@ -160,21 +161,28 @@ src/gassi/
 ├── viewmodels/
 │   └── assistant_viewmodel.py   # Mode FSM, capture dispatch, cooldown, debug
 └── views/
-    ├── dialogs.py               # Placement prompt dialog
     ├── log_panel.py             # Collapsible log viewer panel
     ├── main_overlay.py          # Root overlay window (toolbar, canvas, footer)
+    ├── placement_highlight.py   # Cell highlight window (SetWindowRgn, v0.3.2)
+    ├── placement_strip.py       # Inline placement input strip (F2)
     └── settings_dialog.py       # Settings dialog (hotkeys + general tabs)
 
 game_packs/
-└── timberborn/
-    ├── manifest.yaml            # HUD regions + metadata
+├── timberborn/
+│   ├── manifest.yaml            # HUD regions + metadata
+│   └── prompts/
+│       ├── advisor_ocr.txt
+│       ├── advisor_screenshot.txt
+│       └── placement.txt
+└── nebuchadnezzar/
+    ├── manifest.yaml            # HUD regions + metadata (calibration pending)
     └── prompts/
         ├── advisor_ocr.txt
         ├── advisor_screenshot.txt
         └── placement.txt
 
 docs/
-├── architecture.md              # Architecture Decision Records (AD-01 – AD-21)
+├── architecture.md              # Architecture Decision Records (AD-01 – AD-24)
 ├── adding_game_pack.md          # Guide: adding support for a new game
 └── v1_scope.md                  # v1 feature scope and known limitations
 
