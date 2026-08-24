@@ -7,6 +7,7 @@
 Small UX improvements to the placement and advisor flow. Code-only, no gameplay needed.
 
 ### Completed
+
 - [x] Game window focus check: hotkeys ignored when game not in foreground (Windows via pywin32,
       fails open on non-Windows or missing pywin32). Uses `window_title_pattern` from manifest.
 - [x] Inline placement input strip: F2 now toggles a `PlacementInputStrip` bar inside the overlay
@@ -88,7 +89,8 @@ Real-world validation that the game pack architecture generalizes.
 ### Remaining (needs Windows machine + game running)
 
 **First session checklist — do in this order:**
-- [ ] Switch active game to `nebuchadnezzar` in Settings → General → Active Game
+- [ ] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
+- [ ] Save settings and restart GASSI
 - [ ] Run CalibrationService (Settings → Calibrate HUD) — first real test on non-Timberborn game
 - [ ] F4 debug frame after calibration — visually confirm `resource_bar` crop (small font, riskiest region)
 - [ ] F1 advisor (OCR mode) mid-mission — check OCR confidence in log panel for all 3 regions
@@ -222,6 +224,18 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.4.2 (2026-08-24)
+- [x] Nebuchadnezzar OCR preprocessor configs: `NEBU_RESOURCE_BAR_CONFIG` (4×, aggressive),
+      `NEBU_STATUS_BAR_CONFIG` (3×, standard), `NEBU_OBJECTIVES_CONFIG` (2.5×, minimal)
+- [x] All three registered in `LABEL_CONFIGS` by region label — auto-applied at runtime
+
+### v0.4.1 (2026-08-24)
+- [x] Active game selector in Settings → General — `ttk.Combobox` listing installed packs
+- [x] `GamePackLoader.list_available_packs()` — scans game_packs/ dir, reads manifest display names
+- [x] `MainOverlay.set_pack_loader()` setter — same pattern as `set_calibration_service()`
+- [x] `active_game_id` saved to `settings.json` on Settings save
+- [x] `SettingsDialog` accepts optional `pack_loader` parameter (graceful fallback if absent)
 
 ### v0.3.2 (2026-08-24)
 - [x] `PlacementHighlightWindow` — yellow outline box + label over game screen

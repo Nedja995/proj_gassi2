@@ -13,15 +13,38 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (top-center resource counts), `status_bar` (treasury/month/approval/population),
   `objectives` (top-right mission targets). Requires CalibrationService run to finalize fractions.
 - `prompts/advisor_ocr.txt`: full domain knowledge — resources, housing evolution chain,
-  bazaar walker system, wells, labor pool, approval delta priority, prestige, 3 game stages
-  (early/mid/late keyed to population and mission complexity).
+  bazaar walker system, wells, labor pool, approval delta priority, prestige, 3 game stages.
 - `prompts/advisor_screenshot.txt`: screenshot variant with spatial building context.
-- `prompts/placement.txt`: grid overlay + JSON response format, Nebuchadnezzar spatial rules
-  (road-first constraint, bazaar centrality, granary dual-proximity, temple/well coverage radii,
-  monument footprint pre-planning).
-- 5 quick_prompts in manifest (bazaar, granary, housing expansion, temple, well placement).
+- `prompts/placement.txt`: grid overlay + JSON response format, Nebuchadnezzar spatial rules.
+- 5 quick_prompts in manifest.
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
+
+## [0.4.2] - 2026-08-24
+
+### Added
+- **Nebuchadnezzar OCR preprocessor configs** (`core/ocr/preprocessor.py`):
+  - `NEBU_RESOURCE_BAR_CONFIG`: 4× upscale (digits ~10px), block=11, C=6 — most aggressive,
+    targets small white digits on dark decorative icon strip.
+  - `NEBU_STATUS_BAR_CONFIG`: 3× upscale, block=13, C=8 — medium white text on dark band.
+  - `NEBU_OBJECTIVES_CONFIG`: 2.5× upscale, no denoise, block=15 — clean white text on solid
+    dark panel, minimal preprocessing needed.
+- All three configs registered in `LABEL_CONFIGS` by region label (`resource_bar`, `status_bar`,
+  `objectives`) — automatically picked up by `config_for_label()` at runtime.
+
+## [0.4.1] - 2026-08-24
+
+### Added
+- **Active game selector** in Settings → General: `ttk.Combobox` listing all installed game
+  packs by display name. Populated at dialog open via `GamePackLoader.list_available_packs()`.
+  Selection saved as `active_game_id` in `settings.json` and applied on next GASSI start.
+- **`GamePackLoader.list_available_packs()`**: scans `game_packs/` directory, reads each
+  `manifest.yaml`, returns `list[tuple[game_id, display_name]]` sorted by display name.
+  Skips directories without `manifest.yaml` with a warning log.
+- **`MainOverlay.set_pack_loader()`**: setter wiring `GamePackLoader` for the settings dialog.
+  Same pattern as `set_calibration_service()`. Called in `main.py` during startup wiring.
+- `SettingsDialog` accepts optional `pack_loader: GamePackLoader` parameter. Falls back to
+  showing only the current game_id if loader not provided (graceful degradation).
 
 ## [0.3.2] - 2026-08-24
 
