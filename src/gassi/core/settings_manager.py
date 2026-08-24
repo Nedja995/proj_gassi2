@@ -3,6 +3,11 @@
 Bridges the gap between pydantic-settings (read-only from env) and
 runtime user changes from the settings dialog. Settings are saved
 to a JSON file in the user's app data directory.
+
+Write strategy:
+    All public save functions use _write_atomic() which writes to a
+    .tmp file then renames it, preventing partial writes from corrupting
+    the settings file if the process is killed mid-save.
 """
 
 import json
@@ -34,6 +39,26 @@ def _get_config_path() -> Path:
     return _get_config_dir() / "settings.json"
 
 
+def _write_atomic(path: Path, data: dict[str, Any]) -> None:
+    """Write JSON to a .tmp file then rename — atomic on all platforms.
+
+    Prevents a corrupted settings.json if the process is killed mid-write.
+    On Windows, replace() is atomic since Python 3.3.
+    """
+    tmp_path = path.with_suffix(".tmp")
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        tmp_path.replace(path)
+    except OSError as exc:
+        logger.error("Failed to write settings to %s: %s", path, exc)
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise
+
+
 def load_saved_settings() -> dict[str, Any]:
     """Load settings from the JSON config file. Returns empty dict if none."""
     path = _get_config_path()
@@ -44,43 +69,41 @@ def load_saved_settings() -> dict[str, Any]:
             data = json.load(f)
         logger.info("Loaded settings from %s", path)
         return data
-    except (json.JSONDecodeError, OSError) as e:
-        logger.warning("Failed to load settings from %s: %s", path, e)
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Failed to load settings from %s: %s", path, exc)
         return {}
 
 
 def save_settings(settings: dict[str, Any]) -> None:
     """Save settings dict to the JSON config file."""
     path = _get_config_path()
-    try:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=2)
-        logger.info("Settings saved to %s", path)
-    except OSError as e:
-        logger.error("Failed to save settings to %s: %s", path, e)
+    _write_atomic(path, settings)
+    logger.info("Settings saved to %s", path)
 
 
 def save_window_geometry(geometry: str) -> None:
-    """Save window geometry string separately (frequent updates)."""
+    """Persist window geometry string.
+
+    Merges into existing settings rather than overwriting, so geometry
+    saves don't clobber settings changed in the same session.
+    """
     data = load_saved_settings()
     data["_window_geometry"] = geometry
-    save_settings(data)
+    _write_atomic(_get_config_path(), data)
 
 
 def load_window_geometry() -> str | None:
     """Load saved window geometry string."""
-    data = load_saved_settings()
-    return data.get("_window_geometry")
+    return load_saved_settings().get("_window_geometry")
 
 
 def save_prompt_history(history: list[str]) -> None:
     """Persist the last N placement prompt queries."""
     data = load_saved_settings()
     data["_prompt_history"] = history
-    save_settings(data)
+    _write_atomic(_get_config_path(), data)
 
 
 def load_prompt_history() -> list[str]:
     """Load persisted placement prompt history."""
-    data = load_saved_settings()
-    return data.get("_prompt_history", [])
+    return load_saved_settings().get("_prompt_history", [])
