@@ -20,6 +20,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.5.17] - 2026-08-25
+
+### Fixed
+- **`_on_settings_saved` in `main.py`**: restart notice no longer fires on every
+  settings save. Now compares old vs new hotkey values; only logs
+  "restart required for hotkey changes" and shows the overlay notice when a
+  hotkey actually changed. Model, theme, cooldown, game changes log "Settings saved"
+  with no restart warning.
+- **Settings tab readability**: `ttk.Style.theme_use("default")` applied before
+  configuring `Settings.TNotebook.Tab` so Windows native "vista" theme no longer
+  overrides foreground colours. Inactive tabs now render in `fg_dim`, selected tab
+  in `fg_accent`, hover in `fg_text`. Font explicitly set on tab labels.
+
 ## [0.5.16] - 2026-08-25
 
 ### Fixed
