@@ -20,6 +20,37 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.6] - 2026-08-25
+
+### Added
+- `game_packs/nebuchadnezzar/knowledge/` — 6 markdown knowledge files:
+  - `01_resources.md` — food types, building materials, luxury goods, workers,
+    bronze tools
+  - `02_housing_evolution.md` — full tier chain (shack → noble estate), evolution
+    checklist, coverage radii (well ~5x5, bazaar walker ~60-80 tiles), devolution warning
+  - `03_bazaar_distribution.md` — walker route mechanics, placement rules, storehouse
+    positioning, signs of distribution failure
+  - `04_approval_prestige_objectives.md` — approval causes/fixes, prestige sources
+    (small shrine 1-2, large temple 15-25, monument 50-200), objective tracking
+  - `05_building_costs_production.md` — cost table (18 buildings), all core production
+    chains (brick, grain, dates, pottery, linen, beer), labor requirements
+  - `06_stages_meta_strategy.md` — 3-stage guide, common failure modes, useful ratios
+- `game_packs/nebuchadnezzar/manifest.yaml`: `rag_collection_name: nebuchadnezzar_knowledge`,
+  `rag_top_k: 4`, `rag_min_game_version: "1.0"`
+
+### Note
+Collection must be ingested before RAG activates:
+```
+uv run python tools/ingest_knowledge.py --game-id nebuchadnezzar --source-dir game_packs/nebuchadnezzar/knowledge --game-version 1.0 --reset
+```
+
+## [0.6.5] - 2026-08-25
+
+### Changed
+- v0.6.5 implemented as part of v0.6.1 and v0.6.4 — no additional code required.
+  `ChromaRagService.query()` `$gte` filter and `_build_rag_context()` `min_game_version`
+  pass-through were both already in place.
+
 ## [0.6.4] - 2026-08-25
 
 ### Added

@@ -268,29 +268,39 @@ Delivered across sub-versions v0.6.1–v0.6.7.
 
 ---
 
-## v0.6.5 — Game Version Metadata Filtering
+## v0.6.5 — Game Version Metadata Filtering ✅ Complete
 
-Honours `rag_min_game_version` from manifest in Chroma queries.
-
-- [ ] `ChromaRagService.query()` accepts optional `min_game_version: str | None`
-- [ ] When set, adds Chroma `where` filter: `{"game_version": {"$gte": min_game_version}}`
-      — excludes chunks tagged to older patch versions
-- [ ] `RagService` Protocol updated: `query(text, top_k, min_game_version=None)`
-- [ ] `NullRagService.query()` signature updated to match (no-op)
-- [ ] ViewModel passes `manifest.rag_min_game_version` through to query call
+- [x] `ChromaRagService.query()` accepts `min_game_version: str | None` —
+      applies `{"game_version": {"$gte": min_game_version}}` Chroma `where` filter
+- [x] `RagService` Protocol: `query(text, top_k, min_game_version=None)` — already
+      present from v0.6.1
+- [x] `NullRagService.query()` signature matches (no-op)
+- [x] `_build_rag_context()` passes `self._manifest.rag_min_game_version` through
+      to `query()` — implemented as part of v0.6.4
+- [x] No additional code required — full pipeline already wired
 
 ---
 
-## v0.6.6 — Nebuchadnezzar Knowledge Base
+## v0.6.6 — Nebuchadnezzar Knowledge Base ✅ Complete
 
-Source documents authored and ingested. Chroma collection shipped with the pack.
-
-- [ ] `game_packs/nebuchadnezzar/knowledge/` folder: markdown files covering resource
-      types, housing evolution chain, bazaar walker mechanics, well coverage,
-      prestige system, approval delta mechanics, building costs, 3 game stages
-- [ ] Collection ingested and committed as `game_packs/nebuchadnezzar/rag/`
-- [ ] `manifest.yaml`: `rag_collection_name: nebuchadnezzar_knowledge`,
+- [x] `game_packs/nebuchadnezzar/knowledge/01_resources.md` — food, materials,
+      luxury goods, workers, bronze tools
+- [x] `game_packs/nebuchadnezzar/knowledge/02_housing_evolution.md` — tier chain,
+      evolution checklist, coverage radii, devolution warning
+- [x] `game_packs/nebuchadnezzar/knowledge/03_bazaar_distribution.md` — walker
+      mechanics, placement rules, storehouse positioning, failure signs
+- [x] `game_packs/nebuchadnezzar/knowledge/04_approval_prestige_objectives.md` —
+      approval causes/fixes, prestige sources and values, objective tracking
+- [x] `game_packs/nebuchadnezzar/knowledge/05_building_costs_production.md` —
+      cost table (18 buildings), all production chains, labor requirements
+- [x] `game_packs/nebuchadnezzar/knowledge/06_stages_meta_strategy.md` — 3-stage
+      guide, failure modes, useful ratios
+- [x] `manifest.yaml`: `rag_collection_name: nebuchadnezzar_knowledge`,
       `rag_top_k: 4`, `rag_min_game_version: "1.0"`
+- [ ] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id
+      nebuchadnezzar --source-dir game_packs/nebuchadnezzar/knowledge
+      --game-version 1.0 --reset`)
+- [ ] `game_packs/nebuchadnezzar/rag/` committed to repo after ingestion
 
 ---
 
