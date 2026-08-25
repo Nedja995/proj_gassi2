@@ -25,6 +25,8 @@ from gassi.core.grid_overlay import cell_to_screen_pixels, draw_grid_on_frame, p
 from gassi.core.ocr.preprocessor import config_for_label, preprocess
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
+from gassi.core.rag.null_backend import NullRagService
+from gassi.core.rag.protocol import RagService
 from gassi.core.settings_manager import load_prompt_history, save_prompt_history
 from gassi.models.config import AppSettings
 from gassi.models.enums import AdvisorInputSource, AssistantMode
@@ -48,6 +50,7 @@ class AssistantViewModel:
         canvas: OverlayCanvas,
         async_bridge: AsyncBridge,
         debug_manager: DebugManager,
+        rag_service: RagService | None = None,
     ) -> None:
         self._settings = settings
         self._ai = ai_backend
@@ -58,6 +61,7 @@ class AssistantViewModel:
         self._canvas = canvas
         self._bridge = async_bridge
         self._debug = debug_manager
+        self._rag: RagService = rag_service if rag_service is not None else NullRagService()
 
         # state
         self._mode = AssistantMode.IDLE
@@ -311,9 +315,14 @@ class AssistantViewModel:
             is_loading=True,
         )
         self._canvas.update_idletasks()
+
+        # RAG: use combined OCR text as query — most relevant knowledge for current state
+        _rag_context = self._build_rag_context(combined_prompt)
+        _ocr_system_prompt = _rag_context + self._advisor_ocr_prompt if _rag_context else self._advisor_ocr_prompt
+
         self._bridge.submit(
             self._ai.complete_text(
-                system_prompt=self._advisor_ocr_prompt,
+                system_prompt=_ocr_system_prompt,
                 user_prompt=combined_prompt,
             ),
             on_done=self._on_result,
@@ -336,6 +345,11 @@ class AssistantViewModel:
             is_loading=True,
         )
         self._canvas.update_idletasks()
+
+        # RAG: screenshot mode has no text query to embed against — skip retrieval
+        if self._rag.is_available():
+            logger.info("rag=off (screenshot mode — no text query available)")
+
         self._bridge.submit(
             self._ai.complete_with_image(
                 system_prompt=self._advisor_screenshot_prompt,
@@ -506,6 +520,31 @@ class AssistantViewModel:
         )
 
     # ── helpers ───────────────────────────────────────────────────
+
+    def _build_rag_context(self, query_text: str) -> str:
+        """Retrieve relevant knowledge chunks and format as a prompt context block.
+
+        Returns an empty string when RAG is unavailable or query yields nothing,
+        so callers can safely prepend it without emitting an empty section.
+        """
+        if not self._rag.is_available():
+            return ""
+
+        _top_k = self._manifest.rag_top_k or 3
+        _min_version = self._manifest.rag_min_game_version
+        _chunks = self._rag.query(
+            text=query_text,
+            top_k=_top_k,
+            min_game_version=_min_version,
+        )
+
+        if not _chunks:
+            logger.info("rag=off (no chunks returned for query)")
+            return ""
+
+        logger.info("rag=on (%d chunks retrieved)", len(_chunks))
+        _lines = "\n".join(f"- {chunk}" for chunk in _chunks)
+        return f"## Retrieved Knowledge\n{_lines}\n\n"
 
     def _capture_without_overlay(
         self, region: tuple[int, int, int, int] | None = None

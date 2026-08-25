@@ -20,6 +20,7 @@ from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.hotkey_manager import HotkeyManager
 from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.ocr.rapid_ocr_engine import RapidOcrEngine
+from gassi.core.rag.factory import RagServiceFactory
 from gassi.core.settings_manager import load_saved_settings, save_window_geometry
 from gassi.core.theme.theme import THEMES, FOREST_THEME
 from gassi.models.config import AppSettings
@@ -74,6 +75,14 @@ def main() -> None:
     ocr_engine = RapidOcrEngine()
     pack_loader = GamePackLoader()
     debug_manager = DebugManager()
+
+    # ── RAG service ───────────────────────────────────────────
+    _active_manifest = pack_loader.load_manifest(settings.active_game_id)
+    _game_pack_path = pack_loader._packs_dir / settings.active_game_id
+    rag_service = RagServiceFactory.for_game_pack(
+        game_pack_path=_game_pack_path,
+        collection_name=_active_manifest.rag_collection_name,
+    )
     calibration_service = CalibrationService(
         api_key=api_key,
         model=settings.gemini_model,
@@ -104,6 +113,7 @@ def main() -> None:
         canvas=overlay.canvas,
         async_bridge=async_bridge,
         debug_manager=debug_manager,
+        rag_service=rag_service,
     )
 
     # ── hotkeys ───────────────────────────────────────────────────────
@@ -194,12 +204,12 @@ def main() -> None:
 
     overlay.set_close_handler(_on_close)
 
-    active_pack = pack_loader.load_manifest(settings.active_game_id)
     logger.info(
-        "GASSI v%s started — game: %s (%s) | debug frames: %s",
+        "GASSI v%s started — game: %s (%s) | rag: %s | debug frames: %s",
         _pkg_version("gassi"),
-        active_pack.display_name,
+        _active_manifest.display_name,
         settings.active_game_id,
+        "on" if rag_service.is_available() else "off",
         debug_manager.get_debug_dir(),
     )
     overlay.mainloop()
