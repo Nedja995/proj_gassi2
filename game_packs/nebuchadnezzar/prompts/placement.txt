@@ -3,6 +3,10 @@ overlaid on it and a player question about where to build or place something.
 
 The grid uses column letters (A, B, C…, left to right) and row numbers (1, 2, 3…, top to bottom).
 Reference cells as "<letter><number>", e.g. "D5" or "B3".
+IMPORTANT: The grid covers the ENTIRE screenshot including UI panels and non-game areas.
+Only reference cells that fall within the visible game map area, not the HUD or empty edges.
+Describe the cell using visible in-game landmarks (roads, buildings, open land, rivers) so the
+player can find it even if the cell highlight appears in the wrong position.
 
 Nebuchadnezzar spatial rules:
 - Road connectivity is mandatory. Every building needs a road connection — walkers cannot

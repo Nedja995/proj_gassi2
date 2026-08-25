@@ -4,12 +4,26 @@ window_title_pattern: "Nebuchadnezzar"
 game_version: "1.0"
 rag_collection_name: null
 
+# OCR regions are unreliable until calibration is refined;
+# screenshot mode gives better advice for mid/late game.
+# Override per-session via Shift+F1.
+preferred_advisor_source: "screenshot"
+
+# v0.6.0: building footprint registry (planned)
+# building_footprints:
+#   shrine: [2, 2]        # small shrine (fits 2x2 tiles)
+#   temple: [4, 4]        # standard temple
+#   ziggurat: [6, 6]      # monument-scale
+#   bazaar: [2, 2]
+#   granary: [2, 2]
+#   storehouse: [2, 2]
+
 quick_prompts:
-  - "Where should I place my next bazaar to cover more housing?"
-  - "Where is the best spot for a new granary or storehouse?"
-  - "Where should I expand my housing block?"
-  - "Where should I build the next temple or entertainment venue?"
-  - "Where should I place a new well or water supply building?"
+  - "Where should I place the Temple to cover the most housing blocks?"
+  - "Where is the best central spot for a new Bazaar to reach all housing?"
+  - "Where should I place the next Granary closest to both farms and bazaar?"
+  - "Where should I expand my housing block next for maximum road access?"
+  - "Where should I place a Well to cover the most unserved housing tiles?"
 
 # HUD regions estimated from 1456x816 reference screenshots.
 # IMPORTANT: these are first estimates — run auto-calibration (Settings → Calibrate HUD)
@@ -38,7 +52,8 @@ hud_regions:
   - label: "objectives"
     # Top-right panel: mission targets — Population x/y, Money x/y, Prestige x/y,
     # house level targets. White text on dark background, most readable region.
-    x_pct: 0.78
-    y_pct: 0.0
-    width_pct: 0.22
-    height_pct: 0.12
+    # Corrected manually: calibration placed this at x=0.43 (city name area).
+    x_pct: 0.838
+    y_pct: 0.028
+    width_pct: 0.155
+    height_pct: 0.133

@@ -1,0 +1,17 @@
+calibrated_at: '2026-08-25T09:10:24'
+hud_regions:
+- height_pct: 0.0287
+  label: resource_bar
+  width_pct: 0.3328
+  x_pct: 0.1849
+  y_pct: 0.0028
+- height_pct: 0.025
+  label: date_time_panel
+  width_pct: 0.3187
+  x_pct: 0.1932
+  y_pct: 0.0324
+- height_pct: 0.133
+  label: objectives_panel
+  width_pct: 0.155
+  x_pct: 0.838
+  y_pct: 0.028
