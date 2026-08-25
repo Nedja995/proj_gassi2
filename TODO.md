@@ -145,15 +145,28 @@ Real-world validation that the game pack architecture generalizes.
 
 ## v0.4.7 — Nebuchadnezzar Testing (needs Windows + game) 🚧 In Progress
 
+**Known limitation for testing:** Nebuchadnezzar has no Borderless Windowed mode.
+Test in Windowed mode — GASSI overlay works correctly, taskbar visible at bottom.
+Fullscreen exclusive mode bypasses DWM; GASSI cannot overlay it (Windows limitation, not a bug).
+If Nebuchadnezzar adds borderless windowed in a future patch, no GASSI changes needed.
+
+**Building footprint note:** The cell highlight shows a single grid cell (the placement anchor).
+Multi-tile buildings (e.g. Temple 4×4) extend beyond the highlighted cell.
+Full footprint rendering tracked under v0.6.x below.
+
 **First session checklist — do in this order:**
-- [ ] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
-- [ ] Save settings and restart GASSI
-- [ ] Run CalibrationService (Settings → Calibrate HUD) — first real test on non-Timberborn game
-- [ ] F4 debug frame after calibration — visually confirm `resource_bar` crop
-- [ ] F1 advisor (OCR mode) mid-mission — check OCR confidence in log panel for all 3 regions
-- [ ] F1 advisor (Screenshot mode) — compare advice quality vs OCR mode
-- [ ] F2 placement with a real question (e.g. "Where should I place my next bazaar?")
-- [ ] Verify yellow highlight box appears at correct cell on Nebuchadnezzar screen
+- [x] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
+- [x] Save settings and restart GASSI
+- [x] Run CalibrationService (Settings → Calibrate HUD) — 3/3 regions accepted
+- [x] Verify `objectives_panel` region position — manually corrected to x=0.838
+- [x] F1 advisor (Screenshot mode) — confirmed working, good advice quality
+- [x] F2 placement with a real question — confirmed working, hollow yellow outline correct
+- [x] Yellow highlight box appears at correct cell — confirmed v0.5.15
+
+**Remaining / follow-up:**
+- [ ] F1 advisor (OCR mode) — test after objectives_panel region fix, compare quality
+- [ ] Prompt iteration: refine stage clauses based on real advice quality
+- [ ] Identify what’s reusable across Timberborn + Nebuchadnezzar prompts
 
 **Follow-up (based on first session results):**
 - [ ] Refine HUD region fractions if calibration missed any region
@@ -209,6 +222,10 @@ validates that AiBackend Protocol is truly backend-agnostic.
 - [ ] Backend selector dropdown in Settings → General
 - [ ] Cost tracking: token usage display per session in overlay footer
 - [ ] Per-backend model list in settings dropdown (reuse fetch pattern from Gemini)
+- [ ] Building footprint registry in game pack manifest (`building_footprints` dict)
+      e.g. `temple: [4, 4]` — used to render multi-cell highlight instead of single cell
+- [ ] `cell_to_screen_pixels` extended to accept optional `footprint: tuple[int,int]`
+      so highlight covers the full building area on the game screen
 
 ---
 
@@ -301,6 +318,61 @@ All items here are low architectural risk — UI-only changes on top of existing
 ---
 
 ## Completed
+
+### v0.5.15 (2026-08-25)
+- [x] SetWindowRgn via ctypes confirmed working — hollow yellow outline rendering correctly
+- [x] Nebuchadnezzar quick_prompts refined for better spatial advice
+
+### v0.5.14 (2026-08-25)
+- [x] `PlacementHighlightWindow`: ctypes replaces pywin32 (win32gui lacks CreateRectRgn)
+- [x] `update()` before SetWindowRgn, GetAncestor reverted, error code logging added
+
+### v0.5.13 (2026-08-25)
+- [x] `PlacementHighlightWindow`: use `GetAncestor(GA_ROOT)` to get root HWND
+      from child HWND — fixes SetWindowRgn failure and click-through
+
+### v0.5.12 (2026-08-25)
+- [x] `GamePackManifest.preferred_advisor_source` field + ViewModel wiring
+- [x] Nebuchadnezzar manifest sets screenshot as default advisor source
+- [x] `objectives` region corrected in manifest.yaml baseline
+
+### v0.5.11 (2026-08-25)
+- [x] Placement prompts (both games): IMPORTANT landmark note for windowed mode grid offset
+
+### v0.5.10 (2026-08-25)
+- [x] `objectives_panel` in `hud_regions_user.yaml` corrected: x=0.838 (was 0.433)
+- [x] `objectives` in `manifest.yaml` corrected: x=0.838 (was 0.78)
+
+### v0.5.9 (2026-08-25)
+- [x] `HotkeyManager`: reject modifier-only hotkey strings — prevents `<alt>` alone triggering
+- [x] `_is_game_focused()`: log blocked foreground window title, block when GASSI is foreground
+
+### v0.5.8 (2026-08-25)
+- [x] `advisor_ocr.txt` (both games): NEVER ask for more data rule added
+
+### v0.5.7 (2026-08-25)
+- [x] Hotkey capture: printable chars no longer wrapped in `<>` — `<alt>+8` correct
+- [x] Alt detection: added `0x20000` Windows Mod2 flag alongside `0x8`
+- [x] Bare modifier presses no longer terminate capture prematurely
+- [x] Display label width: 16 → 22 chars
+- [x] `_display_hotkey` capitalises plain characters correctly
+
+### v0.5.6 (2026-08-25)
+- [x] Diagnostic logger.info reverted to logger.debug
+- [x] Calibration confirmed working: 3/3 Nebuchadnezzar regions accepted
+- [x] objectives_panel placement issue noted in TODO for manual correction
+
+### v0.5.5 (2026-08-25)
+- [x] `CalibrationService`: scale detection via max value — handles fractions,
+      percentages, and pixel coords in one pass without mixed-scale corruption
+
+### v0.5.4 (2026-08-25)
+- [x] `CalibrationService`: clamp all coords to [0.0, 1.0] before validation
+      instead of rejecting — `objectives_panel` now passes through to OCR gate
+
+### v0.5.3 (2026-08-24)
+- [x] `CalibrationService`: auto-normalise 0–100 coords from Gemini to 0.0–1.0 fractions
+- [x] `_CALIBRATION_PROMPT`: CRITICAL warning + wrong/right examples to prevent recurrence
 
 ### v0.5.2 (2026-08-24)
 - [x] `_write_atomic()` in `settings_manager.py` — tmp+rename pattern, no corrupt settings.json

@@ -20,6 +20,163 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.5.15] - 2026-08-25
+
+### Fixed
+- `PlacementHighlightWindow`: `SetWindowRgn` via ctypes confirmed working —
+  hollow yellow outline box now renders correctly over game screen.
+
+### Changed
+- Nebuchadnezzar `quick_prompts` refined: vague prompts replaced with specific
+  building-type questions that produce better spatial advice from Gemini.
+  e.g. "Where should I build the next temple or entertainment venue?" →
+  "Where should I place the Temple to cover the most housing blocks?"
+
+## [0.5.14] - 2026-08-25
+
+### Fixed
+- `PlacementHighlightWindow`: `win32gui` does not expose `CreateRectRgn` (it is
+  a GDI32 function, not a win32gui function). Switched entirely to `ctypes`:
+  `ctypes.windll.gdi32.CreateRectRgn/CombineRgn/DeleteObject` and
+  `ctypes.windll.user32.SetWindowRgn/GetWindowLongW/SetWindowLongW`.
+  pywin32 dependency removed from this module entirely.
+- `show()`: changed `update_idletasks()` to `update()` before `SetWindowRgn`
+  so the Win32 window is fully resized before the region coordinates are applied.
+- Reverted `GetAncestor(GA_ROOT)` — documented in module docstring why it is
+  wrong for tkinter Toplevels (returns main Tk HWND, not the Toplevel HWND).
+- `GetLastError()` now logged when `SetWindowRgn` returns 0.
+
+## [0.5.13] - 2026-08-25
+
+### Fixed
+- `PlacementHighlightWindow._apply_region_and_clickthrough()`: `winfo_id()` returns
+  a child HWND on Windows, not the root HWND that `SetWindowRgn` and `SetWindowLong`
+  require. Added `win32gui.GetAncestor(child_hwnd, GA_ROOT)` to resolve the true
+  top-level HWND. Fixes `SetWindowRgn failed` warning and restores click-through
+  + hollow region clipping behaviour.
+
+### Notes
+- Building footprint rendering (multi-cell highlight for large buildings like Temple
+  4×4) tracked in TODO under v0.6.0. Current highlight shows placement anchor cell
+  only.
+
+## [0.5.12] - 2026-08-25
+
+### Added
+- `GamePackManifest.preferred_advisor_source`: optional per-pack advisor source
+  override (`"ocr"` or `"screenshot"`). Applied at startup before global settings.
+  Nebuchadnezzar manifest sets `"screenshot"` — OCR unreliable until region
+  coordinates are refined.
+- `AssistantViewModel.__init__` applies pack preference over global setting;
+  logs which source was selected and why.
+
+### Fixed
+- Nebuchadnezzar `manifest.yaml`: `objectives` region corrected from x=0.78 (wrong)
+  to x=0.838 — calibration had placed it at city name area (x=0.43). Corrected in
+  both `manifest.yaml` (baseline default) and `hud_regions_user.yaml` (active).
+
+## [0.5.11] - 2026-08-25
+
+### Fixed
+- Placement prompt (both games): added `IMPORTANT` note that the grid covers the
+  entire screenshot including UI panels. Instructs Gemini to reference visible
+  in-game landmarks alongside cell coordinates so players can locate the target
+  even when the cell highlight appears offset (windowed mode).
+
+## [0.5.10] - 2026-08-25
+
+### Fixed
+- `game_packs/nebuchadnezzar/hud_regions_user.yaml`: `objectives_panel` region
+  manually corrected to x=0.838, y=0.028, w=0.155, h=0.133 — calibration had
+  placed it at x=0.433 (centre screen, catching city name "Uruk"), causing OCR
+  advisor to read early-game signals and give wrong advice.
+- `game_packs/nebuchadnezzar/manifest.yaml`: same correction applied to
+  `objectives` baseline region.
+
+## [0.5.9] - 2026-08-25
+
+### Fixed
+- **`HotkeyManager.register()`**: modifier-only hotkey strings (e.g. `<alt>`) are
+  now rejected with a warning before being passed to pynput. This prevents Alt-alone
+  triggering the advisor when `settings.json` contains legacy broken format
+  `<alt>+<8>` from pre-v0.5.7 — pynput was silently dropping the invalid `<8>` part
+  and matching on `<alt>` alone.
+- **`_is_game_focused()`**: logs foreground window title at DEBUG level when hotkey
+  is blocked, making window title mismatches diagnosable. Also blocks triggers when
+  GASSI's own overlay title is in the foreground.
+
+## [0.5.8] - 2026-08-25
+
+### Fixed
+- `game_packs/nebuchadnezzar/prompts/advisor_ocr.txt`: added `NEVER ask the player
+  for more information` rule. Gemini was responding with a request for more OCR data
+  when a region value was incomplete instead of giving best-effort advice.
+- `game_packs/timberborn/prompts/advisor_ocr.txt`: same rule added for consistency.
+
+## [0.5.7] - 2026-08-25
+
+### Fixed
+- **Hotkey capture — wrong pynput key format for printable characters.**
+  `_on_key_press` was wrapping every key in angle brackets, producing
+  `<alt>+<8>` instead of the correct `<alt>+8`. pynput only uses angle
+  brackets for special keys (F1–F12, space, escape, etc.); regular printable
+  characters (letters, digits, symbols) must not be wrapped. Alt+8/9/0 and
+  similar combos now register and trigger correctly.
+- **Alt detection on Windows.** Added `event.state & 0x20000` (Windows Mod2)
+  alongside the existing `0x8` (X11 standard). Fixes Alt not being detected
+  on some Windows configurations.
+- **Bare modifier keypresses no longer terminate capture.** Pressing Alt alone
+  while waiting for a key no longer saves an incomplete hotkey — the widget
+  waits for the non-modifier key to complete the combo.
+- **Hotkey display label width** increased from 16 to 22 characters to
+  accommodate longer strings like "Alt + 8" without clipping.
+- **`_display_hotkey`** updated to capitalise plain characters correctly
+  (e.g. `<alt>+8` → "Alt + 8", `<shift>+a` → "Shift + A").
+
+## [0.5.6] - 2026-08-25
+
+### Fixed
+- `CalibrationService`: diagnostic `logger.info` for raw coordinates reverted to
+  `logger.debug` — only visible when debug logging enabled, not in normal log panel.
+
+### Notes
+- Calibration now handles all three Gemini coordinate formats correctly (fractions,
+  percentages, pixel coords). Confirmed working: 3/3 regions accepted on Nebuchadnezzar.
+- `objectives_panel` accepted but placed at x≈0.43 (centre) not x≈0.84 (top-right) —
+  Gemini misidentified the region location. Tracked in TODO v0.4.7 checklist for
+  manual correction via F4 debug frame.
+
+## [0.5.5] - 2026-08-25
+
+### Fixed
+- `CalibrationService._validate_region()`: smarter coordinate scale detection.
+  Previous fix divided all values by 100 when any single value exceeded 1.0,
+  causing near-zero dimensions when Gemini mixed scales (e.g. `x=82` but `w=0.15`).
+  Now uses `max(x, y, w, h)` to determine scale: >100 → pixel coords (divide by
+  `img_w`/`img_h`), >1.0 → percentage (divide by 100), ≤1.0 → already correct.
+  All three Gemini coordinate formats now handled correctly in a single pass.
+
+## [0.5.4] - 2026-08-25
+
+### Fixed
+- `CalibrationService._validate_region()`: regions were rejected with "out of bounds
+  after normalisation" even when the coordinates were valid but slightly over 1.0
+  (e.g. `x=1.02` from Gemini rounding). All four coordinate values are now clamped
+  to `[0.0, 1.0]` and the region is passed to OCR validation rather than rejected.
+  The `objectives_panel` in Nebuchadnezzar was affected by this — now accepted.
+  Hard geometry rejection removed; OCR confidence is the only acceptance gate.
+
+## [0.5.3] - 2026-08-24
+
+### Fixed
+- `CalibrationService._validate_region()`: Gemini occasionally returns coordinates
+  on a 0–100 percentage scale despite the prompt specifying 0.0–1.0 fractions,
+  causing a Pydantic `ValidationError` on `HudRegion`. Values > 1.0 are now
+  automatically normalised by dividing by 100 before validation.
+- `_CALIBRATION_PROMPT`: strengthened coordinate instructions with explicit
+  `CRITICAL` warning, concrete wrong/right examples (82.5 WRONG, 0.825 CORRECT),
+  and margin expressed as fractions (0.01–0.02) not percentages.
+
 ## [0.5.2] - 2026-08-24
 
 ### Changed
