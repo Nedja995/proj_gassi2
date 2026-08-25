@@ -45,13 +45,16 @@ Exclude: decorative borders, map area, game world, tooltips, buttons without val
 Include: resource bars, population panels, day/cycle/time indicators, status panels.
 
 For each region, return:
-- label: short snake_case descriptor of what the region contains (e.g. "resource_bar", "population_panel")
-- x_pct: left edge as fraction of total image width (0.0–1.0)
-- y_pct: top edge as fraction of total image height (0.0–1.0)
-- width_pct: region width as fraction of total image width (0.0–1.0)
-- height_pct: region height as fraction of total image height (0.0–1.0)
+- label: short snake_case descriptor (e.g. "resource_bar", "population_panel")
+- x_pct: left edge as a DECIMAL FRACTION of total image width. MUST be between 0.0 and 1.0. NOT a percentage.
+- y_pct: top edge as a DECIMAL FRACTION of total image height. MUST be between 0.0 and 1.0. NOT a percentage.
+- width_pct: region width as a DECIMAL FRACTION of total image width. MUST be between 0.0 and 1.0.
+- height_pct: region height as a DECIMAL FRACTION of total image height. MUST be between 0.0 and 1.0.
 
-Add 1–2% margin around each region so OCR has breathing room.
+CRITICAL: All coordinate values MUST be decimal fractions in range 0.0–1.0.
+Do NOT return percentages (e.g. 82.5 is WRONG, 0.825 is CORRECT).
+
+Add 1–2% margin (0.01–0.02) around each region so OCR has breathing room.
 Return only regions you are confident contain text. Prefer fewer high-quality regions over many uncertain ones.
 """
 
@@ -210,22 +213,70 @@ class CalibrationService:
         img_w: int,
         img_h: int,
     ) -> RegionCalibrationResult:
-        """Validate a raw region dict via geometry check + OCR confidence."""
+        """Validate a raw region dict via geometry check + OCR confidence.
+
+        Handles three coordinate scales Gemini may return:
+        - 0.0–1.0 decimal fractions (correct, no normalisation needed)
+        - 0–100 percentages (divided by 100)
+        - pixel coordinates (divided by img_w/img_h)
+        Scale is determined by the maximum value across all four fields.
+        After normalisation all values are clamped to [0.0, 1.0] and the
+        region is passed to OCR confidence gating — no hard geometry rejection.
+        """
         label = str(raw.get("label", "unknown"))
 
-        # geometry validation
         x_pct = float(raw.get("x_pct", 0.0))
         y_pct = float(raw.get("y_pct", 0.0))
         w_pct = float(raw.get("width_pct", 0.0))
         h_pct = float(raw.get("height_pct", 0.0))
 
-        if not (0.0 <= x_pct <= 1.0 and 0.0 <= y_pct <= 1.0):
-            return RegionCalibrationResult(
-                region=HudRegion(label=label, x_pct=x_pct, y_pct=y_pct,
-                                 width_pct=w_pct, height_pct=h_pct),
-                accepted=False, ocr_confidence=0.0,
-                rejection_reason="origin coordinates out of bounds",
-            )
+        logger.debug(
+            "Calibration raw '%s': x=%.4f y=%.4f w=%.4f h=%.4f",
+            label, x_pct, y_pct, w_pct, h_pct,
+        )
+
+        # Gemini may return coordinates in mixed or inconsistent scales:
+        #   - pure 0.0–1.0 fractions (correct)
+        #   - pure 0–100 percentages (divide all by 100)
+        #   - pixel coordinates (e.g. x=1200, w=320 on a 1920px image)
+        # Strategy: if ANY value looks like a percentage/pixel (> 1.0), treat
+        # ALL positional values as the same scale and normalise together.
+        # Use the largest value to determine the assumed scale:
+        #   max > 100  → likely pixel coords, divide by img dimension
+        #   max > 1.0  → likely percentage, divide by 100
+        max_val = max(x_pct, y_pct, w_pct, h_pct)
+        if max_val > 1.0:
+            if max_val > 100.0:
+                # pixel coordinates — normalise by image dimensions
+                logger.debug(
+                    "Calibration: normalising '%s' from pixel coords (max=%.1f)",
+                    label, max_val,
+                )
+                x_pct = x_pct / img_w
+                y_pct = y_pct / img_h
+                w_pct = w_pct / img_w
+                h_pct = h_pct / img_h
+            else:
+                # percentage scale (0–100)
+                logger.debug(
+                    "Calibration: normalising '%s' from 0–100 scale (max=%.1f)",
+                    label, max_val,
+                )
+                x_pct /= 100.0
+                y_pct /= 100.0
+                w_pct /= 100.0
+                h_pct /= 100.0
+
+        # clamp all values to valid range — Gemini may return slightly out-of-bounds
+        # coords even after normalisation (e.g. x=1.02); clamp and let OCR decide
+        x_pct = max(0.0, min(x_pct, 1.0))
+        y_pct = max(0.0, min(y_pct, 1.0))
+        w_pct = max(0.0, min(w_pct, 1.0))
+        h_pct = max(0.0, min(h_pct, 1.0))
+
+        # ensure region fits within image bounds
+        x_pct = min(x_pct, 1.0 - w_pct)
+        y_pct = min(y_pct, 1.0 - h_pct)
 
         if w_pct < 0.01 or h_pct < 0.005:
             return RegionCalibrationResult(
@@ -234,10 +285,6 @@ class CalibrationService:
                 accepted=False, ocr_confidence=0.0,
                 rejection_reason=f"region too small (w={w_pct:.3f} h={h_pct:.3f})",
             )
-
-        # clamp to image bounds
-        x_pct = min(x_pct, 1.0 - w_pct)
-        y_pct = min(y_pct, 1.0 - h_pct)
 
         # crop and OCR
         x = int(x_pct * img_w)
