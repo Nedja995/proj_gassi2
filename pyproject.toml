@@ -1,6 +1,6 @@
 [project]
 name = "gassi"
-version = "0.6.7"
+version = "0.7.1"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
 readme = "README.md"
 license = "MIT"
@@ -34,6 +34,12 @@ dev = [
 ]
 windows = [
     "pywin32>=306",
+]
+claude = [
+    # Anthropic Claude API backend (v0.7.1).
+    # Not installed by default — only needed when ClaudeBackend is selected.
+    # Install with: uv sync --extra claude
+    "anthropic>=0.40",
 ]
 rag = [
     # Local vector DB for game knowledge retrieval (v0.6.x).
