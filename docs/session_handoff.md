@@ -21,9 +21,8 @@ pynput, opencv-python-headless, pywin32, uv package manager
 
 ## Key Docs — Read On Demand, Not Upfront
 
-**Do NOT read all these at session start** — that wastes tokens.
+**Read all these at session start**
 This handoff doc is designed to be self-contained for starting work.
-Read specific docs only when the task requires it:
 
 - `TODO.md` — only if planning the next milestone or checking roadmap ordering
 - `CHANGELOG.md` — only if debugging a regression or checking what changed in a specific version
