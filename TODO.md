@@ -246,30 +246,25 @@ Delivered across sub-versions v0.6.1–v0.6.7.
       common failure modes, useful ratios table
 - [x] `manifest.yaml`: `rag_collection_name: timberborn_knowledge`, `rag_top_k: 4`,
       `rag_min_game_version: "0.6"`
-- [ ] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id timberborn
+- [x] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id timberborn
       --source-dir game_packs/timberborn/knowledge --game-version 0.6 --reset`)
-- [ ] `game_packs/timberborn/rag/` committed to repo after ingestion
+- [x] `game_packs/timberborn/rag/` committed to repo after ingestion
 
 ---
 
-## v0.6.4 — RAG Injection into Advisor
+## v0.6.4 — RAG Injection into Advisor ✅ Complete
 
-Wires `RagService` into `AssistantViewModel`. Retrieved chunks prepended to system
-prompt on every OCR and screenshot advisor call.
-
-- [ ] `AssistantViewModel.__init__` accepts optional `rag_service: RagService`
-      (defaults to `NullRagService`)
-- [ ] `main.py`: `RagServiceFactory.for_game_pack()` called at startup, result
-      passed to ViewModel
-- [ ] `_build_rag_context(query_text) -> str`: calls `rag_service.query()`, formats
-      chunks as `## Retrieved Knowledge\n- chunk1\n- chunk2\n...`
-- [ ] OCR advisor path: OCR text used as query; retrieved context injected before
-      system prompt body
-- [ ] Screenshot advisor path: last placement query text used as query if available,
-      else skip RAG injection (no text to embed against)
-- [ ] Log at INFO: `rag=on (4 chunks)` or `rag=off (no collection)` per call
-- [ ] `rag_top_k` from `GamePackManifest` passed to `rag_service.query()` if set;
-      fallback default `top_k=3`
+- [x] `AssistantViewModel.__init__` accepts optional `rag_service: RagService`
+      (defaults to `NullRagService` — backward-compatible)
+- [x] `_build_rag_context(query_text) -> str`: queries service, formats chunks as
+      `## Retrieved Knowledge\n- chunk...`, returns `""` when unavailable
+- [x] OCR advisor path: OCR text used as RAG query; context prepended to system prompt;
+      logs `rag=on (N chunks)` or `rag=off (no chunks returned)`
+- [x] Screenshot advisor path: RAG skipped; logs
+      `rag=off (screenshot mode — no text query available)` when collection present
+- [x] `main.py`: `RagServiceFactory.for_game_pack()` at startup, result passed to ViewModel
+- [x] Startup log includes `rag: on/off` status
+- [x] `rag_top_k` from manifest honoured; fallback default `top_k=3`
 
 ---
 

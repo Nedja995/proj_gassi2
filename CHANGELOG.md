@@ -20,6 +20,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.4] - 2026-08-25
+
+### Added
+- `AssistantViewModel.__init__` accepts optional `rag_service: RagService` parameter
+  (defaults to `NullRagService` when not provided — fully backward-compatible)
+- `AssistantViewModel._build_rag_context(query_text) -> str`: queries `RagService`,
+  formats retrieved chunks as `## Retrieved Knowledge\n- chunk...` block prepended
+  to system prompt. Returns empty string when RAG unavailable or no chunks returned.
+- OCR advisor path: combined OCR text used as RAG query; retrieved context prepended
+  to system prompt before Gemini call. Logs `rag=on (N chunks)` or `rag=off`.
+- Screenshot advisor path: RAG skipped (no text query available); logs
+  `rag=off (screenshot mode — no text query available)` when collection is present.
+- `main.py`: `RagServiceFactory.for_game_pack()` called at startup using
+  `_active_manifest.rag_collection_name`; result passed to ViewModel.
+- Startup log now includes `rag: on/off` status.
+
 ## [0.6.3] - 2026-08-25
 
 ### Added
