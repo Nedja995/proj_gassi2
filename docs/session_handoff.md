@@ -10,12 +10,13 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.5.16, production-tested on Timberborn and Nebuchadnezzar.
-F1 (Advisor), F2 (Placement + grid overlay + cell highlight), Settings, Calibration all working.
+**Current state:** v0.6.7, RAG milestone complete. Production-tested on Timberborn and
+Nebuchadnezzar. F1 (Advisor + RAG injection), F2 (Placement + grid overlay + cell highlight),
+Settings, Calibration all working. Next: v0.7.0 Multi-backend (ClaudeBackend).
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,
-pynput, opencv-python-headless, pywin32, uv package manager
+pynput, opencv-python-headless, pywin32, chromadb (optional `[rag]`), uv package manager
 
 ---
 
@@ -184,6 +185,9 @@ v0.9.0  — UX polish (floating advice/placement windows, accessibility)
 | Async bridge | Thread + queue | AD-10. tkinter not thread-safe |
 | Settings storage | JSON in app data | AD-17. pydantic-settings is read-only |
 | Window chrome | overrideredirect(True) | AD-18. Native titlebar irrelevant for overlay |
+| RAG embedding | `ONNXMiniLM_L6_V2` (chromadb built-in) | AD-25. sentence-transformers pulls PyTorch (~2GB), violates AD-06 |
+| RAG dep group | optional `[rag]` — chromadb only | AD-25. App runs with NullRagService when not installed |
+| RAG injection point | OCR path only | No text query available on screenshot/placement paths |
 
 ---
 
@@ -205,6 +209,59 @@ it, but manual correction of `hud_regions_user.yaml` may still be needed.
 
 Region labels in `hud_regions_user.yaml` must match `LABEL_CONFIGS` in `preprocessor.py`
 for the correct OCR preprocessing config to be applied. Check after any calibration run.
+
+---
+
+## RAG Subsystem — How It Works (AD-25)
+
+`core/rag/` subpackage. Three classes + factory:
+- `RagService` — `typing.Protocol`, `@runtime_checkable`. `query(text, top_k, min_game_version) -> list[str]`, `is_available() -> bool`
+- `NullRagService` — no-op. Zero extra imports. Returned when no collection or chromadb absent.
+- `ChromaRagService` — loads persistent Chroma collection from `game_packs/<id>/rag/`. Deferred chromadb import. Uses `ONNXMiniLM_L6_V2` (chromadb built-in ONNX embedder, no PyTorch).
+- `RagServiceFactory.for_game_pack(game_pack_path, collection_name)` — checks `rag/` folder exists + `collection_name` set + chromadb importable → `ChromaRagService`, else `NullRagService`.
+
+**Wiring in `main.py`:**
+```python
+_active_manifest = pack_loader.load_manifest(settings.active_game_id)
+_game_pack_path = pack_loader._packs_dir / settings.active_game_id
+rag_service = RagServiceFactory.for_game_pack(
+    game_pack_path=_game_pack_path,
+    collection_name=_active_manifest.rag_collection_name,
+)
+viewmodel = AssistantViewModel(..., rag_service=rag_service)
+```
+
+**Injection in ViewModel (`_build_rag_context`):**
+- Called on OCR advisor path only (combined OCR text used as query)
+- Prepends `## Retrieved Knowledge\n- chunk...\n\n` to system prompt
+- Returns `""` when RAG unavailable — callers never emit empty section
+- Logs `rag=on (N chunks)` or `rag=off (reason)` per call
+
+**Manifest fields per game pack:**
+```yaml
+rag_collection_name: timberborn_knowledge  # null = NullRagService
+rag_top_k: 4                               # chunks per call, default 3
+rag_min_game_version: "0.6"               # Chroma $gte filter on game_version metadata
+```
+
+**Knowledge base structure:**
+```
+game_packs/<id>/
+├── knowledge/   # .md source files (human-readable, editable)
+└── rag/         # Chroma binary (committed to repo)
+```
+
+**Ingestion CLI** (run after editing knowledge files):
+```bash
+uv sync --extra rag
+uv run python tools/ingest_knowledge.py \
+    --game-id timberborn \
+    --source-dir game_packs/timberborn/knowledge \
+    --game-version 0.6 --reset
+```
+Use `--reset` when editing existing files. Omit for incremental (new files only).
+
+**Current collections:** Timberborn (`timberborn_knowledge`, 6 files), Nebuchadnezzar (`nebuchadnezzar_knowledge`, 6 files).
 
 ---
 
