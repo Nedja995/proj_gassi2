@@ -138,7 +138,7 @@ Real-world validation that the game pack architecture generalizes.
 - [x] Nebuchadnezzar added as second target game
 - [x] All features updated to reflect shipped state (grid overlay, cell highlight,
       settings, calibration, debug tools, placement strip)
-- [x] Deferred items renumbered to match current roadmap (v0.5.0–v0.8.0)
+- [x] Deferred items renumbered to match current roadmap (v0.6.0–v0.9.0)
 - [x] Known limitations updated (game switch restart, macOS fallback, Nebu OCR note)
 
 ---
@@ -150,7 +150,7 @@ Test in Windowed mode — GASSI overlay works correctly, taskbar visible at bott
 Fullscreen exclusive mode bypasses DWM (Windows limitation, not a bug).
 
 **Building footprint note:** Cell highlight shows single grid cell (placement anchor).
-Multi-tile buildings extend beyond it. Full footprint rendering tracked in v0.6.0.
+Multi-tile buildings extend beyond it. Full footprint rendering tracked in v0.7.0.
 
 ### Completed
 - [x] Open Settings → General → select Nebuchadnezzar from Active game dropdown
@@ -189,21 +189,127 @@ Multi-tile buildings extend beyond it. Full footprint rendering tracked in v0.6.
 
 ---
 
-## v0.5.0 — RAG Pipeline
+## v0.6.0 — RAG Pipeline (milestone)
 
-Local knowledge retrieval to replace static game knowledge in system prompts.
+Local knowledge retrieval to augment static game knowledge in system prompts.
 Allows deeper, formula-level advice without bloating prompt token count.
-
-- [ ] Chroma + sentence-transformers for game knowledge retrieval
-- [ ] Wiki/formula ingestion pipeline: chunking, embedding, persistence to disk
-- [ ] Pre-baked Chroma collections shipped per game pack folder
-- [ ] RAG-augmented prompts: retrieved chunks injected into system prompt at query time
-- [ ] patch_version metadata filtering in Chroma queries
-- [ ] Fallback: if no RAG collection found, use static prompt as before
+Delivered across sub-versions v0.6.1–v0.6.7.
 
 ---
 
-## v0.6.0 — Multi-Backend (Cloud)
+## v0.6.1 — RagService: Protocol + Chroma Backend
+
+Core retrieval infrastructure. No prompt injection yet — just the service wired and queryable.
+
+- [ ] `RagService` Protocol (`core/rag/protocol.py`): `query(text, top_k) -> list[str]`, `is_available() -> bool`
+- [ ] `ChromaRagService` implementing `RagService` (`core/rag/chroma_backend.py`):
+      loads persistent Chroma collection from `game_packs/<id>/rag/`, wraps query,
+      returns chunk strings
+- [ ] `NullRagService` implementing `RagService`: no-op, `is_available()` returns `False` —
+      used when collection absent; no import of chromadb/sentence-transformers
+- [ ] `RagServiceFactory.for_game_pack(game_pack_path) -> RagService`: returns
+      `ChromaRagService` if `rag/` folder present, else `NullRagService`
+- [ ] `chromadb` + `sentence-transformers` added to optional dep group `[rag]` in
+      `pyproject.toml` — not installed by default
+- [ ] AD-25 added to `docs/architecture.md` (RagService Protocol, NullRagService
+      fallback, optional dep group rationale)
+
+---
+
+## v0.6.2 — Ingestion CLI
+
+Standalone script to chunk source documents, embed, and persist a Chroma collection.
+Run once per game pack by the developer; output shipped with the pack.
+
+- [ ] `tools/ingest_knowledge.py`: CLI accepting `--game-id` and `--source-dir`
+- [ ] Reads `.md` / `.txt` files from `--source-dir` recursively
+- [ ] Chunks by paragraph (double-newline split) with configurable `--chunk-size` (default 400
+      tokens) and `--chunk-overlap` (default 50 tokens)
+- [ ] Embeds with `sentence-transformers` (`all-MiniLM-L6-v2` default, overrideable via
+      `--model`)
+- [ ] Persists Chroma collection to `game_packs/<game_id>/rag/` (persistent client,
+      collection named `<game_id>_knowledge`)
+- [ ] Metadata per chunk: `source_file`, `chunk_index`, `game_version` (from `--game-version`
+      arg, default `"any"`)
+- [ ] Idempotent: `--reset` flag drops and rebuilds collection; without it, skips
+      already-ingested source files by checking stored `source_file` metadata
+
+---
+
+## v0.6.3 — Timberborn Knowledge Base
+
+Source documents authored and ingested. Chroma collection shipped with the pack.
+
+- [ ] `game_packs/timberborn/knowledge/` folder: markdown files covering formulas,
+      resource mechanics, building costs, floodgate/badwater/battery mechanics,
+      district system, wiki-sourced patch notes for v0.6
+- [ ] Collection ingested via `tools/ingest_knowledge.py` and committed to repo
+      as `game_packs/timberborn/rag/` (binary Chroma files)
+- [ ] `manifest.yaml`: `rag_collection_name: timberborn_knowledge`,
+      `rag_top_k: 4`, `rag_min_game_version: "0.6"`
+
+---
+
+## v0.6.4 — RAG Injection into Advisor
+
+Wires `RagService` into `AssistantViewModel`. Retrieved chunks prepended to system
+prompt on every OCR and screenshot advisor call.
+
+- [ ] `AssistantViewModel.__init__` accepts optional `rag_service: RagService`
+      (defaults to `NullRagService`)
+- [ ] `main.py`: `RagServiceFactory.for_game_pack()` called at startup, result
+      passed to ViewModel
+- [ ] `_build_rag_context(query_text) -> str`: calls `rag_service.query()`, formats
+      chunks as `## Retrieved Knowledge\n- chunk1\n- chunk2\n...`
+- [ ] OCR advisor path: OCR text used as query; retrieved context injected before
+      system prompt body
+- [ ] Screenshot advisor path: last placement query text used as query if available,
+      else skip RAG injection (no text to embed against)
+- [ ] Log at INFO: `rag=on (4 chunks)` or `rag=off (no collection)` per call
+- [ ] `rag_top_k` from `GamePackManifest` passed to `rag_service.query()` if set;
+      fallback default `top_k=3`
+
+---
+
+## v0.6.5 — Game Version Metadata Filtering
+
+Honours `rag_min_game_version` from manifest in Chroma queries.
+
+- [ ] `ChromaRagService.query()` accepts optional `min_game_version: str | None`
+- [ ] When set, adds Chroma `where` filter: `{"game_version": {"$gte": min_game_version}}`
+      — excludes chunks tagged to older patch versions
+- [ ] `RagService` Protocol updated: `query(text, top_k, min_game_version=None)`
+- [ ] `NullRagService.query()` signature updated to match (no-op)
+- [ ] ViewModel passes `manifest.rag_min_game_version` through to query call
+
+---
+
+## v0.6.6 — Nebuchadnezzar Knowledge Base
+
+Source documents authored and ingested. Chroma collection shipped with the pack.
+
+- [ ] `game_packs/nebuchadnezzar/knowledge/` folder: markdown files covering resource
+      types, housing evolution chain, bazaar walker mechanics, well coverage,
+      prestige system, approval delta mechanics, building costs, 3 game stages
+- [ ] Collection ingested and committed as `game_packs/nebuchadnezzar/rag/`
+- [ ] `manifest.yaml`: `rag_collection_name: nebuchadnezzar_knowledge`,
+      `rag_top_k: 4`, `rag_min_game_version: "1.0"`
+
+---
+
+## v0.6.7 — Docs: RAG Pipeline
+
+- [ ] `docs/adding_game_pack.md`: new Section — RAG knowledge base authoring guide
+      (folder structure, chunk authoring tips, ingestion CLI usage, `manifest.yaml`
+      RAG fields, testing retrieval quality)
+- [ ] `docs/architecture.md`: AD-25 finalised with shipped implementation details
+- [ ] `docs/v1_scope.md`: RAG pipeline moved from deferred to shipped features
+- [ ] `README.md`: RAG feature listed under Features, optional `[rag]` dep group
+      install instructions added
+
+---
+
+## v0.7.0 — Multi-Backend (Cloud)
 
 Protocol-based AI backend swap. ClaudeBackend as the second implementation,
 validates that AiBackend Protocol is truly backend-agnostic.
@@ -214,12 +320,12 @@ validates that AiBackend Protocol is truly backend-agnostic.
 - [ ] Per-backend model list in settings dropdown (reuse fetch pattern from Gemini)
 - [ ] Building footprint registry in game pack manifest (`building_footprints` dict)
       e.g. `temple: [4, 4]` — used to render multi-cell highlight instead of single cell
-- [ ] `cell_to_screen_pixels` extended to accept optional `footprint: tuple[int,int]`
+- [ ] `cell_to_screen_pixels` extended to accept optional `footprint: tuple[int, int]`
       so highlight covers the full building area on the game screen
 
 ---
 
-## v0.6.1 — Local SLM Support
+## v0.7.1 — Local SLM Support
 
 Freemium tier: local model for users with capable GPUs, no API key required.
 
@@ -231,7 +337,7 @@ Freemium tier: local model for users with capable GPUs, no API key required.
 
 ---
 
-## v0.7.0 — Platform Support
+## v0.8.0 — Platform Support
 
 Expand beyond Windows + X11. Native window detection replaces manual positioning.
 
@@ -243,7 +349,7 @@ Expand beyond Windows + X11. Native window detection replaces manual positioning
 
 ---
 
-## v0.7.1 — Anti-Cheat Posture
+## v0.8.1 — Anti-Cheat Posture
 
 For games with anti-cheat. Pure overlay approach already avoids memory reading;
 this adds capture hiding and documentation.
@@ -254,7 +360,7 @@ this adds capture hiding and documentation.
 
 ---
 
-## v0.7.2 — Distribution
+## v0.8.2 — Distribution
 
 Packaging and installer for end-users who don't have Python/uv.
 
@@ -266,7 +372,7 @@ Packaging and installer for end-users who don't have Python/uv.
 
 ---
 
-## v0.8.0 — UX Polish (post-first-release)
+## v0.9.0 — UX Polish (post-first-release)
 
 Refinements to the interaction model after the core product is stable and released.
 All items here are low architectural risk — UI-only changes on top of existing infrastructure.

@@ -85,13 +85,13 @@ with RapidOCR, writes `hud_regions_user.yaml`. Clear user calibration button rev
 
 - Arrow rendering over game screen
 - Tutorial overlay (highlight UI elements, step-through instructions)
-- RAG pipeline (Chroma, embeddings, vector search) — v0.5.0
-- Claude or Ollama backends — v0.6.0 / v0.6.1
-- Native window detection (OS-level window handle lookup) — v0.7.0
-- Wayland capture support — v0.7.0
-- TTS voice readout — v0.7.2
+- RAG pipeline (Chroma, embeddings, vector search) — v0.6.0
+- Claude or Ollama backends — v0.7.0 / v0.7.1
+- Native window detection (OS-level window handle lookup) — v0.8.0
+- Wayland capture support — v0.8.0
+- TTS voice readout — v0.8.2
 - Automated in-game clicks/keypresses (out of scope permanently — anti-cheat posture)
-- Monetization / app store distribution — v0.7.2
+- Monetization / app store distribution — v0.8.2
 
 ---
 

@@ -140,12 +140,13 @@ v0.4.7  ✅ Complete — Nebuchadnezzar + Timberborn live testing
 v0.5.x  ✅ Complete (v0.5.1–v0.5.16) — GamePackManifest fields, atomic settings,
            calibration fixes, hotkey fixes, placement highlight (SetWindowRgn),
            Nebuchadnezzar advisor tuning, prompt fixes
-v0.5.0  🔜 Next — RAG pipeline (Chroma + sentence-transformers, per-game collections)
-v0.6.0  — Multi-backend (Claude, building footprints)
-v0.6.1  — Local SLM (Ollama, Qwen2.5-VL)
-v0.7.0  — Platform (Wayland, native window detection, macOS, SteamOS)
-v0.7.2  — Distribution (PyInstaller, installer, TTS)
-v0.8.0  — UX polish (floating advice/placement windows, accessibility)
+v0.6.0  🔜 Next — RAG pipeline (Chroma + sentence-transformers, per-game collections)
+v0.7.0  — Multi-backend (Claude, building footprints)
+v0.7.1  — Local SLM (Ollama, Qwen2.5-VL)
+v0.8.0  — Platform (Wayland, native window detection, macOS, SteamOS)
+v0.8.1  — Anti-cheat posture (SetWindowDisplayAffinity)
+v0.8.2  — Distribution (PyInstaller, installer, TTS)
+v0.9.0  — UX polish (floating advice/placement windows, accessibility)
 ```
 
 ---
