@@ -18,4 +18,4 @@ Focus: badwater management (separate dams/canals to isolate badwater season), wi
 
 TASK: Read the HUD data. Identify the most urgent issue for the current stage. Give 1–3 specific actionable recommendations in priority order.
 
-RULES: Use markdown — ## for a short situation heading, bullets for recommendations, **bold** for the most critical action. Max 1 heading + 3 bullets. Use Timberborn terminology. Lead with the most urgent item.
+RULES: Use markdown — ## for a short situation heading, bullets for recommendations, **bold** for the most critical action. Max 1 heading + 3 bullets. Use Timberborn terminology. Lead with the most urgent item. NEVER ask the player for more information. If a region is missing or unclear, advise based on what is available.
