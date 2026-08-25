@@ -28,6 +28,16 @@ Hide/show:
     The Toplevel is moved off-screen (not withdrawn) between uses to avoid
     HWND recreation. SetWindowRgn is re-applied on every show() because
     the cell size can change between queries.
+
+Win32 implementation note (AD-24):
+    ctypes is used instead of pywin32 for SetWindowRgn / SetWindowLong.
+    pywin32 wraps HWNDs in a custom type that can cause validation failures
+    with some tkinter-returned handles. ctypes with raw int(winfo_id()) is
+    more reliable.
+    GetAncestor(GA_ROOT) was tried but is WRONG for tkinter Toplevels —
+    it returns the main Tk window HWND (since Toplevels are internal children
+    of the Tk root), causing SetWindowRgn to clip the main overlay instead.
+    Direct winfo_id() on the Toplevel widget returns the correct HWND.
 """
 
 import logging
@@ -48,9 +58,13 @@ _LABEL_FONT = ("Consolas", 11, "bold")
 _LABEL_PAD = 6               # horizontal padding inside label
 
 # off-screen position used when "hidden" (no withdraw — preserves HWND)
-_OFFSCREEN = "-99999+-99999"
-## sufficiently negative to avoid all realistic multi-monitor arrangements
-#_OFFSCREEN = "-32000+-32000"
+_OFFSCREEN = "-32000+-32000"
+
+# Win32 constants (avoid importing win32con)
+_GWL_EXSTYLE = -20
+_WS_EX_TRANSPARENT = 0x00000020
+_RGN_DIFF = 4
+_RGN_OR = 2
 
 
 class PlacementHighlightWindow:
@@ -96,9 +110,10 @@ class PlacementHighlightWindow:
         self._canvas.config(width=win_w, height=win_h)
         self._draw(pw, ph, label_w, cell_ref)
 
-        # position on-screen, apply region, then lift
+        # position on-screen then force a full update so the Win32 window
+        # is at the correct size before SetWindowRgn is applied
         self._toplevel.geometry(f"{win_w}x{win_h}+{win_x}+{win_y}")
-        self._toplevel.update_idletasks()
+        self._toplevel.update()   # full update, not just idletasks
 
         if self._system == "Windows":
             self._apply_region_and_clickthrough(pw, ph, label_w)
@@ -141,7 +156,6 @@ class PlacementHighlightWindow:
         top.overrideredirect(True)
         top.attributes("-topmost", True)
         top.configure(bg=_BOX_COLOUR)
-        # start off-screen — no visible flash
         top.geometry(f"1x1+{_OFFSCREEN}")
 
         canvas = tk.Canvas(
@@ -162,7 +176,7 @@ class PlacementHighlightWindow:
             return
         self._canvas.delete("all")
 
-        # label area: (0, 0) → (label_w, _LABEL_H)
+        # label area: (0, 0) -> (label_w, _LABEL_H)
         self._canvas.create_rectangle(
             0, 0, label_w, _LABEL_H,
             fill=_LABEL_BG, outline=_BOX_COLOUR, width=1,
@@ -184,50 +198,61 @@ class PlacementHighlightWindow:
     def _apply_region_and_clickthrough(
         self, pw: int, ph: int, label_w: int
     ) -> None:
-        """Clip window to outline + label and set WS_EX_TRANSPARENT."""
+        """Clip window to outline + label and set WS_EX_TRANSPARENT.
+
+        Uses ctypes directly instead of pywin32 to avoid HWND type conversion
+        issues. winfo_id() on the Toplevel widget returns the correct HWND.
+
+        NOTE: Do NOT use GetAncestor(GA_ROOT) here — for tkinter Toplevels,
+        GA_ROOT returns the main Tk window HWND (Toplevels are internal children
+        of the Tk root on Windows), which would clip the wrong window.
+        """
         try:
-            import win32gui   # type: ignore[import-untyped]
-            import win32con   # type: ignore[import-untyped]
+            import ctypes
 
-            hwnd = self._toplevel.winfo_id()  # type: ignore[union-attr]
+            gdi32 = ctypes.windll.gdi32
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
 
-            # ── build region ──────────────────────────────────────────
-            # label: solid rectangle at top
-            label_rgn = win32gui.CreateRectRgn(0, 0, label_w, _LABEL_H)
+            hwnd = int(self._toplevel.winfo_id())  # type: ignore[union-attr]
+            if not hwnd:
+                logger.warning("PlacementHighlightWindow: winfo_id() returned 0")
+                return
 
-            # box outline: outer minus inner
+            # build region: label rect + box outline (outer minus inner)
+            label_rgn = gdi32.CreateRectRgn(0, 0, label_w, _LABEL_H)
+
             box_y = _LABEL_H
-            outer = win32gui.CreateRectRgn(0, box_y, pw, box_y + ph)
+            outer = gdi32.CreateRectRgn(0, box_y, pw, box_y + ph)
             if pw > _BOX_WIDTH * 2 and ph > _BOX_WIDTH * 2:
-                inner = win32gui.CreateRectRgn(
+                inner = gdi32.CreateRectRgn(
                     _BOX_WIDTH, box_y + _BOX_WIDTH,
                     pw - _BOX_WIDTH, box_y + ph - _BOX_WIDTH,
                 )
-                win32gui.CombineRgn(outer, outer, inner, win32con.RGN_DIFF)
-                win32gui.DeleteObject(inner)
+                gdi32.CombineRgn(outer, outer, inner, _RGN_DIFF)
+                gdi32.DeleteObject(inner)
 
-            # combine label + box outline
-            win32gui.CombineRgn(outer, outer, label_rgn, win32con.RGN_OR)
-            win32gui.DeleteObject(label_rgn)
+            gdi32.CombineRgn(outer, outer, label_rgn, _RGN_OR)
+            gdi32.DeleteObject(label_rgn)
 
-            win32gui.SetWindowRgn(hwnd, outer, True)
-            logger.debug("SetWindowRgn applied (hwnd=%d pw=%d ph=%d)", hwnd, pw, ph)
+            result = user32.SetWindowRgn(hwnd, outer, True)
+            if result == 0:
+                err = kernel32.GetLastError()
+                logger.warning(
+                    "SetWindowRgn returned 0 (hwnd=%d err=%d)", hwnd, err
+                )
+            else:
+                logger.debug("SetWindowRgn ok (hwnd=%d pw=%d ph=%d)", hwnd, pw, ph)
 
-            # ── WS_EX_TRANSPARENT for click-through ───────────────────
-            # Note: WS_EX_TRANSPARENT alone (no WS_EX_LAYERED) passes all
-            # mouse messages through — no interference with transparency
-            ex_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-            ex_style |= win32con.WS_EX_TRANSPARENT
-            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, ex_style)
+            # WS_EX_TRANSPARENT for click-through (no WS_EX_LAYERED needed)
+            ex_style = user32.GetWindowLongW(hwnd, _GWL_EXSTYLE)
+            user32.SetWindowLongW(hwnd, _GWL_EXSTYLE, ex_style | _WS_EX_TRANSPARENT)
 
-        except ImportError:
-            logger.debug("pywin32 not available — no region clipping or click-through")
         except Exception as exc:  # noqa: BLE001
             logger.warning("SetWindowRgn failed: %s", exc)
 
     def _label_width(self, cell_ref: str) -> int:
         """Approximate label rectangle width in px."""
-        # Consolas 11pt ≈ 8px per char; add padding
         return len(cell_ref) * 8 + _LABEL_PAD * 4
 
     def _cancel_dismiss(self) -> None:
