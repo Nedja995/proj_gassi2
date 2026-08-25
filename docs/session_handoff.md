@@ -267,18 +267,53 @@ Developer works remotely on MacBook but GASSI runs and is tested on Windows PC.
 
 ## How to Start a New Session
 
-1. Read `TODO.md` (roadmap + what's next)
-2. Read `CHANGELOG.md` (last few versions to understand current state)
-3. Read this file
-4. Ask the developer what task they want to work on
-5. Read the specific source files relevant to that task before proposing changes
-6. Split task into sub-versions, propose the split before coding
-7. Implement one sub-version at a time, update docs, give commit instructions
+**Paste this into the new chat to begin:**
 
-**Never:**
-- Improve things that weren't asked for
-- Remove markdown from prompts
-- Hardcode version strings outside pyproject.toml
-- Use `git add .`
-- Skip updating CHANGELOG, TODO, or pyproject.toml
-- Assume prior decisions are carried forward — verify against current files
+> Read `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\docs\session_handoff.md`
+> and all files it references (TODO.md, CHANGELOG.md, docs/architecture.md) before
+> we start. Then tell me what's missing from your context.
+
+That's all you need to say. The new Claude will read the handoff, read the key docs,
+and ask you to clarify anything still needed before touching code.
+
+**Keep this file updated** as the project evolves:
+- After any major architectural decision (new AD added)
+- After a milestone is complete (update roadmap summary)
+- After a new "lesson learned" (e.g. the win32gui/ctypes discovery)
+- After a new game pack reaches tested status
+
+No version bump needed — this is a living doc, not a changelog entry.
+
+---
+
+## Will This Be Enough Without Reading the Full Codebase?
+
+**Short answer: yes for most tasks, with caveats.**
+
+**What the handoff + key docs cover well:**
+- Architecture decisions and rationale (all 24 ADs)
+- What not to do and why (Windows hacks, naming, commit discipline)
+- Roadmap and current state
+- Game pack quirks
+- Prompt rules
+- Platform status
+
+**What still requires reading specific source files:**
+- Any task that modifies existing code — Claude must read the file before editing.
+  It should never edit from memory. Ask it to read the specific files first.
+- `assistant_viewmodel.py` — large, complex, central. Always read before touching.
+- `settings_dialog.py` — has many interdependencies, always read before touching.
+- `calibration_service.py` — coordinate normalisation logic is subtle, always read.
+- Prompt files — always read the current prompt before suggesting changes.
+
+**Good workflow for a new session:**
+1. Claude reads handoff + key docs (~3-4 file reads, moderate tokens)
+2. You describe the task
+3. Claude identifies which source files it needs and reads only those
+4. Claude proposes the sub-version split before writing any code
+5. You approve, then it implements one sub-version at a time
+
+**This is significantly cheaper than reading the full codebase** (which is
+~15-20 source files, most of them long). The handoff doc acts as a map —
+Claude knows the architecture from it and only needs to read the specific
+files relevant to your task.
