@@ -134,6 +134,34 @@ This document captures the key architecture decisions made for GASSI and the rat
 
 **Rationale:** `WS_EX_LAYERED` + `SetLayeredWindowAttributes(LWA_COLORKEY)` + tkinter Canvas (GDI child window) is unreliable on Windows 10/11 with DWM compositing — the color key is not composited correctly and the window renders as a solid near-black rectangle regardless of ordering or timing of Win32 calls. `SetWindowRgn` avoids layered windows entirely: it is a pure hit-test and paint-clip operation that works correctly on all Windows versions with DWM. The HWND is never destroyed between calls (moved off-screen instead of withdrawn) to avoid region and style state being reset.
 
+## AD-25: RagService Protocol + NullRagService fallback + optional dep group
+
+**Decision:** RAG retrieval is abstracted behind a `RagService` `typing.Protocol`
+(`core/rag/protocol.py`) with two implementations: `ChromaRagService` (Chroma
+persistent vector DB + sentence-transformers embeddings) and `NullRagService`
+(no-op). `RagServiceFactory.for_game_pack()` selects the correct implementation
+at startup. `chromadb` and `sentence-transformers` are in an optional dep group
+`[rag]` — not installed by default.
+
+**Rationale:**
+- **Protocol pattern (AD-02):** Consistent with `AiBackend` and `CaptureBackend`.
+  ViewModel accepts a `RagService` and never imports chromadb directly — the
+  optional dep is completely isolated to `chroma_backend.py`.
+- **NullRagService:** Allows the app to start and run without the `[rag]` extras
+  installed and without a `rag/` collection present. Callers check
+  `is_available()` before formatting a RAG context block.
+- **Optional dep group:** `chromadb` + `sentence-transformers` add ~500MB to the
+  install (ONNX models, transformers weights). Making this opt-in preserves the
+  low-footprint default install for users who only want OCR+Gemini mode.
+- **Deferred import:** `ChromaRagService._load_collection()` imports chromadb
+  inside the method, not at module level. This means importing `chroma_backend`
+  itself is safe even without extras — only instantiation triggers the import.
+- **Synchronous query:** RAG queries run synchronously on the main thread before
+  the async bridge submit. Chroma local queries are ~1–10ms — no benefit to async,
+  and it avoids bridging complexity.
+- **Factory responsibility:** `RagServiceFactory` is the only place that knows
+  about both implementations. All other code uses only `RagService` Protocol.
+
 ## AD-23: Grid overlay drawn on frame pre-submission; canvas bounding box deferred to v0.3.2
 
 **Decision:** In v0.3.1, the coordinate grid is drawn directly onto the captured frame (as a BGR image annotation via OpenCV) before that frame is sent to Gemini. Gemini returns a structured JSON response (`response_schema`) with a `cell` reference and `advice` text. The cell reference is validated and converted to screen pixel coordinates via `cell_to_screen_pixels()`, but no canvas bounding box is rendered — the cell reference is appended to the advice text instead.

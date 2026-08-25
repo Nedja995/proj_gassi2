@@ -20,6 +20,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.1] - 2026-08-25
+
+### Added
+- `core/rag/` subpackage: `RagService` Protocol, `NullRagService`, `ChromaRagService`,
+  `RagServiceFactory` (AD-25)
+- `RagService` Protocol (`core/rag/protocol.py`): `query(text, top_k, min_game_version)`,
+  `is_available()` — structural subtyping, `@runtime_checkable`
+- `NullRagService` (`core/rag/null_backend.py`): no-op fallback, zero extra imports,
+  used when no `rag/` collection present or extras not installed
+- `ChromaRagService` (`core/rag/chroma_backend.py`): loads persistent Chroma collection
+  from `game_packs/<id>/rag/`, deferred chromadb import, graceful degradation on any
+  load or query error
+- `RagServiceFactory.for_game_pack()` (`core/rag/factory.py`): returns `ChromaRagService`
+  when `rag/` folder exists + `collection_name` set + chromadb available; else `NullRagService`
+- Optional dep group `[rag]` in `pyproject.toml`: `chromadb>=0.6`,
+  `sentence-transformers>=3.0` — not installed by default
+- AD-25 added to `docs/architecture.md`
+
 ## [0.5.18] - 2026-08-25
 
 ### Changed

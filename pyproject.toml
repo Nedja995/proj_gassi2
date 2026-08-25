@@ -1,6 +1,6 @@
 [project]
 name = "gassi"
-version = "0.5.18"
+version = "0.6.1"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
 readme = "README.md"
 license = "MIT"
@@ -34,6 +34,13 @@ dev = [
 ]
 windows = [
     "pywin32>=306",
+]
+rag = [
+    # Local vector DB + embedding model for game knowledge retrieval (v0.6.x).
+    # Not installed by default — only needed when game packs ship a rag/ collection.
+    # Install with: uv sync --extra rag
+    "chromadb>=0.6",
+    "sentence-transformers>=3.0",
 ]
 
 [project.scripts]

@@ -197,22 +197,19 @@ Delivered across sub-versions v0.6.1–v0.6.7.
 
 ---
 
-## v0.6.1 — RagService: Protocol + Chroma Backend
+## v0.6.1 — RagService: Protocol + Chroma Backend ✅ Complete
 
-Core retrieval infrastructure. No prompt injection yet — just the service wired and queryable.
-
-- [ ] `RagService` Protocol (`core/rag/protocol.py`): `query(text, top_k) -> list[str]`, `is_available() -> bool`
-- [ ] `ChromaRagService` implementing `RagService` (`core/rag/chroma_backend.py`):
-      loads persistent Chroma collection from `game_packs/<id>/rag/`, wraps query,
-      returns chunk strings
-- [ ] `NullRagService` implementing `RagService`: no-op, `is_available()` returns `False` —
-      used when collection absent; no import of chromadb/sentence-transformers
-- [ ] `RagServiceFactory.for_game_pack(game_pack_path) -> RagService`: returns
-      `ChromaRagService` if `rag/` folder present, else `NullRagService`
-- [ ] `chromadb` + `sentence-transformers` added to optional dep group `[rag]` in
-      `pyproject.toml` — not installed by default
-- [ ] AD-25 added to `docs/architecture.md` (RagService Protocol, NullRagService
-      fallback, optional dep group rationale)
+- [x] `RagService` Protocol (`core/rag/protocol.py`): `query(text, top_k, min_game_version)`,
+      `is_available()` — `@runtime_checkable`, structural subtyping
+- [x] `ChromaRagService` (`core/rag/chroma_backend.py`): loads persistent Chroma collection
+      from `game_packs/<id>/rag/`, deferred chromadb import, graceful degradation
+- [x] `NullRagService` (`core/rag/null_backend.py`): no-op, zero extra imports,
+      `is_available()` returns `False`
+- [x] `RagServiceFactory.for_game_pack()` (`core/rag/factory.py`): `ChromaRagService`
+      when prerequisites met, else `NullRagService`
+- [x] Optional dep group `[rag]` in `pyproject.toml`: `chromadb>=0.6`,
+      `sentence-transformers>=3.0` — not installed by default
+- [x] AD-25 added to `docs/architecture.md`
 
 ---
 
