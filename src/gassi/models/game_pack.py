@@ -42,9 +42,9 @@ class GamePackManifest(BaseModel):
     # If game patches change mechanics significantly, old chunks can be filtered.
     rag_min_game_version: str | None = None
 
-    # v0.6.0: preferred AI backend for this pack (None = use global setting).
-    # Allows a pack to specify "ollama" for local-only or "gemini" for cloud.
-    preferred_backend: str | None = None
+    # v0.5.12: preferred advisor input source for this pack.
+    # None = use global settings default. Values: "ocr", "screenshot".
+    preferred_advisor_source: str | None = None
 
     # v0.7.0: native window detection — OS-specific window class or process name.
     # Used by NativeWindowRegionProvider when implemented.
