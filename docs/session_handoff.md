@@ -144,11 +144,15 @@ v0.5.x  ✅ Complete (v0.5.1–v0.5.18) — GamePackManifest fields, atomic sett
 v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
            ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases,
            ViewModel injection, version filtering, docs)
-v0.7.0  🔜 Next — Multi-backend (ClaudeBackend, building footprints)
-v0.7.1  — Local SLM (Ollama, Qwen2.5-VL)
-v0.8.0  — Platform (Wayland, native window detection, macOS, SteamOS)
-v0.8.1  — Anti-cheat posture (SetWindowDisplayAffinity)
-v0.8.2  — Distribution (PyInstaller, installer, TTS)
+v0.7.0  🔜 Next — Multi-backend milestone (v0.7.1–v0.7.4)
+v0.7.1  — ClaudeBackend (Anthropic SDK, AiBackend Protocol)
+v0.7.2  — Backend selector UI + wiring in Settings
+v0.7.3  — Token usage / cost tracking in overlay footer
+v0.7.4  — Building footprint registry + multi-cell highlight
+v0.8.0  — Local SLM (Ollama, Qwen2.5-VL)
+v0.8.1  — Platform (Wayland, native window detection, macOS, SteamOS)
+v0.8.2  — Anti-cheat posture (SetWindowDisplayAffinity)
+v0.8.3  — Distribution (PyInstaller, installer, TTS)
 v0.9.0  — UX polish (floating advice/placement windows, accessibility)
 ```
 

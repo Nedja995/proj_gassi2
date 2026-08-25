@@ -62,12 +62,6 @@ Transparent always-on-top cell highlight window over the game screen.
 - [x] `placement_highlight_seconds` in `AppSettings`
 - [x] AD-24 added to architecture.md
 
-### Deferred to v0.3.3 or later
-- [ ] Arrow rendering (directional arrows pointing to game UI elements)
-- [ ] Dim-background highlight region (tutorial step overlay)
-- [ ] Tutorial step system (sequence of steps with next/prev navigation)
-- [ ] Tutorial sequences defined in game pack YAML
-
 ---
 
 ## v0.4.0 — Second Game Pack (Nebuchadnezzar) ✅ Complete
@@ -318,23 +312,81 @@ Delivered across v0.6.1–v0.6.7. All sub-versions complete.
 
 ---
 
-## v0.7.0 — Multi-Backend (Cloud)
+## v0.7.0 — Multi-Backend (Cloud) 🔜 Next
 
 Protocol-based AI backend swap. ClaudeBackend as the second implementation,
 validates that AiBackend Protocol is truly backend-agnostic.
-
-- [ ] ClaudeBackend implementing AiBackend Protocol (Anthropic SDK)
-- [ ] Backend selector dropdown in Settings → General
-- [ ] Cost tracking: token usage display per session in overlay footer
-- [ ] Per-backend model list in settings dropdown (reuse fetch pattern from Gemini)
-- [ ] Building footprint registry in game pack manifest (`building_footprints` dict)
-      e.g. `temple: [4, 4]` — used to render multi-cell highlight instead of single cell
-- [ ] `cell_to_screen_pixels` extended to accept optional `footprint: tuple[int, int]`
-      so highlight covers the full building area on the game screen
+Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.7.1 — Local SLM Support
+## v0.7.1 — ClaudeBackend
+
+- [ ] `core/ai/claude_backend.py`: `ClaudeBackend` implementing `AiBackend` Protocol
+      (Anthropic SDK `anthropic>=0.40`)
+- [ ] `complete_text()` and `complete_with_image()` matching exact Protocol signatures
+- [ ] Structured output via JSON mode (system prompt instruction) — Claude has no native
+      schema object; falls back to same `_parse_placement_response()` JSON parsing
+- [ ] 429 / rate-limit error handling with readable message (same pattern as `GeminiBackend`)
+- [ ] `fetch_available_claude_models()` — returns static list (no Anthropic listing endpoint)
+- [ ] Optional dep group `[claude]`: `anthropic>=0.40` only, not installed by default
+- [ ] Deferred import pattern — safe to import module without extras installed
+- [ ] No UI wiring yet — backend instantiated only if `[claude]` extras present
+- [ ] AD-26 in `docs/architecture.md`
+
+---
+
+## v0.7.2 — Backend Selector UI + Wiring
+
+- [ ] `AiProvider` enum added to `models/enums.py`: `GEMINI`, `CLAUDE`
+- [ ] `active_ai_provider: AiProvider` field added to `AppSettings` (default `GEMINI`)
+- [ ] Backend selector `ttk.Combobox` in Settings → General
+- [ ] Model dropdown content switches based on selected provider:
+      Gemini fetches live, Claude shows static list
+- [ ] Backend factory in `core/ai/`: constructs correct backend from `AppSettings`
+- [ ] `main.py` wiring: backend constructed via factory at startup
+- [ ] `preferred_backend` manifest field: logged at startup as informational hint only;
+      Settings always wins — pack field does not override user selection
+- [ ] Claude option hidden from dropdown if `[claude]` extras not installed;
+      startup log explains why
+
+---
+
+## v0.7.3 — Token Usage / Cost Tracking
+
+- [ ] `UsageStats` Pydantic model (`models/results.py`):
+      `input_tokens: int`, `output_tokens: int`, `estimated_cost_usd: float | None`
+- [ ] `AiBackend` Protocol updated: both methods return `tuple[str, UsageStats]`
+      instead of bare `str` — both backends updated atomically in this sub-version
+- [ ] `GeminiBackend`: extract token counts from response metadata, populate `UsageStats`
+- [ ] `ClaudeBackend`: extract token counts from response usage field, populate `UsageStats`
+- [ ] Session accumulator in ViewModel: `_session_input_tokens`, `_session_output_tokens`,
+      `_session_cost_usd`
+- [ ] Overlay footer: token/cost label updated after each call
+      (e.g. `↑1.2k ↓0.8k ~$0.001`); hidden when zero
+- [ ] Per-call stats logged at DEBUG level
+- [ ] Cost rates hardcoded per known model string; `None` for unknown models
+
+---
+
+## v0.7.4 — Building Footprint Registry + Multi-cell Highlight
+
+- [ ] `building_footprints: dict[str, tuple[int, int]]` field added to `GamePackManifest`
+      (optional, default `{}`)
+      e.g. `temple: [4, 4]`, `pump: [1, 1]`
+- [ ] `cell_to_screen_pixels()` extended to accept optional `footprint: tuple[int, int]`;
+      when provided, rect covers W×H cells instead of 1×1
+- [ ] `PlacementHighlightWindow.show()` accepts optional `footprint` param;
+      passes through to `SetWindowRgn` hollow frame calculation
+- [ ] ViewModel: after parsing `cell_reference`, look up footprint in manifest
+      by keyword scan of advice text — no additional AI call
+- [ ] Timberborn manifest: `building_footprints` entries for common buildings
+- [ ] Nebuchadnezzar manifest: `building_footprints` entries for common buildings
+- [ ] AD-27 in `docs/architecture.md`
+
+---
+
+## v0.8.0 — Local SLM Support
 
 Freemium tier: local model for users with capable GPUs, no API key required.
 
@@ -346,7 +398,7 @@ Freemium tier: local model for users with capable GPUs, no API key required.
 
 ---
 
-## v0.8.0 — Platform Support
+## v0.8.1 — Platform Support
 
 Expand beyond Windows + X11. Native window detection replaces manual positioning.
 
@@ -358,7 +410,7 @@ Expand beyond Windows + X11. Native window detection replaces manual positioning
 
 ---
 
-## v0.8.1 — Anti-Cheat Posture
+## v0.8.2 — Anti-Cheat Posture
 
 For games with anti-cheat. Pure overlay approach already avoids memory reading;
 this adds capture hiding and documentation.
@@ -369,7 +421,7 @@ this adds capture hiding and documentation.
 
 ---
 
-## v0.8.2 — Distribution
+## v0.8.3 — Distribution
 
 Packaging and installer for end-users who don't have Python/uv.
 
