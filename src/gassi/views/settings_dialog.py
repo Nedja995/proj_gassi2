@@ -194,18 +194,33 @@ class SettingsDialog(tk.Toplevel):
         self.grab_set()
 
         # notebook (tabs)
+        # Use "default" theme as base so foreground overrides are not
+        # stomped by the native Windows "vista" theme.
         style = ttk.Style()
-        style.configure("Settings.TNotebook", background=t.bg_primary)
+        try:
+            style.theme_use("default")
+        except tk.TclError:
+            pass
+        style.configure("Settings.TNotebook", background=t.bg_primary, borderwidth=0)
         style.configure(
             "Settings.TNotebook.Tab",
             background=t.bg_header,
             foreground=t.fg_text,
-            padding=[10, 4],
+            padding=[12, 5],
+            font=t.font("normal"),
+            focuscolor=t.bg_primary,
         )
         style.map(
             "Settings.TNotebook.Tab",
-            background=[("selected", t.bg_primary)],
-            foreground=[("selected", t.fg_accent)],
+            background=[
+                ("selected", t.bg_primary),
+                ("active", t.bg_button_hover),
+            ],
+            foreground=[
+                ("selected", t.fg_accent),
+                ("active", t.fg_text),
+                ("!selected", t.fg_dim),
+            ],
         )
 
         notebook = ttk.Notebook(self, style="Settings.TNotebook")

@@ -149,7 +149,27 @@ def main() -> None:
                 ),
             )
         else:
-            logger.info("Settings saved — restart required for hotkey changes")
+            _hotkey_keys = {
+                "hotkey_advisor_toggle",
+                "hotkey_advisor_source_switch",
+                "hotkey_placement",
+                "hotkey_lock_overlay",
+                "hotkey_debug_save_frame",
+            }
+            _old_hotkeys = {k: settings.__dict__.get(k) for k in _hotkey_keys}
+            _new_hotkeys = {k: new_settings.get(k) for k in _hotkey_keys}
+            if _old_hotkeys != _new_hotkeys:
+                logger.info("Settings saved — restart required for hotkey changes")
+                overlay.after(
+                    0,
+                    lambda: overlay.canvas.show_advice(
+                        "## Restart required\n"
+                        "- Hotkey changes will take effect after restarting GASSI.",
+                        is_loading=False,
+                    ),
+                )
+            else:
+                logger.info("Settings saved")
 
         if "cooldown_seconds" in new_settings:
             viewmodel._settings = AppSettings(
