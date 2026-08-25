@@ -2,7 +2,9 @@ game_id: nebuchadnezzar
 display_name: "Nebuchadnezzar"
 window_title_pattern: "Nebuchadnezzar"
 game_version: "1.0"
-rag_collection_name: null
+rag_collection_name: nebuchadnezzar_knowledge
+rag_top_k: 4
+rag_min_game_version: "1.0"
 
 # OCR regions are unreliable until calibration is refined;
 # screenshot mode gives better advice for mid/late game.
