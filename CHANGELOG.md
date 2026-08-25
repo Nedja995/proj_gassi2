@@ -20,6 +20,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.5.18] - 2026-08-25
+
+### Changed
+- **Status messages during AI calls** — all three paths now show a two-line
+  progress sequence visible while the AI call is in flight:
+  - OCR advisor: `✓ HUD captured (N regions) / Analyzing with <model>...`
+  - Screenshot advisor: `✓ Screenshot captured (WxH px) / Analyzing with <model>...`
+  - Placement: `✓ Screenshot captured (WxH px + CxR grid) / Analyzing with <model>...`
+- OCR fallback to screenshot now shows `OCR confidence low — switching to screenshot...`
+  before re-entering the screenshot path.
+- `update_idletasks()` called immediately after each status message so the
+  overlay repaints before the blocking bridge submit.
+
 ## [0.5.17] - 2026-08-25
 
 ### Fixed

@@ -415,6 +415,13 @@ All items here are low architectural risk — UI-only changes on top of existing
 
 ## Completed
 
+### v0.5.18 (2026-08-25)
+- [x] OCR advisor: shows `✓ HUD captured (N regions) / Analyzing with <model>...` after capture
+- [x] Screenshot advisor: shows `✓ Screenshot captured (WxHpx) / Analyzing with <model>...`
+- [x] Placement: shows `✓ Screenshot captured (WxHpx + CxR grid) / Analyzing with <model>...`
+- [x] OCR fallback shows `OCR confidence low — switching to screenshot...`
+- [x] `update_idletasks()` after each status message ensures repaint before bridge submit
+
 ### v0.5.17 (2026-08-25)
 - [x] `_on_settings_saved`: restart notice only fires when hotkeys actually changed
 - [x] Non-hotkey saves (model, theme, cooldown, game) log "Settings saved" with no warning
