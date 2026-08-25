@@ -1,7 +1,7 @@
 # GASSI — Game-specific AI Strategy Screen Inspector
 
 A lightweight, cross-platform desktop overlay that assists players in real-time with complex
-strategy and colony-sim games. Currently supports **Timberborn**.
+strategy and colony-sim games. Currently supports **Timberborn** and **Nebuchadnezzar**.
 
 **No game memory reading. No process injection. Pure computer vision + screen overlay.**
 
@@ -15,7 +15,7 @@ always-on-top overlay on top of your game.
 
 ---
 
-## Features (v0.3.2)
+## Features (v0.6.6)
 
 ### Advisor Mode (`F1`)
 
@@ -62,6 +62,20 @@ Click-through enabled; the highlight never blocks game input.
 - Toggle grid overlay for placement mode
 - Settings persist across sessions (`settings.json` in OS app data dir)
 
+### RAG Knowledge Retrieval
+
+Game-specific knowledge (formulas, building costs, ratios, patch notes) is embedded into
+a local vector database and retrieved at query time. Relevant chunks are injected into the
+AI prompt automatically on every OCR advisor call — giving deeper, formula-level advice
+without inflating the static prompt size.
+
+- Per-game knowledge base: human-readable `.md` source files in `game_packs/<id>/knowledge/`
+- Pre-compiled [Chroma](https://www.trychroma.com/) vector DB committed to repo — no user
+  ingestion required
+- Uses chromadb's built-in ONNX embedding (`ONNXMiniLM_L6_V2`) — no PyTorch dependency
+- Optional: requires `[rag]` dep group (`uv sync --extra rag`). Falls back silently to
+  static prompts when not installed.
+
 ### Debug Tools
 
 - `F4` saves last captured frame as timestamped PNG to `<app data>/debug_frames/`
@@ -75,8 +89,8 @@ Click-through enabled; the highlight never blocks game input.
 
 | Game | Pack Version | Status |
 |------|-------------|--------|
-| Timberborn | 0.6 | Active |
-| Nebuchadnezzar | 1.0 | In progress (calibration pending) |
+| Timberborn | 0.6 | Active, RAG enabled |
+| Nebuchadnezzar | 1.0 | Active, RAG enabled |
 
 ---
 
@@ -101,6 +115,11 @@ uv pip install -e ".[dev]"
 
 # Windows: also install pywin32 for click-through overlay
 uv pip install -e ".[dev,windows]"
+
+# Optional: install RAG support (Chroma vector DB for game knowledge retrieval)
+# Required to use the knowledge base — falls back to static prompts without it
+uv pip install -e ".[dev,rag]"
+# or both: uv pip install -e ".[dev,windows,rag]"
 
 # Store Gemini API key in OS keyring
 uv run python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_API_KEY')"

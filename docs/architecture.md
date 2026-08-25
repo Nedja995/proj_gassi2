@@ -138,10 +138,10 @@ This document captures the key architecture decisions made for GASSI and the rat
 
 **Decision:** RAG retrieval is abstracted behind a `RagService` `typing.Protocol`
 (`core/rag/protocol.py`) with two implementations: `ChromaRagService` (Chroma
-persistent vector DB + sentence-transformers embeddings) and `NullRagService`
+persistent vector DB + `ONNXMiniLM_L6_V2` embeddings) and `NullRagService`
 (no-op). `RagServiceFactory.for_game_pack()` selects the correct implementation
-at startup. `chromadb` and `sentence-transformers` are in an optional dep group
-`[rag]` — not installed by default.
+at startup. `chromadb` is in an optional dep group `[rag]` — not installed by default.
+sentence-transformers was explicitly rejected (see Embedding model rationale below).
 
 **Rationale:**
 - **Protocol pattern (AD-02):** Consistent with `AiBackend` and `CaptureBackend`.
@@ -150,9 +150,15 @@ at startup. `chromadb` and `sentence-transformers` are in an optional dep group
 - **NullRagService:** Allows the app to start and run without the `[rag]` extras
   installed and without a `rag/` collection present. Callers check
   `is_available()` before formatting a RAG context block.
-- **Optional dep group:** `chromadb` + `sentence-transformers` add ~500MB to the
-  install (ONNX models, transformers weights). Making this opt-in preserves the
-  low-footprint default install for users who only want OCR+Gemini mode.
+- **Optional dep group:** `chromadb` alone adds ~100MB. Making this opt-in
+  preserves the low-footprint default install for users who only want OCR+Gemini mode.
+- **Embedding model — `ONNXMiniLM_L6_V2` over sentence-transformers:** The initial
+  plan used `sentence-transformers` (`all-MiniLM-L6-v2`). During implementation,
+  `uv sync --extra rag` pulled `torch==2.13.0` (~2GB) as a transitive dependency of
+  `sentence-transformers>=3.x`. This directly violates AD-06 (no PyTorch). Chromadb
+  ships a built-in `ONNXMiniLM_L6_V2` embedding function that uses `onnxruntime`
+  (already installed via `rapidocr-onnxruntime`) with the same model weights.
+  `sentence-transformers` was dropped from the `[rag]` dep group entirely.
 - **Deferred import:** `ChromaRagService._load_collection()` imports chromadb
   inside the method, not at module level. This means importing `chroma_backend`
   itself is safe even without extras — only instantiation triggers the import.
@@ -161,6 +167,10 @@ at startup. `chromadb` and `sentence-transformers` are in an optional dep group
   and it avoids bridging complexity.
 - **Factory responsibility:** `RagServiceFactory` is the only place that knows
   about both implementations. All other code uses only `RagService` Protocol.
+- **Injection point — OCR path only:** RAG is injected on the OCR advisor path
+  (combined OCR text used as query). Screenshot path is skipped — no text query
+  is available to embed against. Placement mode also skipped for the same reason.
+  Context is prepended to the system prompt as a `## Retrieved Knowledge` block.
 
 ## AD-23: Grid overlay drawn on frame pre-submission; canvas bounding box deferred to v0.3.2
 

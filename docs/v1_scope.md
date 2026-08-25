@@ -81,11 +81,36 @@ with RapidOCR, writes `hud_regions_user.yaml`. Clear user calibration button rev
 
 ---
 
+## Feature 6: RAG Knowledge Retrieval
+
+**Shipped:** v0.6.1–v0.6.6
+
+Game-specific knowledge is embedded into a local Chroma vector database and retrieved
+at query time. Retrieved chunks are prepended to the system prompt on every OCR advisor
+call, giving the AI access to formula-level, wiki-sourced knowledge without bloating
+the static prompt.
+
+**Architecture:**
+- `RagService` Protocol — `ChromaRagService` (Chroma + ONNXMiniLM_L6_V2 ONNX embeddings,
+  no PyTorch) and `NullRagService` (no-op fallback when collection absent)
+- `tools/ingest_knowledge.py` — CLI for chunking, embedding, and persisting collections
+- Per-game `knowledge/` folder (human-readable `.md` sources) and `rag/` folder
+  (compiled Chroma binary, committed to repo)
+- Optional `[rag]` dep group (`chromadb` only — `onnxruntime` reused from RapidOCR)
+
+**Game packs with RAG:**
+- Timberborn — 6 knowledge files, `timberborn_knowledge` collection
+- Nebuchadnezzar — 6 knowledge files, `nebuchadnezzar_knowledge` collection
+
+**Injection:** OCR advisor path only (OCR text used as query). Screenshot path skipped
+(no text query available). `rag_top_k` and `rag_min_game_version` configurable per pack.
+
+---
+
 ## Explicitly Out of Scope (still deferred)
 
 - Arrow rendering over game screen
 - Tutorial overlay (highlight UI elements, step-through instructions)
-- RAG pipeline (Chroma, embeddings, vector search) — v0.6.0
 - Claude or Ollama backends — v0.7.0 / v0.7.1
 - Native window detection (OS-level window handle lookup) — v0.8.0
 - Wayland capture support — v0.8.0
