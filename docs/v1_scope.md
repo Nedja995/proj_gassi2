@@ -104,3 +104,6 @@ with RapidOCR, writes `hud_regions_user.yaml`. Clear user calibration button rev
 - Wayland desktops (SteamOS/Steam Deck) are not supported
 - macOS click-through and transparency fallback to alpha (no `SetWindowRgn` equivalent yet)
 - `resource_bar` OCR in Nebuchadnezzar unvalidated — small digits may need preprocessor tuning
+- Fullscreen exclusive mode (DirectX/OpenGL) bypasses DWM — GASSI overlay is not visible.
+  Use Borderless Windowed mode in game settings. Games without that option (e.g. Nebuchadnezzar)
+  must be run in Windowed mode for GASSI to work.
