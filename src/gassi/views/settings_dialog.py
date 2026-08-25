@@ -26,12 +26,26 @@ _KEY_DISPLAY = {
 
 
 def _display_hotkey(hotkey_str: str) -> str:
-    """Convert pynput hotkey string to readable display."""
+    """Convert pynput hotkey string to readable display.
+
+    Examples:
+        '<f1>'          → 'F1'
+        '<alt>+8'       → 'Alt + 8'
+        '<ctrl>+<f2>'   → 'Ctrl + F2'
+        '<shift>+a'     → 'Shift + A'
+    """
     parts = hotkey_str.split("+")
     display_parts = []
     for part in parts:
         part = part.strip()
-        display_parts.append(_KEY_DISPLAY.get(part, part.strip("<>")))
+        if part in _KEY_DISPLAY:
+            display_parts.append(_KEY_DISPLAY[part])
+        elif part.startswith("<") and part.endswith(">"):
+            # unknown special key — strip brackets and capitalise
+            display_parts.append(part.strip("<>").upper())
+        else:
+            # plain character — show uppercase
+            display_parts.append(part.upper())
     return " + ".join(display_parts)
 
 
@@ -52,7 +66,7 @@ class HotkeyCapture(tk.Frame):
             bg=theme.bg_input,
             fg=theme.fg_text,
             font=theme.font("normal"),
-            width=16,
+            width=22,
             anchor="center",
             relief=tk.FLAT,
             padx=4,
@@ -87,6 +101,17 @@ class HotkeyCapture(tk.Frame):
         top = self.winfo_toplevel()
         top.bind("<Key>", self._on_key_press)
 
+    # special key names that pynput expects wrapped in angle brackets
+    # single printable characters (letters, digits, symbols) must NOT be wrapped
+    _SPECIAL_KEYS = frozenset({
+        "f1", "f2", "f3", "f4", "f5", "f6",
+        "f7", "f8", "f9", "f10", "f11", "f12",
+        "space", "return", "escape", "tab", "backspace", "delete",
+        "home", "end", "prior", "next",  # prior/next = page up/down
+        "up", "down", "left", "right",
+        "insert", "pause", "print", "scroll_lock", "num_lock", "caps_lock",
+    })
+
     def _on_key_press(self, event: tk.Event) -> None:  # type: ignore[type-arg]
         if not self._capturing:
             return
@@ -94,19 +119,34 @@ class HotkeyCapture(tk.Frame):
         top = self.winfo_toplevel()
         top.unbind("<Key>")
 
-        # build pynput-compatible string
         key_name = event.keysym.lower()
         modifiers: list[str] = []
 
-        if event.state & 0x1:  # Shift
+        if event.state & 0x1:   # Shift
             modifiers.append("<shift>")
-        if event.state & 0x4:  # Ctrl
+        if event.state & 0x4:   # Ctrl
             modifiers.append("<ctrl>")
-        if event.state & 0x8:  # Alt
+        # Alt: check both 0x8 (X11/Tk standard) and 0x20000 (Windows Mod2)
+        if event.state & 0x8 or event.state & 0x20000:
             modifiers.append("<alt>")
 
-        # map tkinter keysym to pynput format
-        pynput_key = f"<{key_name}>"
+        # skip bare modifier keypresses — wait for an actual key
+        if key_name in ("shift_l", "shift_r", "control_l", "control_r",
+                        "alt_l", "alt_r", "super_l", "super_r"):
+            self._capturing = True
+            top.bind("<Key>", self._on_key_press)
+            return
+
+        # pynput format: special keys get <>, printable chars do not
+        # e.g. F1 → "<f1>", 8 → "8", a → "a", space → "<space>"
+        if key_name in self._SPECIAL_KEYS:
+            pynput_key = f"<{key_name}>"
+        elif len(key_name) == 1:
+            # single printable character — use as-is
+            pynput_key = key_name
+        else:
+            # unknown multi-char key — wrap defensively
+            pynput_key = f"<{key_name}>"
 
         if modifiers:
             self._value = "+".join(modifiers) + "+" + pynput_key

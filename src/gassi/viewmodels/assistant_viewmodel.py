@@ -61,7 +61,6 @@ class AssistantViewModel:
 
         # state
         self._mode = AssistantMode.IDLE
-        self._input_source = settings.advisor_input_source
         self._busy = False
         self._last_call_time: float = 0.0
         self._cooldown_after_id: str | None = None
@@ -84,6 +83,16 @@ class AssistantViewModel:
         self._placement_prompt = self._pack_loader.load_prompt(
             settings.active_game_id, "placement"
         )
+
+        # apply pack-level advisor source preference if set, else use global setting
+        _pack_source = getattr(self._manifest, "preferred_advisor_source", None)
+        if _pack_source and _pack_source in ("ocr", "screenshot"):
+            self._input_source = AdvisorInputSource(_pack_source)
+            logger.info(
+                "Advisor source set to '%s' from game pack preference", _pack_source
+            )
+        else:
+            self._input_source = settings.advisor_input_source
 
     # ── public commands (bound to hotkeys / UI buttons) ───────────────
 
@@ -423,6 +432,9 @@ class AssistantViewModel:
         Windows-only check via pywin32. Returns True on non-Windows or
         if pywin32 is not installed (fail open — don't block the hotkey).
         Falls back to True if window_title_pattern is not set in manifest.
+
+        Also blocks triggers when GASSI's own overlay is in the foreground
+        (should not happen with overrideredirect, but guards against edge cases).
         """
         pattern = getattr(self._manifest, "window_title_pattern", "") or ""
         if not pattern:
@@ -432,10 +444,17 @@ class AssistantViewModel:
             import win32gui  # type: ignore[import-untyped]
             hwnd = win32gui.GetForegroundWindow()
             title = win32gui.GetWindowText(hwnd)
-            focused = pattern.lower() in title.lower()
+            title_lower = title.lower()
+
+            # block if GASSI itself is somehow in foreground
+            if "gassi" in title_lower:
+                logger.debug("Hotkey blocked — GASSI overlay is foreground window")
+                return False
+
+            focused = pattern.lower() in title_lower
             if not focused:
                 logger.debug(
-                    "Foreground window: '%s' (expected pattern: '%s')",
+                    "Hotkey blocked — foreground: '%s' (expected pattern: '%s')",
                     title, pattern,
                 )
             return focused
