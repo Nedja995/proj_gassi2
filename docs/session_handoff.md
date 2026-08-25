@@ -19,17 +19,19 @@ pynput, opencv-python-headless, pywin32, uv package manager
 
 ---
 
-## Key Docs — Read Before Any Changes
+## Key Docs — Read On Demand, Not Upfront
 
-Always read these before touching code:
+**Do NOT read all these at session start** — that wastes tokens.
+This handoff doc is designed to be self-contained for starting work.
+Read specific docs only when the task requires it:
 
-```
-TODO.md                    — roadmap, all sub-versions, completed items
-CHANGELOG.md               — every version with full change details
-docs/architecture.md       — AD-01 through AD-24 (all design decisions + rationale)
-docs/v1_scope.md           — feature scope, known limitations
-docs/adding_game_pack.md   — complete guide for new game packs
-```
+- `TODO.md` — only if planning the next milestone or checking roadmap ordering
+- `CHANGELOG.md` — only if debugging a regression or checking what changed in a specific version
+- `docs/architecture.md` — only if making a non-obvious design decision (check if an AD already covers it)
+- `docs/adding_game_pack.md` — only when adding a new game pack
+- `docs/v1_scope.md` — only when updating the known limitations or scope
+
+**Source files:** read only the specific files the task touches. Never edit from memory.
 
 ---
 
@@ -270,11 +272,10 @@ Developer works remotely on MacBook but GASSI runs and is tested on Windows PC.
 **Paste this into the new chat to begin:**
 
 > Read `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\docs\session_handoff.md`
-> and all files it references (TODO.md, CHANGELOG.md, docs/architecture.md) before
-> we start. Then tell me what's missing from your context.
+> then tell me what task you need help with.
 
-That's all you need to say. The new Claude will read the handoff, read the key docs,
-and ask you to clarify anything still needed before touching code.
+That's it — just the one file. The handoff is self-contained.
+Claude reads specific source files only when the task requires it.
 
 **Keep this file updated** as the project evolves:
 - After any major architectural decision (new AD added)
@@ -307,13 +308,12 @@ No version bump needed — this is a living doc, not a changelog entry.
 - Prompt files — always read the current prompt before suggesting changes.
 
 **Good workflow for a new session:**
-1. Claude reads handoff + key docs (~3-4 file reads, moderate tokens)
+1. Claude reads only this handoff doc (1 file, moderate tokens)
 2. You describe the task
 3. Claude identifies which source files it needs and reads only those
 4. Claude proposes the sub-version split before writing any code
 5. You approve, then it implements one sub-version at a time
 
-**This is significantly cheaper than reading the full codebase** (which is
-~15-20 source files, most of them long). The handoff doc acts as a map —
-Claude knows the architecture from it and only needs to read the specific
-files relevant to your task.
+**This is the cheapest possible start** — one file read instead of
+15-20. The handoff acts as a map. Claude reads source files only for
+the specific task, not the whole codebase.
