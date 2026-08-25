@@ -319,6 +319,10 @@ All items here are low architectural risk — UI-only changes on top of existing
 
 ## Completed
 
+### v0.5.16 (2026-08-25)
+- [x] Timberborn `hud_regions_user.yaml`: `cycle_time_panel` manually added
+- [x] Calibration prompt: standard label list, min size requirement, px-coord warning
+
 ### v0.5.15 (2026-08-25)
 - [x] SetWindowRgn via ctypes confirmed working — hollow yellow outline rendering correctly
 - [x] Nebuchadnezzar quick_prompts refined for better spatial advice

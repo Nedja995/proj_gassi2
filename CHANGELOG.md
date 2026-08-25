@@ -20,6 +20,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.5.16] - 2026-08-25
+
+### Fixed
+- Timberborn calibration: `cycle_time_panel` manually added to
+  `hud_regions_user.yaml` — Gemini consistently returns zero dimensions for the
+  top-right time/cycle region. Position from manifest baseline (known good).
+- `_CALIBRATION_PROMPT`: added standard label list so Gemini uses consistent
+  names (`top_resource_bar`, `cycle_time_panel`, etc.) matching `LABEL_CONFIGS`
+  and advisor prompts. Added explicit minimum size requirement (`>= 0.05` width,
+  `>= 0.02` height) to prevent zero-dimension regions being returned.
+- Added pixel coordinate example to CRITICAL section to reduce px-coord returns.
+
+### Notes
+- Root cause of inconsistent label names: Gemini invents labels each run
+  (`top_bar_resources`, `resource_bar_top`, `top_resource_bar` for same region).
+  Prompt now steers toward canonical names. Full fix would require post-processing
+  to match calibrated regions to manifest labels by spatial overlap.
+
 ## [0.5.15] - 2026-08-25
 
 ### Fixed
