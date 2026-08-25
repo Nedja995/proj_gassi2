@@ -320,19 +320,19 @@ Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.7.1 — ClaudeBackend
+## v0.7.1 — ClaudeBackend ✅ Complete
 
-- [ ] `core/ai/claude_backend.py`: `ClaudeBackend` implementing `AiBackend` Protocol
+- [x] `core/ai/claude_backend.py`: `ClaudeBackend` implementing `AiBackend` Protocol
       (Anthropic SDK `anthropic>=0.40`)
-- [ ] `complete_text()` and `complete_with_image()` matching exact Protocol signatures
-- [ ] Structured output via JSON mode (system prompt instruction) — Claude has no native
+- [x] `complete_text()` and `complete_with_image()` matching exact Protocol signatures
+- [x] Structured output via JSON mode (system prompt instruction) — Claude has no native
       schema object; falls back to same `_parse_placement_response()` JSON parsing
-- [ ] 429 / rate-limit error handling with readable message (same pattern as `GeminiBackend`)
-- [ ] `fetch_available_claude_models()` — returns static list (no Anthropic listing endpoint)
-- [ ] Optional dep group `[claude]`: `anthropic>=0.40` only, not installed by default
-- [ ] Deferred import pattern — safe to import module without extras installed
-- [ ] No UI wiring yet — backend instantiated only if `[claude]` extras present
-- [ ] AD-26 in `docs/architecture.md`
+- [x] 429 / rate-limit error handling with readable message (same pattern as `GeminiBackend`)
+- [x] `fetch_available_claude_models()` — returns static list (no Anthropic listing endpoint)
+- [x] Optional dep group `[claude]`: `anthropic>=0.40` only, not installed by default
+- [x] Deferred import pattern — safe to import module without extras installed
+- [x] No UI wiring yet — backend instantiated only if `[claude]` extras present
+- [x] AD-26 in `docs/architecture.md`
 
 ---
 

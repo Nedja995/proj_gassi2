@@ -7,7 +7,27 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.7.0 Multi-Backend (Cloud)
 
-See [TODO.md](TODO.md) for planned sub-versions v0.7.1–v0.7.4.
+See [TODO.md](TODO.md) for planned sub-versions v0.7.2–v0.7.4.
+
+## [0.7.1] - 2026-08-26
+
+### Added
+- `core/ai/claude_backend.py`: `ClaudeBackend` implementing `AiBackend` Protocol
+  (Anthropic SDK). Drop-in replacement for `GeminiBackend` — same method signatures.
+- `complete_text()`: text-only async call via `AsyncAnthropic.messages.create()`.
+- `complete_with_image()`: multimodal call with base64-encoded image. `response_schema`
+  argument accepted for Protocol compatibility but ignored — JSON output enforced via
+  system prompt instruction; `_parse_placement_response()` handles both backends
+  without changes (AD-26).
+- Rate-limit / overloaded error handling: catches `rate_limit_error`, `overloaded_error`,
+  529, 429 by string match; raises readable `RuntimeError` with retry guidance.
+- `fetch_available_claude_models()`: returns static ordered list (Haiku → Sonnet → Opus).
+  Anthropic has no public model-listing endpoint.
+- Optional dep group `[claude]` in `pyproject.toml`: `anthropic>=0.40` only.
+  Install with `uv sync --extra claude`. Not installed by default.
+- Deferred import: `anthropic` imported at `__init__` time, not module level —
+  safe to import `claude_backend` without extras installed.
+- AD-26 added to `docs/architecture.md`.
 
 ## [0.6.7] - 2026-08-25
 

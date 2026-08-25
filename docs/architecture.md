@@ -183,3 +183,36 @@ sentence-transformers was explicitly rejected (see Embedding model rationale bel
 **Decision:** `CalibrationService` sends a full screenshot to Gemini with `response_schema` enforcing a structured JSON response (`{regions: [{label, x_pct, y_pct, width_pct, height_pct}]}`). Each returned region is immediately validated by running RapidOCR on the crop and checking confidence against threshold. Accepted regions are written to `game_packs/<id>/hud_regions_user.yaml`. `GamePackLoader` checks for this file first and falls back to `manifest.yaml` if absent.
 
 **Rationale:** `response_schema` makes the Gemini response deterministic and directly parseable — no regex or free-text parsing of coordinates. The immediate OCR validation step catches hallucinated regions (Gemini returning a bounding box that covers map terrain instead of HUD text) before they corrupt the working region set. Keeping user calibration in a separate file means the developer-authored `manifest.yaml` defaults are never overwritten by AI output, and clearing calibration is a single file delete. The `GamePackLoader` override pattern means the rest of the system (ViewModel, OCR pipeline) is completely unaware of whether regions came from manual or auto-calibration.
+
+## AD-26: ClaudeBackend — optional dep group, deferred import, prompt-enforced JSON
+
+**Decision:** `ClaudeBackend` (`core/ai/claude_backend.py`) implements the `AiBackend`
+Protocol using the `anthropic` SDK (`anthropic>=0.40`). The SDK is in an optional dep
+group `[claude]` — not installed by default. The `anthropic` import is performed at
+construction time (inside `__init__`) rather than at module level, so importing
+`claude_backend` is safe without the extras installed; only instantiation raises
+`ImportError` (with a clear `uv sync --extra claude` message).
+
+Structured JSON output for placement mode (`response_schema` parameter) is enforced
+via system prompt instruction only — Claude has no native schema-enforcement equivalent
+to Gemini's `types.Schema` + `response_mime_type="application/json"`. The
+`response_schema` argument is accepted in the Protocol signature for compatibility but
+ignored by `ClaudeBackend`; a DEBUG log message records when it is provided. The
+existing `_parse_placement_response()` in the ViewModel handles JSON extraction from
+free-form text for both backends without changes.
+
+**Rationale:**
+- **Protocol consistency (AD-02):** `ClaudeBackend` satisfies `AiBackend` Protocol
+  structurally — same `complete_text()` and `complete_with_image()` signatures.
+  ViewModel never imports `ClaudeBackend` directly; only the factory (v0.7.2) does.
+- **Optional dep (AD-06 pattern):** `anthropic` is ~10MB — small, but keeping it
+  optional preserves the zero-surprise default install for Gemini-only users.
+- **No native schema enforcement:** Gemini's `response_schema` is a first-party SDK
+  feature tied to `GenerateContentConfig`. Replicating it for Claude would require
+  a custom validation layer (JSON Schema + retry loop) that adds complexity with
+  marginal benefit — placement.txt already instructs JSON-only output and the
+  parse fallback handles failures gracefully.
+- **Static model list:** Anthropic provides no public model-listing endpoint.
+  `fetch_available_claude_models()` returns a hardcoded list ordered
+  cheapest/fastest first (Haiku → Sonnet → Opus). The ViewModel's settings dialog
+  uses this list in v0.7.2 the same way `fetch_available_models()` works for Gemini.
