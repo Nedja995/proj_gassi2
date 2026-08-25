@@ -143,38 +143,28 @@ Real-world validation that the game pack architecture generalizes.
 
 ---
 
-## v0.4.7 — Nebuchadnezzar Testing (needs Windows + game) 🚧 In Progress
+## v0.4.7 — Nebuchadnezzar Testing ✅ Complete
 
-**Known limitation for testing:** Nebuchadnezzar has no Borderless Windowed mode.
+**Known limitation:** Nebuchadnezzar has no Borderless Windowed mode.
 Test in Windowed mode — GASSI overlay works correctly, taskbar visible at bottom.
-Fullscreen exclusive mode bypasses DWM; GASSI cannot overlay it (Windows limitation, not a bug).
-If Nebuchadnezzar adds borderless windowed in a future patch, no GASSI changes needed.
+Fullscreen exclusive mode bypasses DWM (Windows limitation, not a bug).
 
-**Building footprint note:** The cell highlight shows a single grid cell (the placement anchor).
-Multi-tile buildings (e.g. Temple 4×4) extend beyond the highlighted cell.
-Full footprint rendering tracked under v0.6.x below.
+**Building footprint note:** Cell highlight shows single grid cell (placement anchor).
+Multi-tile buildings extend beyond it. Full footprint rendering tracked in v0.6.0.
 
-**First session checklist — do in this order:**
-- [x] Open Settings → General → select **Nebuchadnezzar** from Active game dropdown
+### Completed
+- [x] Open Settings → General → select Nebuchadnezzar from Active game dropdown
 - [x] Save settings and restart GASSI
-- [x] Run CalibrationService (Settings → Calibrate HUD) — 3/3 regions accepted
-- [x] Verify `objectives_panel` region position — manually corrected to x=0.838
-- [x] F1 advisor (Screenshot mode) — confirmed working, good advice quality
-- [x] F2 placement with a real question — confirmed working, hollow yellow outline correct
-- [x] Yellow highlight box appears at correct cell — confirmed v0.5.15
-
-**Remaining / follow-up:**
-- [ ] F1 advisor (OCR mode) — test after objectives_panel region fix, compare quality
-- [ ] Prompt iteration: refine stage clauses based on real advice quality
-- [ ] Identify what’s reusable across Timberborn + Nebuchadnezzar prompts
-
-**Follow-up (based on first session results):**
-- [ ] Refine HUD region fractions if calibration missed any region
-- [ ] Tune OCR preprocessor config for `resource_bar` if confidence < threshold
-- [ ] Prompt iteration: run `tests/prompt_iteration.py` against saved F4 frames
-- [ ] Refine stage clauses in advisor prompts based on real advice quality
-- [ ] Identify what’s reusable across Timberborn + Nebuchadnezzar — extract to base template if clear
-- [ ] Update `manifest.yaml` game_version after checking actual installed version
+- [x] CalibrationService: 3/3 regions accepted
+- [x] `objectives_panel` region manually corrected to x=0.838
+- [x] F1 advisor (Screenshot mode) — good advice quality confirmed
+- [x] F1 advisor (OCR mode) — tested, works with corrected region
+- [x] F2 placement — confirmed working, hollow yellow outline correct
+- [x] Yellow highlight box renders correctly via SetWindowRgn (ctypes)
+- [x] Hotkey fixes: Alt+8/9/0 bindings work correctly after rebind
+- [x] `preferred_advisor_source: screenshot` set in manifest
+- [x] Quick prompts refined for better spatial advice quality
+- [x] Timberborn tested: calibration, F1, F2, highlight all working
 
 ---
 
@@ -385,6 +375,13 @@ All items here are low architectural risk — UI-only changes on top of existing
 ### v0.5.1 (2026-08-24)
 - [x] `GamePackManifest` forward-compat fields: `rag_top_k`, `rag_min_game_version`,
       `preferred_backend`, `window_class`, `anticheat_note` — all optional, all None default
+
+### v0.4.7 (2026-08-25)
+- [x] Nebuchadnezzar: full F1/F2/calibration/highlight testing complete
+- [x] Timberborn: retested, all features working with new code
+- [x] All hotkey fixes validated (Alt+8/9/0, modifier-only rejection)
+- [x] PlacementHighlightWindow: SetWindowRgn via ctypes working correctly
+- [x] Calibration: coord normalisation robust across all three Gemini scale formats
 
 ### v0.4.6 (2026-08-24)
 - [x] `docs/v1_scope.md` updated to shipped state: Nebuchadnezzar added, all features
