@@ -20,6 +20,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.3] - 2026-08-25
+
+### Added
+- `game_packs/timberborn/knowledge/` — 6 markdown knowledge files:
+  - `01_resources.md` — logs, planks, food, water, science, metal mechanics and ratios
+  - `02_water_management.md` — drought cycle, dams vs floodgates, water tanks, badwater,
+    irrigation; drought reserve formula (500–800 units per 10 beavers per drought day)
+  - `03_power_system.md` — windmills (height dependency), water wheels (drought caveat),
+    batteries (3,600 units capacity), power shaft distribution
+  - `04_forestry_farming_costs.md` — tree growth rates, crop calorie densities, building
+    cost table (20 buildings), population growth mechanics
+  - `05_districts_labour.md` — district system, labour ratios, builder percentages,
+    worker priority, shift scheduling, expansion timing signals
+  - `06_v06_patch_meta.md` — v0.6 changes, terrain meta, common failure modes,
+    useful ratios table
+- `game_packs/timberborn/manifest.yaml`: `rag_collection_name: timberborn_knowledge`,
+  `rag_top_k: 4`, `rag_min_game_version: "0.6"`
+
+### Note
+Collection must be ingested before RAG activates:
+```
+uv sync --extra rag
+uv run python tools/ingest_knowledge.py --game-id timberborn --source-dir game_packs/timberborn/knowledge --game-version 0.6 --reset
+```
+
 ## [0.6.2] - 2026-08-25
 
 ### Added

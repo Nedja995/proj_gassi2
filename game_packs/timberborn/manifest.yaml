@@ -2,7 +2,9 @@ game_id: timberborn
 display_name: "Timberborn"
 window_title_pattern: "Timberborn"
 game_version: "0.6"
-rag_collection_name: null
+rag_collection_name: timberborn_knowledge
+rag_top_k: 4
+rag_min_game_version: "0.6"
 
 quick_prompts:
   - "Where should I build my next water pump?"

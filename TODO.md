@@ -202,34 +202,18 @@ Delivered across sub-versions v0.6.1–v0.6.7.
 - [x] `RagService` Protocol (`core/rag/protocol.py`): `query(text, top_k, min_game_version)`,
       `is_available()` — `@runtime_checkable`, structural subtyping
 - [x] `ChromaRagService` (`core/rag/chroma_backend.py`): loads persistent Chroma collection
-      from `game_packs/<id>/rag/`, deferred chromadb import, graceful degradation
+      from `game_packs/<id>/rag/`, deferred chromadb import, `ONNXMiniLM_L6_V2` embedder
+      (no PyTorch), graceful degradation on load/query error
 - [x] `NullRagService` (`core/rag/null_backend.py`): no-op, zero extra imports,
       `is_available()` returns `False`
 - [x] `RagServiceFactory.for_game_pack()` (`core/rag/factory.py`): `ChromaRagService`
       when prerequisites met, else `NullRagService`
-- [x] Optional dep group `[rag]` in `pyproject.toml`: `chromadb>=0.6`,
-      `sentence-transformers>=3.0` — not installed by default
+- [x] Optional dep group `[rag]` in `pyproject.toml`: `chromadb>=0.6` only —
+      `sentence-transformers` dropped (pulled PyTorch ~2GB, violates AD-06);
+      `ONNXMiniLM_L6_V2` uses `onnxruntime` already present via `rapidocr-onnxruntime`
 - [x] AD-25 added to `docs/architecture.md`
 
 ---
-
-## v0.6.2 — Ingestion CLI
-
-Standalone script to chunk source documents, embed, and persist a Chroma collection.
-Run once per game pack by the developer; output shipped with the pack.
-
-- [ ] `tools/ingest_knowledge.py`: CLI accepting `--game-id` and `--source-dir`
-- [ ] Reads `.md` / `.txt` files from `--source-dir` recursively
-- [ ] Chunks by paragraph (double-newline split) with configurable `--chunk-size` (default 400
-      tokens) and `--chunk-overlap` (default 50 tokens)
-- [ ] Embeds with `sentence-transformers` (`all-MiniLM-L6-v2` default, overrideable via
-      `--model`)
-- [ ] Persists Chroma collection to `game_packs/<game_id>/rag/` (persistent client,
-      collection named `<game_id>_knowledge`)
-- [ ] Metadata per chunk: `source_file`, `chunk_index`, `game_version` (from `--game-version`
-      arg, default `"any"`)
-- [ ] Idempotent: `--reset` flag drops and rebuilds collection; without it, skips
-      already-ingested source files by checking stored `source_file` metadata
 
 ## v0.6.2 — Ingestion CLI ✅ Complete
 
@@ -243,20 +227,28 @@ Run once per game pack by the developer; output shipped with the pack.
 - [x] Idempotent: skips already-ingested `source_file` values; `--reset` rebuilds
 - [x] Output: `game_packs/<game_id>/rag/`, collection `<game_id>_knowledge`
 - [x] `game_packs/` root auto-detected from script location
+- [x] Uses `ONNXMiniLM_L6_V2` (no PyTorch) consistent with `ChromaRagService`
 
 ---
 
-## v0.6.3 — Timberborn Knowledge Base
+## v0.6.3 — Timberborn Knowledge Base ✅ Complete
 
-Source documents authored and ingested. Chroma collection shipped with the pack.
-
-- [ ] `game_packs/timberborn/knowledge/` folder: markdown files covering formulas,
-      resource mechanics, building costs, floodgate/badwater/battery mechanics,
-      district system, wiki-sourced patch notes for v0.6
-- [ ] Collection ingested via `tools/ingest_knowledge.py` and committed to repo
-      as `game_packs/timberborn/rag/` (binary Chroma files)
-- [ ] `manifest.yaml`: `rag_collection_name: timberborn_knowledge`,
-      `rag_top_k: 4`, `rag_min_game_version: "0.6"`
+- [x] `game_packs/timberborn/knowledge/01_resources.md` — logs/planks/food/water/science/metal
+- [x] `game_packs/timberborn/knowledge/02_water_management.md` — drought cycle, dams vs
+      floodgates, tanks, badwater, irrigation; reserve formula (500–800 units/10 beavers/day)
+- [x] `game_packs/timberborn/knowledge/03_power_system.md` — windmills, water wheels,
+      batteries (3,600 units capacity), shaft distribution
+- [x] `game_packs/timberborn/knowledge/04_forestry_farming_costs.md` — tree growth rates,
+      crop calorie densities, building cost table (20 buildings)
+- [x] `game_packs/timberborn/knowledge/05_districts_labour.md` — districts, labour ratios,
+      builder %, worker priority, expansion timing signals
+- [x] `game_packs/timberborn/knowledge/06_v06_patch_meta.md` — v0.6 changes, terrain meta,
+      common failure modes, useful ratios table
+- [x] `manifest.yaml`: `rag_collection_name: timberborn_knowledge`, `rag_top_k: 4`,
+      `rag_min_game_version: "0.6"`
+- [ ] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id timberborn
+      --source-dir game_packs/timberborn/knowledge --game-version 0.6 --reset`)
+- [ ] `game_packs/timberborn/rag/` committed to repo after ingestion
 
 ---
 
@@ -309,13 +301,23 @@ Source documents authored and ingested. Chroma collection shipped with the pack.
 
 ## v0.6.7 — Docs: RAG Pipeline
 
-- [ ] `docs/adding_game_pack.md`: new Section — RAG knowledge base authoring guide
-      (folder structure, chunk authoring tips, ingestion CLI usage, `manifest.yaml`
-      RAG fields, testing retrieval quality)
-- [ ] `docs/architecture.md`: AD-25 finalised with shipped implementation details
+- [ ] `docs/adding_game_pack.md`: new Section 5 — RAG knowledge base guide:
+      - Folder structure: `knowledge/` (sources) vs `rag/` (compiled Chroma)
+      - Chunk authoring tips: paragraph-per-concept, avoid walls of text,
+        numeric facts in own paragraphs for clean retrieval
+      - Ingestion CLI usage: full command reference, `--reset` vs incremental,
+        when to re-ingest (new files vs edits to existing files)
+      - `manifest.yaml` RAG fields: `rag_collection_name`, `rag_top_k`,
+        `rag_min_game_version` — what each does and sane defaults
+      - Embedding model note: `ONNXMiniLM_L6_V2` built-in, no extra deps beyond `[rag]`
+      - Testing retrieval quality: how to run a manual query against the collection
+        from a Python REPL to verify chunks are sensible before shipping
+      - `.gitignore` note: `rag/` binary files should be committed (not ignored)
+- [ ] `docs/architecture.md`: AD-25 updated with `ONNXMiniLM_L6_V2` decision
+      (sentence-transformers dropped, PyTorch avoided, onnxruntime reuse)
 - [ ] `docs/v1_scope.md`: RAG pipeline moved from deferred to shipped features
-- [ ] `README.md`: RAG feature listed under Features, optional `[rag]` dep group
-      install instructions added
+- [ ] `README.md`: RAG feature listed under Features; `[rag]` dep group install
+      instructions; note that `knowledge/` sources are human-readable and editable
 
 ---
 

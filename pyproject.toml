@@ -1,6 +1,6 @@
 [project]
 name = "gassi"
-version = "0.6.2"
+version = "0.6.3"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
 readme = "README.md"
 license = "MIT"
@@ -36,11 +36,12 @@ windows = [
     "pywin32>=306",
 ]
 rag = [
-    # Local vector DB + embedding model for game knowledge retrieval (v0.6.x).
+    # Local vector DB for game knowledge retrieval (v0.6.x).
+    # Uses chromadb's built-in ONNX embedding (all-MiniLM-L6-v2) — no PyTorch needed.
+    # onnxruntime is already a dependency via rapidocr-onnxruntime.
     # Not installed by default — only needed when game packs ship a rag/ collection.
     # Install with: uv sync --extra rag
     "chromadb>=0.6",
-    "sentence-transformers>=3.0",
 ]
 
 [project.scripts]
