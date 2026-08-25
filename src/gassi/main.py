@@ -156,8 +156,13 @@ def main() -> None:
                 "hotkey_lock_overlay",
                 "hotkey_debug_save_frame",
             }
-            _old_hotkeys = {k: settings.__dict__.get(k) for k in _hotkey_keys}
-            _new_hotkeys = {k: new_settings.get(k) for k in _hotkey_keys}
+            _old_hotkeys = {k: getattr(settings, k, None) for k in _hotkey_keys}
+            # use old value as fallback when key absent from new_settings
+            _new_hotkeys = {
+                k: new_settings.get(k, getattr(settings, k, None))
+                for k in _hotkey_keys
+            }
+            logger.debug("hotkey diff — old: %s new: %s", _old_hotkeys, _new_hotkeys)
             if _old_hotkeys != _new_hotkeys:
                 logger.info("Settings saved — restart required for hotkey changes")
                 overlay.after(

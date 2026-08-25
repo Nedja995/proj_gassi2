@@ -415,6 +415,12 @@ All items here are low architectural risk — UI-only changes on top of existing
 
 ## Completed
 
+### v0.5.17 (2026-08-25)
+- [x] `_on_settings_saved`: restart notice only fires when hotkeys actually changed
+- [x] Non-hotkey saves (model, theme, cooldown, game) log "Settings saved" with no warning
+- [x] Settings tabs: `theme_use("default")` fixes Windows foreground override;
+      inactive=`fg_dim`, selected=`fg_accent`, hover=`fg_text`, font explicit
+
 ### v0.5.16 (2026-08-25)
 - [x] Timberborn `hud_regions_user.yaml`: `cycle_time_panel` manually added
 - [x] Calibration prompt: standard label list, min size requirement, px-coord warning
