@@ -20,6 +20,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.7] - 2026-08-25
+
+### Changed
+- All RAG docs written progressively during v0.6.1–v0.6.6; v0.6.7 confirms
+  all four doc targets complete.
+- `docs/adding_game_pack.md`: Section 5 (RAG guide), Section 7 checklist (5 RAG items)
+- `docs/architecture.md`: AD-25 finalised with `ONNXMiniLM_L6_V2` rationale,
+  `sentence-transformers` rejection, injection point
+- `docs/v1_scope.md`: Feature 6 RAG shipped
+- `README.md`: RAG in Features, install, project structure
+- `v0.6.0` RAG milestone marked complete in TODO
+
 ## [0.6.6] - 2026-08-25
 
 ### Added

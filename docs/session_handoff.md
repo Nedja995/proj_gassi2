@@ -137,11 +137,13 @@ Every task must update ALL of these:
 
 ```
 v0.4.7  ✅ Complete — Nebuchadnezzar + Timberborn live testing
-v0.5.x  ✅ Complete (v0.5.1–v0.5.16) — GamePackManifest fields, atomic settings,
+v0.5.x  ✅ Complete (v0.5.1–v0.5.18) — GamePackManifest fields, atomic settings,
            calibration fixes, hotkey fixes, placement highlight (SetWindowRgn),
-           Nebuchadnezzar advisor tuning, prompt fixes
-v0.6.0  🔜 Next — RAG pipeline (Chroma + sentence-transformers, per-game collections)
-v0.7.0  — Multi-backend (Claude, building footprints)
+           Nebuchadnezzar advisor tuning, prompt fixes, status messages
+v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
+           ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases,
+           ViewModel injection, version filtering, docs)
+v0.7.0  🔜 Next — Multi-backend (ClaudeBackend, building footprints)
 v0.7.1  — Local SLM (Ollama, Qwen2.5-VL)
 v0.8.0  — Platform (Wayland, native window detection, macOS, SteamOS)
 v0.8.1  — Anti-cheat posture (SetWindowDisplayAffinity)

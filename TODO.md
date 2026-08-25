@@ -189,11 +189,10 @@ Multi-tile buildings extend beyond it. Full footprint rendering tracked in v0.7.
 
 ---
 
-## v0.6.0 — RAG Pipeline (milestone)
+## v0.6.0 — RAG Pipeline (milestone) ✅ Complete
 
 Local knowledge retrieval to augment static game knowledge in system prompts.
-Allows deeper, formula-level advice without bloating prompt token count.
-Delivered across sub-versions v0.6.1–v0.6.7.
+Delivered across v0.6.1–v0.6.7. All sub-versions complete.
 
 ---
 
@@ -297,32 +296,25 @@ Delivered across sub-versions v0.6.1–v0.6.7.
       guide, failure modes, useful ratios
 - [x] `manifest.yaml`: `rag_collection_name: nebuchadnezzar_knowledge`,
       `rag_top_k: 4`, `rag_min_game_version: "1.0"`
-- [ ] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id
+- [x] Collection ingested (`uv run python tools/ingest_knowledge.py --game-id
       nebuchadnezzar --source-dir game_packs/nebuchadnezzar/knowledge
       --game-version 1.0 --reset`)
-- [ ] `game_packs/nebuchadnezzar/rag/` committed to repo after ingestion
+- [x] `game_packs/nebuchadnezzar/rag/` committed to repo after ingestion
 
 ---
 
-## v0.6.7 — Docs: RAG Pipeline
+## v0.6.7 — Docs: RAG Pipeline ✅ Complete
 
-- [ ] `docs/adding_game_pack.md`: new Section 5 — RAG knowledge base guide:
-      - Folder structure: `knowledge/` (sources) vs `rag/` (compiled Chroma)
-      - Chunk authoring tips: paragraph-per-concept, avoid walls of text,
-        numeric facts in own paragraphs for clean retrieval
-      - Ingestion CLI usage: full command reference, `--reset` vs incremental,
-        when to re-ingest (new files vs edits to existing files)
-      - `manifest.yaml` RAG fields: `rag_collection_name`, `rag_top_k`,
-        `rag_min_game_version` — what each does and sane defaults
-      - Embedding model note: `ONNXMiniLM_L6_V2` built-in, no extra deps beyond `[rag]`
-      - Testing retrieval quality: how to run a manual query against the collection
-        from a Python REPL to verify chunks are sensible before shipping
-      - `.gitignore` note: `rag/` binary files should be committed (not ignored)
-- [ ] `docs/architecture.md`: AD-25 updated with `ONNXMiniLM_L6_V2` decision
-      (sentence-transformers dropped, PyTorch avoided, onnxruntime reuse)
-- [ ] `docs/v1_scope.md`: RAG pipeline moved from deferred to shipped features
-- [ ] `README.md`: RAG feature listed under Features; `[rag]` dep group install
-      instructions; note that `knowledge/` sources are human-readable and editable
+- [x] `docs/adding_game_pack.md`: Section 5 added — full RAG guide (folder structure,
+      chunk authoring tips, ingestion CLI reference table, manifest fields, embedding
+      model note, REPL retrieval test, `.gitignore` note); Section 7 checklist
+      extended with 5 RAG items
+- [x] `docs/architecture.md`: AD-25 updated with `ONNXMiniLM_L6_V2` decision,
+      `sentence-transformers` rejection rationale, injection point (OCR path only)
+- [x] `docs/v1_scope.md`: Feature 6 RAG added (architecture, game packs, injection
+      behaviour, dep group)
+- [x] `README.md`: RAG in Features section, installation `[rag]` dep group,
+      project structure updated with `core/rag/`, `knowledge/`, `rag/`
 
 ---
 
