@@ -231,6 +231,19 @@ Run once per game pack by the developer; output shipped with the pack.
 - [ ] Idempotent: `--reset` flag drops and rebuilds collection; without it, skips
       already-ingested source files by checking stored `source_file` metadata
 
+## v0.6.2 — Ingestion CLI ✅ Complete
+
+- [x] `tools/ingest_knowledge.py`: `--game-id`, `--source-dir` required;
+      `--game-version`, `--model`, `--chunk-size`, `--chunk-overlap`,
+      `--reset`, `--game-packs-root` optional
+- [x] Reads `.md` / `.txt` recursively from `--source-dir`
+- [x] Paragraph-split chunking; sentence sub-split for oversized paragraphs;
+      configurable size (default 400 tokens) and overlap (default 50 tokens)
+- [x] Metadata per chunk: `source_file`, `chunk_index`, `game_version`
+- [x] Idempotent: skips already-ingested `source_file` values; `--reset` rebuilds
+- [x] Output: `game_packs/<game_id>/rag/`, collection `<game_id>_knowledge`
+- [x] `game_packs/` root auto-detected from script location
+
 ---
 
 ## v0.6.3 — Timberborn Knowledge Base

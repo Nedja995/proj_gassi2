@@ -20,6 +20,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for remaining items (calibration, OCR validation, prompt iteration).
 
+## [0.6.2] - 2026-08-25
+
+### Added
+- `tools/ingest_knowledge.py`: CLI for chunking, embedding, and persisting game
+  knowledge to a Chroma collection.
+  - `--game-id`, `--source-dir` (required); `--game-version`, `--model`,
+    `--chunk-size`, `--chunk-overlap`, `--reset`, `--game-packs-root` (optional)
+  - Reads `.md` / `.txt` recursively from `--source-dir`
+  - Paragraph-split chunking with sentence-level sub-split for oversized paragraphs;
+    configurable `--chunk-size` (default 400 tokens) and `--chunk-overlap` (default 50)
+  - Metadata per chunk: `source_file`, `chunk_index`, `game_version`
+  - Idempotent by default: already-ingested `source_file` values skipped;
+    `--reset` drops and rebuilds the collection
+  - Output: `game_packs/<game_id>/rag/` (persistent Chroma), collection named
+    `<game_id>_knowledge`
+  - Auto-detects `game_packs/` root from script location; overrideable via
+    `--game-packs-root`
+
 ## [0.6.1] - 2026-08-25
 
 ### Added
