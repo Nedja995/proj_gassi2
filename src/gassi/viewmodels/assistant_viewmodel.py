@@ -118,6 +118,8 @@ class AssistantViewModel:
                 self._settings.gemini_model,
                 self._settings.active_game_id,
             )
+            self._canvas.show_advice("Capturing HUD regions (OCR)...", is_loading=True)
+            self._canvas.update_idletasks()
             self._process_ocr_advisor()
         else:
             logger.info(
@@ -125,6 +127,8 @@ class AssistantViewModel:
                 self._settings.gemini_model,
                 self._settings.active_game_id,
             )
+            self._canvas.show_advice("Capturing screenshot...", is_loading=True)
+            self._canvas.update_idletasks()
             self._process_screenshot_advisor()
 
     def switch_advisor_source(self) -> None:
@@ -157,6 +161,7 @@ class AssistantViewModel:
         self._busy = True
         self._canvas.update_status("PLACEMENT")
         self._canvas.show_advice("Capturing full screen...", is_loading=True)
+        self._canvas.update_idletasks()
 
         # clear any previous highlight before new capture
         overlay = self._canvas.winfo_toplevel()
@@ -185,6 +190,13 @@ class AssistantViewModel:
             "on" if grid_enabled else "off",
             cols, rows,
         )
+
+        _grid_note = f" + {cols}×{rows} grid" if grid_enabled else ""
+        self._canvas.show_advice(
+            f"✓ Screenshot captured ({frame.shape[1]}×{frame.shape[0]}px{_grid_note})\nAnalyzing with {self._settings.gemini_model}...",
+            is_loading=True,
+        )
+        self._canvas.update_idletasks()
 
         response_schema = _build_placement_schema() if grid_enabled else None
 
@@ -281,6 +293,8 @@ class AssistantViewModel:
         # if all regions had low confidence, fall back to screenshot
         if not combined_text_parts or any_low_confidence:
             logger.info("OCR unreliable, falling back to screenshot for this cycle")
+            self._canvas.show_advice("OCR confidence low — switching to screenshot...", is_loading=True)
+            self._canvas.update_idletasks()
             self._process_screenshot_advisor()
             return
 
@@ -292,6 +306,11 @@ class AssistantViewModel:
             len(combined_text_parts),
             len(combined_prompt),
         )
+        self._canvas.show_advice(
+            f"✓ HUD captured ({len(combined_text_parts)} regions)\nAnalyzing with {self._settings.gemini_model}...",
+            is_loading=True,
+        )
+        self._canvas.update_idletasks()
         self._bridge.submit(
             self._ai.complete_text(
                 system_prompt=self._advisor_ocr_prompt,
@@ -303,8 +322,6 @@ class AssistantViewModel:
 
     def _process_screenshot_advisor(self) -> None:
         """Capture full screen, send ONE image call to Gemini."""
-        # Full screen capture — Gemini needs to see the entire HUD,
-        # not just the overlay region which may be small/mispositioned
         frame = self._capture_without_overlay(region=None)
         self._debug.store_frame(frame, label="advisor_screenshot")
         image_bytes = self._frame_to_png_bytes(frame)
@@ -314,6 +331,11 @@ class AssistantViewModel:
             self._settings.gemini_model,
             frame.shape[1], frame.shape[0],
         )
+        self._canvas.show_advice(
+            f"✓ Screenshot captured ({frame.shape[1]}×{frame.shape[0]}px)\nAnalyzing with {self._settings.gemini_model}...",
+            is_loading=True,
+        )
+        self._canvas.update_idletasks()
         self._bridge.submit(
             self._ai.complete_with_image(
                 system_prompt=self._advisor_screenshot_prompt,
