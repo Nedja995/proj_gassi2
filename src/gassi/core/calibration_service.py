@@ -45,7 +45,10 @@ Exclude: decorative borders, map area, game world, tooltips, buttons without val
 Include: resource bars, population panels, day/cycle/time indicators, status panels.
 
 For each region, return:
-- label: short snake_case descriptor (e.g. "resource_bar", "population_panel")
+- label: short snake_case descriptor matching the region type. Prefer these standard
+  labels when they match: top_resource_bar, population_panel, cycle_time_panel,
+  objectives_panel, status_bar, resource_bar, notification_log.
+  Use a descriptive custom label only if none of the above fit.
 - x_pct: left edge as a DECIMAL FRACTION of total image width. MUST be between 0.0 and 1.0. NOT a percentage.
 - y_pct: top edge as a DECIMAL FRACTION of total image height. MUST be between 0.0 and 1.0. NOT a percentage.
 - width_pct: region width as a DECIMAL FRACTION of total image width. MUST be between 0.0 and 1.0.
@@ -53,6 +56,8 @@ For each region, return:
 
 CRITICAL: All coordinate values MUST be decimal fractions in range 0.0–1.0.
 Do NOT return percentages (e.g. 82.5 is WRONG, 0.825 is CORRECT).
+Do NOT return pixel coordinates (e.g. 1200 is WRONG, 0.625 is CORRECT for a 1920px wide image).
+Every region MUST have non-zero width_pct (>= 0.05) and height_pct (>= 0.02).
 
 Add 1–2% margin (0.01–0.02) around each region so OCR has breathing room.
 Return only regions you are confident contain text. Prefer fewer high-quality regions over many uncertain ones.
@@ -174,9 +179,12 @@ class CalibrationService:
                         region_result.rejection_reason,
                     )
 
-            # 4. persist accepted regions
+            # 4. merge any manifest regions Gemini missed, then persist
             if result.accepted:
-                self._save_user_regions(game_id, [r.region for r in result.accepted])
+                self._save_user_regions(
+                    game_id,
+                    [r.region for r in result.accepted],
+                )
             else:
                 result.error = "No regions passed OCR validation — screenshot may not show the game HUD"
 

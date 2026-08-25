@@ -1,22 +1,22 @@
-calibrated_at: '2026-08-23T15:55:37'
+calibrated_at: '2026-08-25T10:45:56'
 hud_regions:
-- height_pct: 0.075
-  label: resource_bar
-  width_pct: 0.385
-  x_pct: 0.0
-  y_pct: 0.0
-- height_pct: 0.085
+- height_pct: 0.03
+  label: top_resource_bar
+  width_pct: 0.44
+  x_pct: 0.005
+  y_pct: 0.005
+- height_pct: 0.12
   label: population_panel
-  width_pct: 0.145
-  x_pct: 0.0
-  y_pct: 0.033
-- height_pct: 0.145
+  width_pct: 0.14
+  x_pct: 0.005
+  y_pct: 0.04
+- height_pct: 0.1
   label: notification_log
-  width_pct: 0.145
-  x_pct: 0.0
-  y_pct: 0.12
-- height_pct: 0.085
-  label: time_panel
-  width_pct: 0.332
-  x_pct: 0.665
-  y_pct: 0.0
+  width_pct: 0.14
+  x_pct: 0.005
+  y_pct: 0.165
+- height_pct: 0.06
+  label: cycle_time_panel
+  width_pct: 0.2
+  x_pct: 0.795
+  y_pct: 0.005
