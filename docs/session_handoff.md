@@ -267,53 +267,26 @@ Developer works remotely on MacBook but GASSI runs and is tested on Windows PC.
 
 ---
 
-## How to Start a New Session
+## Session Start Protocol
 
 **Paste this into the new chat to begin:**
 
-> Read `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\docs\session_handoff.md`
-> then tell me what task you need help with.
+> Read these files in order before we start:
+> 1. `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\docs\session_handoff.md`
+> 2. `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\TODO.md`
+> 3. `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\CHANGELOG.md`
+> 4. `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2\docs\architecture.md`
+> Then tell me what's missing before we start.
 
-That's it — just the one file. The handoff is self-contained.
-Claude reads specific source files only when the task requires it.
+**Read on demand only (not at session start):**
+- `docs/adding_game_pack.md` — only when adding a new game pack
+- `docs/v1_scope.md` — only when updating known limitations or scope
+- **Source files** — read only the specific files the task touches. Never edit from memory.
 
 **Keep this file updated** as the project evolves:
-- After any major architectural decision (new AD added)
-- After a milestone is complete (update roadmap summary)
-- After a new "lesson learned" (e.g. the win32gui/ctypes discovery)
-- After a new game pack reaches tested status
+- After any major architectural decision (new AD added) — summarise it here
+- After a milestone is complete — update the roadmap summary section
+- After a new "lesson learned" — add it to the relevant section
+- After a new game pack reaches tested status — update the game packs section
 
 No version bump needed — this is a living doc, not a changelog entry.
-
----
-
-## Will This Be Enough Without Reading the Full Codebase?
-
-**Short answer: yes for most tasks, with caveats.**
-
-**What the handoff + key docs cover well:**
-- Architecture decisions and rationale (all 24 ADs)
-- What not to do and why (Windows hacks, naming, commit discipline)
-- Roadmap and current state
-- Game pack quirks
-- Prompt rules
-- Platform status
-
-**What still requires reading specific source files:**
-- Any task that modifies existing code — Claude must read the file before editing.
-  It should never edit from memory. Ask it to read the specific files first.
-- `assistant_viewmodel.py` — large, complex, central. Always read before touching.
-- `settings_dialog.py` — has many interdependencies, always read before touching.
-- `calibration_service.py` — coordinate normalisation logic is subtle, always read.
-- Prompt files — always read the current prompt before suggesting changes.
-
-**Good workflow for a new session:**
-1. Claude reads only this handoff doc (1 file, moderate tokens)
-2. You describe the task
-3. Claude identifies which source files it needs and reads only those
-4. Claude proposes the sub-version split before writing any code
-5. You approve, then it implements one sub-version at a time
-
-**This is the cheapest possible start** — one file read instead of
-15-20. The handoff acts as a map. Claude reads source files only for
-the specific task, not the whole codebase.
