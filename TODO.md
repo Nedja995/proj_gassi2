@@ -336,19 +336,24 @@ Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.7.2 — Backend Selector UI + Wiring
+## v0.7.2 — Backend Selector UI + Wiring ✅ Complete
 
-- [ ] `AiProvider` enum added to `models/enums.py`: `GEMINI`, `CLAUDE`
-- [ ] `active_ai_provider: AiProvider` field added to `AppSettings` (default `GEMINI`)
-- [ ] Backend selector `ttk.Combobox` in Settings → General
-- [ ] Model dropdown content switches based on selected provider:
+- [x] `AiProvider` enum added to `models/enums.py`: `GEMINI`, `CLAUDE`
+- [x] `active_ai_provider: AiProvider` field added to `AppSettings` (default `GEMINI`)
+- [x] `claude_model: str` field added to `AppSettings` (default `claude-sonnet-4-6`)
+- [x] Backend factory in `core/ai/factory.py`: `build_ai_backend()`, `get_api_key()`,
+      `is_claude_available()`
+- [x] Backend selector `ttk.Combobox` in Settings → General
+- [x] Model dropdown content switches based on selected provider:
       Gemini fetches live, Claude shows static list
-- [ ] Backend factory in `core/ai/`: constructs correct backend from `AppSettings`
-- [ ] `main.py` wiring: backend constructed via factory at startup
-- [ ] `preferred_backend` manifest field: logged at startup as informational hint only;
+- [x] `preferred_backend` manifest field: logged at startup as informational hint only;
       Settings always wins — pack field does not override user selection
-- [ ] Claude option hidden from dropdown if `[claude]` extras not installed;
+- [x] Claude option hidden from dropdown if `[claude]` extras not installed;
       startup log explains why
+- [x] `main.py` wiring: backend constructed via factory at startup
+- [x] `MainOverlay.set_claude_api_key()` setter; `_open_settings()` passes it through
+- [x] Provider change detected in `_on_settings_saved`: shows restart notice
+- [x] CalibrationService always uses Gemini key regardless of active provider
 
 ---
 

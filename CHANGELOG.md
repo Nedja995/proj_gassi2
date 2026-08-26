@@ -7,7 +7,32 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.7.0 Multi-Backend (Cloud)
 
-See [TODO.md](TODO.md) for planned sub-versions v0.7.2–v0.7.4.
+See [TODO.md](TODO.md) for planned sub-versions v0.7.3–v0.7.4.
+
+## [0.7.2] - 2026-08-26
+
+### Added
+- `AiProvider` enum (`models/enums.py`): `GEMINI`, `CLAUDE`.
+- `active_ai_provider: AiProvider` field in `AppSettings` (default `GEMINI`);
+  `claude_model: str` field (default `claude-sonnet-4-6`).
+- `core/ai/factory.py`: `build_ai_backend(settings, api_key)` constructs the
+  correct backend; `get_api_key(provider)` retrieves from keyring;
+  `is_claude_available()` checks for `anthropic` SDK without importing it.
+- Backend selector `ttk.Combobox` in Settings → General. Model dropdown
+  switches content per provider: Gemini fetches live, Claude shows static list.
+  Both model choices persisted independently so switching back restores prior selection.
+- Claude option hidden from dropdown when `[claude]` extras absent; note label shown.
+- `MainOverlay.set_claude_api_key()` setter; passed through to `SettingsDialog`.
+- Provider change in `_on_settings_saved` shows restart notice in overlay canvas.
+
+### Changed
+- `main.py`: `GeminiBackend` direct construction replaced by `build_ai_backend()`.
+  API key retrieval is now provider-aware (`_get_api_key(provider)`). Startup
+  log includes active provider. `preferred_backend` manifest hint logged at startup.
+- `CalibrationService` always uses the Gemini key regardless of active provider
+  (it requires `response_schema`, a Gemini-only feature).
+- `SettingsDialog._HEIGHT` increased to 510px for backend selector row.
+- `_fetch_models` renamed to `_fetch_gemini_models` for clarity.
 
 ## [0.7.1] - 2026-08-26
 
