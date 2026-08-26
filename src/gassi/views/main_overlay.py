@@ -228,6 +228,7 @@ class MainOverlay(tk.Tk):
         cell_ref: str,
         monitor_rect: tuple[int, int, int, int],
         auto_dismiss_ms: int = 8000,
+        footprint: tuple[int, int] | None = None,
     ) -> None:
         """Show the transparent cell bounding box over the game screen."""
         self._placement_highlight.show(
@@ -235,6 +236,7 @@ class MainOverlay(tk.Tk):
             cell_ref=cell_ref,
             monitor_rect=monitor_rect,
             auto_dismiss_ms=auto_dismiss_ms,
+            footprint=footprint,
         )
 
     def clear_placement_highlight(self) -> None:

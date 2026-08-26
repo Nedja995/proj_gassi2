@@ -408,15 +408,18 @@ class AssistantViewModel:
 
         if result.cell_reference:
             monitor_rect = self._region_provider.get_monitor_rect()
+            footprint = _lookup_footprint(
+                result.advice_text, self._manifest.building_footprints
+            )
             pixel_rect = cell_to_screen_pixels(
-                result.cell_reference, monitor_rect, cols, rows
+                result.cell_reference, monitor_rect, cols, rows,
+                footprint=footprint,
             )
             if pixel_rect:
                 logger.info(
-                    "Placement cell %s → screen rect %s",
-                    result.cell_reference, pixel_rect,
+                    "Placement cell %s footprint=%s → screen rect %s",
+                    result.cell_reference, footprint, pixel_rect,
                 )
-                # show transparent bounding box over game screen
                 overlay = self._canvas.winfo_toplevel()
                 if hasattr(overlay, "show_placement_highlight"):
                     auto_dismiss_ms = int(
@@ -427,6 +430,7 @@ class AssistantViewModel:
                         cell_ref=result.cell_reference,
                         monitor_rect=monitor_rect,
                         auto_dismiss_ms=auto_dismiss_ms,
+                        footprint=footprint,
                     )
             else:
                 logger.warning(
@@ -620,6 +624,40 @@ class AssistantViewModel:
 
 
 # ── module-level helpers (no ViewModel state needed) ────────────────────────────────
+
+def _lookup_footprint(
+    advice_text: str,
+    building_footprints: dict[str, list[int]],
+) -> tuple[int, int] | None:
+    """Scan advice text for known building keywords and return footprint.
+
+    Performs a simple case-insensitive substring scan of the advice text
+    against the manifest's building_footprints keys. Returns the first match
+    as (width_cells, height_cells), or None if no match found.
+
+    No AI call is made — this is a local keyword scan only.
+    If multiple keywords match, the longest keyword wins (more specific match).
+    """
+    if not building_footprints or not advice_text:
+        return None
+
+    text_lower = advice_text.lower()
+    best_key: str | None = None
+    best_len = 0
+
+    for keyword in building_footprints:
+        if keyword.lower() in text_lower and len(keyword) > best_len:
+            best_key = keyword
+            best_len = len(keyword)
+
+    if best_key is None:
+        return None
+
+    dims = building_footprints[best_key]
+    if len(dims) >= 2:
+        return (int(dims[0]), int(dims[1]))
+    return None
+
 
 def _build_placement_schema() -> types.Schema:
     """Build Gemini response_schema for structured placement response.

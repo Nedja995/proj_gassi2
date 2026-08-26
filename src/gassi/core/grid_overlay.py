@@ -97,6 +97,7 @@ def cell_to_screen_pixels(
     monitor_rect: tuple[int, int, int, int],
     cols: int,
     rows: int,
+    footprint: tuple[int, int] | None = None,
 ) -> tuple[int, int, int, int] | None:
     """Convert a cell reference to absolute screen pixel rect.
 
@@ -108,6 +109,9 @@ def cell_to_screen_pixels(
         monitor_rect: (x, y, width, height) of the captured monitor area.
         cols:         Number of grid columns used when the frame was annotated.
         rows:         Number of grid rows used when the frame was annotated.
+        footprint:    Optional (width_cells, height_cells) for multi-cell buildings.
+                      When provided, the returned rect spans footprint_w × footprint_h
+                      cells instead of 1×1. cell_ref is the top-left anchor cell.
     """
     parsed = parse_cell_reference(cell_ref)
     if parsed is None:
@@ -125,10 +129,15 @@ def cell_to_screen_pixels(
     cell_w = mon_w / cols
     cell_h = mon_h / rows
 
+    fp_w, fp_h = footprint if footprint is not None else (1, 1)
+    # clamp footprint so it doesn’t extend past grid boundary
+    fp_w = min(fp_w, cols - col_idx)
+    fp_h = min(fp_h, rows - row_idx)
+
     px = mon_x + int(col_idx * cell_w)
     py = mon_y + int(row_idx * cell_h)
-    pw = int(cell_w)
-    ph = int(cell_h)
+    pw = int(cell_w * fp_w)
+    ph = int(cell_h * fp_h)
 
     return (px, py, pw, ph)
 

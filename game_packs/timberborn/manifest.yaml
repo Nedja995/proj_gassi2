@@ -6,6 +6,24 @@ rag_collection_name: timberborn_knowledge
 rag_top_k: 4
 rag_min_game_version: "0.6"
 
+# v0.7.4: building footprint registry (width_cells x height_cells).
+# Keys are lowercase keywords matched against placement advice text.
+# Footprint expands the highlight box to cover the full building area.
+building_footprints:
+  pump: [1, 1]           # water pump (1 tile)
+  floodgate: [1, 1]      # floodgate (1 tile)
+  dam: [1, 1]            # dam segment (1 tile)
+  forester: [3, 3]       # forester's hut (3x3)
+  lumberjack: [2, 2]     # lumberjack flag (2x2)
+  sawmill: [3, 2]        # sawmill (3x2)
+  farm: [4, 3]           # farmhouse (4x3)
+  farmhouse: [4, 3]      # alternate keyword
+  battery: [2, 2]        # mechanical battery (2x2)
+  power wheel: [2, 3]    # large power wheel (2x3)
+  workshop: [3, 2]       # workshop (3x2)
+  warehouse: [4, 2]      # warehouse (4x2)
+  district center: [4, 4]  # district center / town hall (4x4)
+
 quick_prompts:
   - "Where should I build my next water pump?"
   - "Where is the best spot for a new dam or floodgate?"

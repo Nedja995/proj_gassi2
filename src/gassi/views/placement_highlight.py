@@ -86,8 +86,19 @@ class PlacementHighlightWindow:
         cell_ref: str,
         monitor_rect: tuple[int, int, int, int],
         auto_dismiss_ms: int = 8000,
+        footprint: tuple[int, int] | None = None,
     ) -> None:
-        """Draw the cell highlight at pixel_rect for auto_dismiss_ms milliseconds."""
+        """Draw the cell highlight at pixel_rect for auto_dismiss_ms milliseconds.
+
+        Args:
+            pixel_rect:      (x, y, w, h) screen rect — already footprint-expanded
+                             by cell_to_screen_pixels() in the ViewModel.
+            cell_ref:        Cell reference for the label (e.g. "D5").
+            monitor_rect:    Full monitor rect (for future use / logging).
+            auto_dismiss_ms: Milliseconds before auto-hide.
+            footprint:       Optional (w_cells, h_cells) — used only for the label
+                             text suffix e.g. "D5 (4×4)".
+        """
         self._cancel_dismiss()
 
         if self._toplevel is None or not self._toplevel.winfo_exists():
@@ -98,7 +109,10 @@ class PlacementHighlightWindow:
             return
 
         px, py, pw, ph = pixel_rect
-        label_w = self._label_width(cell_ref)
+        display_ref = cell_ref
+        if footprint is not None and footprint != (1, 1):
+            display_ref = f"{cell_ref} ({footprint[0]}×{footprint[1]})"
+        label_w = self._label_width(display_ref)
 
         # window covers label strip above + cell area below
         win_w = max(pw, label_w)
@@ -108,7 +122,7 @@ class PlacementHighlightWindow:
 
         # draw content before moving on-screen
         self._canvas.config(width=win_w, height=win_h)
-        self._draw(pw, ph, label_w, cell_ref)
+        self._draw(pw, ph, label_w, display_ref)
 
         # position on-screen then force a full update so the Win32 window
         # is at the correct size before SetWindowRgn is applied
@@ -129,8 +143,8 @@ class PlacementHighlightWindow:
 
         self._dismiss_after_id = self._toplevel.after(auto_dismiss_ms, self.clear)
         logger.debug(
-            "Placement highlight: cell=%s px_rect=%s dismiss_ms=%d",
-            cell_ref, pixel_rect, auto_dismiss_ms,
+            "Placement highlight: cell=%s footprint=%s px_rect=%s dismiss_ms=%d",
+            display_ref, footprint, pixel_rect, auto_dismiss_ms,
         )
 
     def clear(self) -> None:

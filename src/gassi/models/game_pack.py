@@ -59,3 +59,10 @@ class GamePackManifest(BaseModel):
     # None = use global Settings selection. Values: "gemini", "claude".
     # Informational hint only — Settings always wins (AD-26).
     preferred_backend: str | None = None
+
+    # v0.7.4: building footprint registry.
+    # Maps building name keyword (lowercase) to (width_cells, height_cells).
+    # Used to render a multi-cell highlight instead of a single-cell box.
+    # e.g. {"temple": [4, 4], "pump": [1, 1]}
+    # ViewModel matches advice text keywords against this dict (case-insensitive).
+    building_footprints: dict[str, list[int]] = Field(default_factory=dict)
