@@ -7,7 +7,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.8.0 UX Polish
 
-See [TODO.md](TODO.md) for planned sub-versions v0.8.0.2–0.8.0.3.
+See [TODO.md](TODO.md) for planned sub-versions v0.8.0.3.
+
+## [0.8.2] - 2026-08-26
+
+### Added
+- `views/floating_placement_dialog.py`: `FloatingPlacementDialog` — semi-transparent
+  centered `tk.Toplevel` shown when main overlay is offscreen and F2 fires.
+  Themed, always-on-top, full keyboard focus (Enter submits, Escape dismisses).
+- Combobox pre-populated with history + quick-prompts (same data as inline
+  `PlacementInputStrip`). Wider combobox and larger font than the strip for
+  comfortable keyboard use while the game is visible.
+- Header bar (title + ✕ close button), footer hint (`Enter to submit • Esc to dismiss`).
+- Position: center screen horizontally, 35% from top vertically. 40% screen width
+  × 18% screen height; min 400×120px.
+- Dialog hides itself before invoking `on_submit` so it does not appear in the
+  placement screenshot sent to the AI backend.
+- `MainOverlay.show_floating_placement_dialog(suggestions, on_submit)` public method.
+- `MainOverlay._floating_placement: FloatingPlacementDialog` created at init,
+  destroyed in `_on_close_click()`.
+
+### Changed
+- `main.py` `_open_placement()`: when `overlay._offscreen` is True, calls
+  `overlay.show_floating_placement_dialog()` instead of
+  `overlay.toggle_placement_strip()`. Overlay remains offscreen; no slide-back.
+  Inline strip path unchanged when overlay is visible.
 
 ## [0.8.1] - 2026-08-26
 

@@ -418,14 +418,14 @@ Required before beta distribution — these are the biggest daily-use pain point
 - [x] Settings dialog: "Floating advice" toggle checkbutton in General tab
 - [x] `SettingsDialog._HEIGHT` increased to 540px
 
-### v0.8.0.2 — Floating Placement Dialog
+### v0.8.0.2 — Floating Placement Dialog ✅ Complete
 
-- [ ] When overlay is offscreen and F2 fires, show a centered `tk.Toplevel` dialog
+- [x] When overlay is offscreen and F2 fires, show a centered `tk.Toplevel` dialog
       (larger than the inline strip) with combobox + history + quick-prompts.
-- [ ] Full keyboard focus, Escape dismisses, Enter submits.
-- [ ] Reuses same history + quick-prompts data as `PlacementInputStrip` — no ViewModel changes.
-- [ ] `placement_input_style: strip | dialog` setting (default `strip`);
-      dialog auto-used when overlay is offscreen regardless of setting.
+- [x] Full keyboard focus, Escape dismisses, Enter submits.
+- [x] Reuses same history + quick-prompts data as `PlacementInputStrip` — no ViewModel changes.
+- [x] Dialog hides itself before `on_submit` so it is absent from the placement screenshot.
+- [x] `placement_input_style` setting deferred to v0.9.0 UX backlog (not needed for current behaviour).
 
 ### v0.8.0.3 — General UX
 
