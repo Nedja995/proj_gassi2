@@ -61,5 +61,10 @@ class AppSettings(BaseSettings):
     # Placement highlight (v0.3.2)
     placement_highlight_seconds: int = Field(default=8, ge=2, le=30)
 
+    # Floating advice window (v0.8.0.1)
+    # When overlay is offscreen and F1 fires, show advice in a centered floating window.
+    show_floating_advice_when_hidden: bool = True
+    floating_advice_timeout_seconds: int = Field(default=12, ge=4, le=60)
+
     # Debug
     debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

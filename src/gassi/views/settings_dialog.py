@@ -165,7 +165,7 @@ class SettingsDialog(tk.Toplevel):
     """Modal settings dialog with tabs for different setting categories."""
 
     _WIDTH = 480
-    _HEIGHT = 510  # increased from 470 to accommodate backend selector row
+    _HEIGHT = 540  # increased from 510 to accommodate floating advice toggle row
 
     def __init__(
         self,
@@ -468,6 +468,23 @@ class SettingsDialog(tk.Toplevel):
         grid_check.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
+        # ── floating advice toggle ──────────────────────────────────
+        tk.Label(
+            frame, text="Floating advice", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        self._floating_advice_var = tk.BooleanVar(
+            value=bool(self._current.get("show_floating_advice_when_hidden", True))
+        )
+        floating_check = ttk.Checkbutton(
+            frame,
+            text="Show in floating window when overlay is hidden",
+            variable=self._floating_advice_var,
+        )
+        floating_check.grid(row=row, column=1, sticky="w", pady=6)
+        row += 1
+
         # ── calibration ────────────────────────────────────────────────
         if self._calibration_service is not None:
             separator = ttk.Separator(frame, orient=tk.HORIZONTAL)
@@ -607,6 +624,7 @@ class SettingsDialog(tk.Toplevel):
         settings["cooldown_seconds"] = self._cooldown_var.get()
         settings["advisor_input_source"] = self._source_var.get()
         settings["grid_overlay_enabled"] = self._grid_var.get()
+        settings["show_floating_advice_when_hidden"] = self._floating_advice_var.get()
         settings["active_game_id"] = self._game_display_to_id.get(
             self._game_var.get(), self._game_var.get()
         )

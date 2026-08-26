@@ -371,11 +371,26 @@ class AssistantViewModel:
         response_text, usage = result
         self._accumulate_usage(usage)
         self._busy = False
-        # auto-expand overlay if collapsed
+
         overlay = self._canvas.winfo_toplevel()
-        if hasattr(overlay, "auto_expand_for_result"):
-            overlay.auto_expand_for_result()
-        self._canvas.show_advice(response_text)
+        _use_floating = (
+            getattr(self._settings, "show_floating_advice_when_hidden", True)
+            and getattr(overlay, "_offscreen", False)
+            and hasattr(overlay, "show_floating_advice")
+        )
+
+        if _use_floating:
+            _timeout = getattr(self._settings, "floating_advice_timeout_seconds", 12)
+            overlay.show_floating_advice(  # type: ignore[union-attr]
+                advice_text=response_text,
+                timeout_seconds=_timeout,
+            )
+            logger.debug("Advisor result routed to floating window (overlay offscreen)")
+        else:
+            if hasattr(overlay, "auto_expand_for_result"):
+                overlay.auto_expand_for_result()
+            self._canvas.show_advice(response_text)
+
         self._start_cooldown()
         self._mode = AssistantMode.IDLE
         self._canvas.update_status("IDLE", self._input_source.value)

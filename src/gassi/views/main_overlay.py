@@ -14,6 +14,7 @@ from typing import Any, Callable
 from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
+from gassi.views.floating_advice_window import FloatingAdviceWindow
 from gassi.views.log_panel import LogPanel
 from gassi.views.placement_highlight import PlacementHighlightWindow
 from gassi.views.placement_strip import PlacementInputStrip
@@ -185,6 +186,9 @@ class MainOverlay(tk.Tk):
         # ── placement highlight (v0.3.2) ──────────────────────────
         self._placement_highlight = PlacementHighlightWindow(self, theme=t)
 
+        # ── floating advice window (v0.8.0.1) ────────────────────
+        self._floating_advice = FloatingAdviceWindow(self, theme=t)
+
         # ── resize grip (bottom-right corner) ────────────────────
         self._resize_grip = tk.Label(
             self, text="◢", bg=t.bg_footer, fg=t.fg_dim,
@@ -219,6 +223,23 @@ class MainOverlay(tk.Tk):
     def update_token_display(self, text: str) -> None:
         """Update the session token/cost label in the footer."""
         self._token_label.config(text=text)
+
+    def show_floating_advice(
+        self,
+        advice_text: str,
+        timeout_seconds: int = 12,
+    ) -> None:
+        """Show advice in the floating centered window (v0.8.0.1).
+
+        Called by ViewModel when overlay is offscreen and
+        show_floating_advice_when_hidden setting is True.
+        MainOverlay does NOT check _offscreen here — the ViewModel
+        decides which path to take; MainOverlay just executes.
+        """
+        self._floating_advice.show(
+            advice_text=advice_text,
+            timeout_ms=timeout_seconds * 1000,
+        )
 
     # ── placement highlight (v0.3.2) ────────────────────────────────────
 
@@ -548,6 +569,7 @@ class MainOverlay(tk.Tk):
     def _on_close_click(self) -> None:
         self._destroy_pull_tab()
         self._placement_highlight.destroy()
+        self._floating_advice.destroy()
         if hasattr(self, "_close_handler") and self._close_handler:
             self._close_handler()  # type: ignore[operator]
         else:
