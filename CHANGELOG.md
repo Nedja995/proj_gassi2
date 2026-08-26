@@ -5,9 +5,27 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.7.0 Multi-Backend (Cloud)
+## [Unreleased] — v0.8.0 Local SLM
 
-See [TODO.md](TODO.md) for planned sub-version v0.7.4.
+See [TODO.md](TODO.md) for planned items.
+
+## [0.7.4] - 2026-08-26
+
+### Added
+- `building_footprints: dict[str, list[int]]` field in `GamePackManifest` (default `{}`).
+- `_lookup_footprint(advice_text, building_footprints)` module-level helper in ViewModel:
+  case-insensitive substring scan; longest keyword match wins; no AI call.
+- `cell_to_screen_pixels()` extended with optional `footprint: tuple[int, int]`;
+  pixel rect now spans `fp_w × fp_h` cells; footprint clamped to grid bounds.
+- `PlacementHighlightWindow.show()` `footprint` param: label suffix `D5 (4×4)` when
+  footprint ≠ `(1, 1)`. `SetWindowRgn` calculation unchanged — works for any rect size.
+- `MainOverlay.show_placement_highlight()` passes `footprint` through to highlight window.
+- Timberborn manifest: 13 `building_footprints` entries (pump, forester, farm, battery,
+  power wheel, sawmill, workshop, warehouse, district center, dam, floodgate, lumberjack).
+- Nebuchadnezzar manifest: 11 `building_footprints` entries (shrine, temple, ziggurat,
+  bazaar, granary, storehouse, well, house, garden, school, bathhouse). Replaces
+  the v0.6.0 commented-out placeholder block.
+- AD-27 added to `docs/architecture.md`.
 
 ## [0.7.3] - 2026-08-26
 

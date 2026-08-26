@@ -216,3 +216,27 @@ free-form text for both backends without changes.
   `fetch_available_claude_models()` returns a hardcoded list ordered
   cheapest/fastest first (Haiku → Sonnet → Opus). The ViewModel's settings dialog
   uses this list in v0.7.2 the same way `fetch_available_models()` works for Gemini.
+
+## AD-27: Building footprint registry — manifest dict + keyword scan, no extra AI call
+
+**Decision:** `GamePackManifest.building_footprints` is a `dict[str, list[int]]` mapping
+lowercase building name keywords to `[width_cells, height_cells]`. The ViewModel's
+`_lookup_footprint()` performs a case-insensitive substring scan of the placement
+advice text against manifest keys; the longest matching keyword wins. The matched
+footprint is passed to `cell_to_screen_pixels()` (which expands the pixel rect by
+`fp_w × fp_h` cells, clamped to grid bounds) and to `PlacementHighlightWindow.show()`
+(which adds a `W×H` suffix to the label: `D5 (4×4)`).
+
+**Rationale:**
+- **No extra AI call:** a second AI call to identify the building type would add
+  latency, cost, and a new failure mode. The advice text already contains the building
+  name — a substring scan is sufficient and instantaneous.
+- **Longest-match wins:** avoids `house` matching `bathhouse` ahead of a more specific
+  key. Simple and predictable without regex.
+- **Manifest-authored footprints:** game designers know building sizes; encoding them
+  in the manifest keeps the ViewModel generic. Adding a new building = one YAML line.
+- **Graceful degradation:** if no keyword matches, `_lookup_footprint()` returns `None`
+  and the highlight falls back to a 1×1 cell box — identical to pre-v0.7.4 behaviour.
+- **`SetWindowRgn` unchanged:** the hollow frame region calculation in
+  `PlacementHighlightWindow._apply_region_and_clickthrough()` already works for any
+  `(pw, ph)` rect; no Win32 changes needed for multi-cell footprints.

@@ -377,20 +377,22 @@ Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.7.4 — Building Footprint Registry + Multi-cell Highlight
+## v0.7.4 — Building Footprint Registry + Multi-cell Highlight ✅ Complete
 
-- [ ] `building_footprints: dict[str, tuple[int, int]]` field added to `GamePackManifest`
+- [x] `building_footprints: dict[str, list[int]]` field added to `GamePackManifest`
       (optional, default `{}`)
-      e.g. `temple: [4, 4]`, `pump: [1, 1]`
-- [ ] `cell_to_screen_pixels()` extended to accept optional `footprint: tuple[int, int]`;
-      when provided, rect covers W×H cells instead of 1×1
-- [ ] `PlacementHighlightWindow.show()` accepts optional `footprint` param;
-      passes through to `SetWindowRgn` hollow frame calculation
-- [ ] ViewModel: after parsing `cell_reference`, look up footprint in manifest
-      by keyword scan of advice text — no additional AI call
-- [ ] Timberborn manifest: `building_footprints` entries for common buildings
-- [ ] Nebuchadnezzar manifest: `building_footprints` entries for common buildings
-- [ ] AD-27 in `docs/architecture.md`
+- [x] `cell_to_screen_pixels()` extended with optional `footprint: tuple[int, int]`;
+      rect spans `fp_w × fp_h` cells; footprint clamped to grid bounds
+- [x] `PlacementHighlightWindow.show()` accepts optional `footprint` param;
+      label suffix added e.g. `D5 (4×4)` when footprint ≠ (1, 1)
+- [x] `MainOverlay.show_placement_highlight()` passes `footprint` through
+- [x] `_lookup_footprint()` module-level helper: case-insensitive keyword scan
+      of advice text vs manifest keys; longest match wins; no AI call
+- [x] ViewModel `_on_placement_result`: calls `_lookup_footprint()`, passes result
+      to `cell_to_screen_pixels()` and `show_placement_highlight()`
+- [x] Timberborn manifest: 13 building footprint entries
+- [x] Nebuchadnezzar manifest: 11 building footprint entries (replaces v0.6.0 comment)
+- [x] AD-27 in `docs/architecture.md`
 
 ---
 
