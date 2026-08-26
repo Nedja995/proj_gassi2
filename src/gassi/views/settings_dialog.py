@@ -11,9 +11,12 @@ from typing import Any, Callable
 
 from gassi.core.calibration_service import CalibrationService
 from gassi.core.ai.gemini_backend import fetch_available_models
+from gassi.core.ai.claude_backend import fetch_available_claude_models
+from gassi.core.ai.factory import is_claude_available
 from gassi.core.game_pack_loader import GamePackLoader
 from gassi.core.theme.theme import Theme, THEMES, DARK_THEME
 from gassi.core.settings_manager import load_saved_settings, save_settings
+from gassi.models.enums import AiProvider
 
 
 # pynput key display names for common keys
@@ -162,7 +165,7 @@ class SettingsDialog(tk.Toplevel):
     """Modal settings dialog with tabs for different setting categories."""
 
     _WIDTH = 480
-    _HEIGHT = 470  # increased from 420 to accommodate active game selector row
+    _HEIGHT = 510  # increased from 470 to accommodate backend selector row
 
     def __init__(
         self,
@@ -173,6 +176,7 @@ class SettingsDialog(tk.Toplevel):
         calibration_service: CalibrationService | None = None,
         game_id: str = "",
         api_key: str = "",
+        claude_api_key: str = "",
         pack_loader: GamePackLoader | None = None,
     ) -> None:
         super().__init__(parent)
@@ -182,6 +186,7 @@ class SettingsDialog(tk.Toplevel):
         self._calibration_service = calibration_service
         self._game_id = game_id
         self._api_key = api_key
+        self._claude_api_key = claude_api_key
         self._pack_loader = pack_loader
         t = theme
 
@@ -295,7 +300,7 @@ class SettingsDialog(tk.Toplevel):
         frame = tk.Frame(parent, bg=t.bg_primary, padx=16, pady=16)
         row = 0
 
-        # active game pack selector
+        # ── active game pack selector ──────────────────────────────────
         tk.Label(
             frame, text="Active game", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -306,7 +311,6 @@ class SettingsDialog(tk.Toplevel):
             packs = self._pack_loader.list_available_packs()
             pack_display = [display for _, display in packs]
             pack_ids = [gid for gid, _ in packs]
-            # find index of current game
             try:
                 current_display = pack_display[pack_ids.index(current_game)]
             except ValueError:
@@ -327,7 +331,75 @@ class SettingsDialog(tk.Toplevel):
         game_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # theme picker
+        # ── AI backend provider selector ───────────────────────────────
+        tk.Label(
+            frame, text="AI Backend", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        _claude_available = is_claude_available()
+        _provider_options = [AiProvider.GEMINI.value]
+        if _claude_available:
+            _provider_options.append(AiProvider.CLAUDE.value)
+
+        current_provider_raw = self._current.get(
+            "active_ai_provider", AiProvider.GEMINI.value
+        )
+        # if Claude saved but extras now absent, fall back to Gemini
+        if current_provider_raw == AiProvider.CLAUDE.value and not _claude_available:
+            current_provider_raw = AiProvider.GEMINI.value
+
+        self._provider_var = tk.StringVar(value=current_provider_raw)
+        self._provider_combo = ttk.Combobox(
+            frame, textvariable=self._provider_var,
+            values=_provider_options, state="readonly", width=18,
+        )
+        self._provider_combo.grid(row=row, column=1, sticky="w", pady=6)
+
+        if not _claude_available:
+            self._provider_note = tk.Label(
+                frame,
+                text="Claude hidden — install [claude] extras to enable",
+                bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+            )
+            self._provider_note.grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
+            row += 1
+        row += 1
+
+        # ── AI model combobox — content switches per provider ──────────
+        tk.Label(
+            frame, text="AI Model", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        # determine starting model from saved settings
+        _initial_provider = AiProvider(self._provider_var.get())
+        if _initial_provider == AiProvider.GEMINI:
+            _initial_model = self._current.get("gemini_model", "gemini-2.5-flash")
+        else:
+            _initial_model = self._current.get("claude_model", "claude-sonnet-4-6")
+
+        self._model_var = tk.StringVar(value=_initial_model)
+        self._model_combo = ttk.Combobox(
+            frame, textvariable=self._model_var,
+            values=[_initial_model], state="readonly", width=26,
+        )
+        self._model_combo.grid(row=row, column=1, sticky="w", pady=6)
+
+        self._model_status = tk.Label(
+            frame, text="",
+            bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+        )
+        self._model_status.grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
+        row += 2
+
+        # bind provider change to refresh model list
+        self._provider_combo.bind("<<ComboboxSelected>>", self._on_provider_changed)
+
+        # kick off initial model fetch for starting provider
+        self.after(100, self._refresh_model_list)
+
+        # ── theme picker ───────────────────────────────────────────────
         tk.Label(
             frame, text="Theme", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -341,7 +413,7 @@ class SettingsDialog(tk.Toplevel):
         theme_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # cooldown
+        # ── cooldown ───────────────────────────────────────────────────
         tk.Label(
             frame, text="Cooldown (seconds)", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -363,37 +435,7 @@ class SettingsDialog(tk.Toplevel):
         self._cooldown_scale.pack(side=tk.LEFT)
         row += 1
 
-        # AI model — combobox populated from live API fetch
-        tk.Label(
-            frame, text="AI Model", bg=t.bg_primary, fg=t.fg_text,
-            font=t.font("normal"),
-        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
-
-        current_model = self._current.get("gemini_model", "gemini-2.0-flash")
-        self._model_var = tk.StringVar(value=current_model)
-        self._model_combo = ttk.Combobox(
-            frame, textvariable=self._model_var,
-            values=[current_model, "Loading models..."],
-            state="readonly", width=26,
-        )
-        self._model_combo.grid(row=row, column=1, sticky="w", pady=6)
-
-        self._model_status = tk.Label(
-            frame, text="⟳ Fetching models...",
-            bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
-        )
-        self._model_status.grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
-        row += 2
-
-        # kick off background fetch after widget is created
-        if self._api_key:
-            self.after(100, self._fetch_models)
-        else:
-            self._model_status.config(text="No API key — using fallback list")
-            from gassi.core.ai.gemini_backend import _FALLBACK_MODELS
-            self._model_combo.config(values=_FALLBACK_MODELS)
-
-        # advisor input source
+        # ── advisor input source ───────────────────────────────────────
         tk.Label(
             frame, text="Default input", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -409,7 +451,7 @@ class SettingsDialog(tk.Toplevel):
         source_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # grid overlay toggle
+        # ── grid overlay toggle ────────────────────────────────────────
         tk.Label(
             frame, text="Grid overlay", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -426,7 +468,7 @@ class SettingsDialog(tk.Toplevel):
         grid_check.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # calibration button — only shown when CalibrationService is wired in
+        # ── calibration ────────────────────────────────────────────────
         if self._calibration_service is not None:
             separator = ttk.Separator(frame, orient=tk.HORIZONTAL)
             separator.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
@@ -454,6 +496,52 @@ class SettingsDialog(tk.Toplevel):
         frame.columnconfigure(1, weight=1)
         return frame
 
+    def _on_provider_changed(self, _event: Any = None) -> None:
+        """Refresh model list when the backend provider combobox changes."""
+        self._model_status.config(text="")
+        self._model_combo.config(values=[])
+        self._model_var.set("")
+        self._refresh_model_list()
+
+    def _refresh_model_list(self) -> None:
+        """Populate model combobox based on the currently selected provider."""
+        provider_str = self._provider_var.get()
+        try:
+            provider = AiProvider(provider_str)
+        except ValueError:
+            provider = AiProvider.GEMINI
+
+        t = self._theme
+
+        if provider == AiProvider.CLAUDE:
+            models = fetch_available_claude_models()
+            current = self._current.get("claude_model", models[0] if models else "")
+            if current not in models:
+                models = [current] + models
+            self._model_combo.config(values=models, state="readonly")
+            self._model_var.set(current if current in models else models[0])
+            self._model_status.config(
+                text=f"✓ {len(models)} models (static list)",
+                fg=t.fg_accent,
+            )
+        else:
+            # Gemini: live fetch
+            current = self._current.get("gemini_model", "gemini-2.5-flash")
+            self._model_var.set(current)
+            self._model_combo.config(values=[current], state="readonly")
+            self._model_status.config(
+                text="⟳ Fetching models...", fg=t.fg_dim,
+            )
+            if self._api_key:
+                self.after(0, self._fetch_gemini_models)
+            else:
+                from gassi.core.ai.gemini_backend import _FALLBACK_MODELS  # noqa: PLC0415
+                self._model_combo.config(values=_FALLBACK_MODELS)
+                self._model_status.config(
+                    text="No Gemini API key — using fallback list",
+                    fg=t.fg_warning,
+                )
+
     def _open_calibration_dialog(self) -> None:
         from gassi.views.calibration_dialog import CalibrationDialog
         CalibrationDialog(
@@ -463,14 +551,13 @@ class SettingsDialog(tk.Toplevel):
             game_id=self._game_id,
         )
 
-    def _fetch_models(self) -> None:
+    def _fetch_gemini_models(self) -> None:
         """Fetch available Gemini models and populate the combobox."""
         def _on_done(models: list[str]) -> None:
-            # marshal back to tkinter thread via after()
             self.after(0, lambda: self._update_model_combo(models))
 
-        def _on_error(msg: str) -> None:
-            from gassi.core.ai.gemini_backend import _FALLBACK_MODELS
+        def _on_error(_msg: str) -> None:
+            from gassi.core.ai.gemini_backend import _FALLBACK_MODELS  # noqa: PLC0415
             self.after(0, lambda: self._update_model_combo(
                 _FALLBACK_MODELS, error=True
             ))
@@ -518,12 +605,27 @@ class SettingsDialog(tk.Toplevel):
         # general
         settings["theme_name"] = self._theme_var.get()
         settings["cooldown_seconds"] = self._cooldown_var.get()
-        settings["gemini_model"] = self._model_var.get()
         settings["advisor_input_source"] = self._source_var.get()
         settings["grid_overlay_enabled"] = self._grid_var.get()
         settings["active_game_id"] = self._game_display_to_id.get(
             self._game_var.get(), self._game_var.get()
         )
+
+        # provider + model — save both model keys so switching back
+        # preserves the previously chosen model for each provider
+        provider_str = self._provider_var.get()
+        settings["active_ai_provider"] = provider_str
+        selected_model = self._model_var.get()
+        try:
+            provider = AiProvider(provider_str)
+        except ValueError:
+            provider = AiProvider.GEMINI
+        if provider == AiProvider.CLAUDE:
+            settings["claude_model"] = selected_model
+            settings["gemini_model"] = self._current.get("gemini_model", "gemini-2.5-flash")
+        else:
+            settings["gemini_model"] = selected_model
+            settings["claude_model"] = self._current.get("claude_model", "claude-sonnet-4-6")
 
         save_settings(settings)
         self._on_save(settings)

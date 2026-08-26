@@ -16,3 +16,14 @@ class AdvisorInputSource(Enum):
 
     OCR = "ocr"                # local RapidOCR -> text -> Gemini
     SCREENSHOT = "screenshot"  # cropped hud_region image -> Gemini directly
+
+
+class AiProvider(Enum):
+    """AI backend provider selection.
+
+    Stored in settings.json as a string value ("gemini" or "claude").
+    Settings always wins over any pack-level preferred_backend hint.
+    """
+
+    GEMINI = "gemini"
+    CLAUDE = "claude"

@@ -1,6 +1,6 @@
 [project]
 name = "gassi"
-version = "0.7.1"
+version = "0.7.2"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
 readme = "README.md"
 license = "MIT"

@@ -3,7 +3,7 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-from gassi.models.enums import AdvisorInputSource
+from gassi.models.enums import AdvisorInputSource, AiProvider
 
 
 class AppSettings(BaseSettings):
@@ -16,8 +16,12 @@ class AppSettings(BaseSettings):
 
     model_config = {"env_prefix": "GASSI_"}
 
-    # AI backend
+    # AI backend provider (v0.7.2)
+    active_ai_provider: AiProvider = AiProvider.GEMINI
+
+    # AI backend — model per provider
     gemini_model: str = "gemini-2.5-flash"
+    claude_model: str = "claude-sonnet-4-6"
 
     # Advisor mode
     advisor_input_source: AdvisorInputSource = AdvisorInputSource.OCR

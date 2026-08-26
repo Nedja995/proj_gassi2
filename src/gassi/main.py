@@ -8,9 +8,9 @@ import sys
 from importlib.metadata import version as _pkg_version
 from typing import Any
 
-import keyring
+import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory
 
-from gassi.core.ai.gemini_backend import GeminiBackend
+from gassi.core.ai.factory import build_ai_backend, get_api_key as _factory_get_api_key
 from gassi.core.async_bridge import AsyncBridge
 from gassi.core.calibration_service import CalibrationService
 from gassi.core.capture.mss_backend import MssCaptureBackend
@@ -24,29 +24,37 @@ from gassi.core.rag.factory import RagServiceFactory
 from gassi.core.settings_manager import load_saved_settings, save_window_geometry
 from gassi.core.theme.theme import THEMES, FOREST_THEME
 from gassi.models.config import AppSettings
+from gassi.models.enums import AiProvider
 from gassi.viewmodels.assistant_viewmodel import AssistantViewModel
 from gassi.views.main_overlay import MainOverlay
 
-_KEYRING_SERVICE = "gassi"
-_KEYRING_USERNAME = "gemini_api_key"
+_KEYRING_USERNAME_GEMINI = "gemini_api_key"
+_KEYRING_USERNAME_CLAUDE = "claude_api_key"
 
 
-def _get_api_key() -> str:
-    """Retrieve Gemini API key from OS keyring."""
-    api_key = keyring.get_password(_KEYRING_SERVICE, _KEYRING_USERNAME)
-    if not api_key:
+def _get_api_key(provider: AiProvider) -> str:
+    """Retrieve API key for the active provider from OS keyring. Exits on missing key."""
+    key = _factory_get_api_key(provider)
+    if not key:
+        username = (
+            _KEYRING_USERNAME_GEMINI
+            if provider == AiProvider.GEMINI
+            else _KEYRING_USERNAME_CLAUDE
+        )
         logging.getLogger(__name__).error(
-            "No API key found in keyring. Store one with:\n"
+            "No API key found in keyring for provider '%s'. Store one with:\n"
             "  python -c \"import keyring; "
-            "keyring.set_password('gassi', 'gemini_api_key', 'YOUR_KEY')\""
+            "keyring.set_password('gassi', '%s', 'YOUR_KEY')\"",
+            provider.value,
+            username,
         )
         sys.exit(1)
-    return api_key
+    return key
 
 
 def main() -> None:
     """Application entry point — compose and start."""
-    # ── logging setup ─────────────────────────────────────────────────
+    # ── logging setup ──────────────────────────────────────────────────────────
     overlay_log_handler = OverlayLogHandler(max_lines=200)
     overlay_log_handler.setLevel(logging.DEBUG)
 
@@ -60,41 +68,61 @@ def main() -> None:
     )
     logger = logging.getLogger(__name__)
 
-    # ── settings ──────────────────────────────────────────────────────
+    # ── settings ───────────────────────────────────────────────────────────────
     saved = load_saved_settings()
     settings = AppSettings(**{k: v for k, v in saved.items() if not k.startswith("_")})
 
     theme = THEMES.get(settings.theme_name, FOREST_THEME)
 
-    # ── API key ───────────────────────────────────────────────────────
-    api_key = _get_api_key()
+    # ── API keys ───────────────────────────────────────────────────────────────
+    api_key = _get_api_key(settings.active_ai_provider)
+    # Retrieve Claude key silently for the settings dialog (may be empty string).
+    # Not used at runtime unless the provider is switched to Claude.
+    _claude_api_key: str = _factory_get_api_key(AiProvider.CLAUDE) or ""
 
-    # ── core components ───────────────────────────────────────────────
-    ai_backend = GeminiBackend(api_key=api_key, model=settings.gemini_model)
+    # ── core components ────────────────────────────────────────────────────────
+    ai_backend = build_ai_backend(settings=settings, api_key=api_key)
     capture_backend = MssCaptureBackend()
     ocr_engine = RapidOcrEngine()
     pack_loader = GamePackLoader()
     debug_manager = DebugManager()
 
-    # ── RAG service ───────────────────────────────────────────
+    # ── game pack + RAG service ────────────────────────────────────────────────
     _active_manifest = pack_loader.load_manifest(settings.active_game_id)
     _game_pack_path = pack_loader._packs_dir / settings.active_game_id
+
+    # log preferred_backend hint if set — informational only; Settings wins
+    if _active_manifest.preferred_backend:
+        logger.info(
+            "Pack '%s' preferred_backend hint: '%s' (current: '%s' — Settings wins)",
+            settings.active_game_id,
+            _active_manifest.preferred_backend,
+            settings.active_ai_provider.value,
+        )
+
     rag_service = RagServiceFactory.for_game_pack(
         game_pack_path=_game_pack_path,
         collection_name=_active_manifest.rag_collection_name,
     )
+
+    # CalibrationService always uses Gemini (multimodal + response_schema)
+    _gemini_api_key_for_calib = (
+        api_key
+        if settings.active_ai_provider == AiProvider.GEMINI
+        else (_factory_get_api_key(AiProvider.GEMINI) or "")
+    )
     calibration_service = CalibrationService(
-        api_key=api_key,
+        api_key=_gemini_api_key_for_calib,
         model=settings.gemini_model,
         capture_backend=capture_backend,
         ocr_engine=ocr_engine,
         ocr_confidence_threshold=settings.ocr_confidence_threshold,
     )
 
-    # ── UI ────────────────────────────────────────────────────────────
+    # ── UI ─────────────────────────────────────────────────────────────────────
     overlay = MainOverlay(theme=theme, log_handler=overlay_log_handler)
 
-    from gassi.core.settings_manager import load_window_geometry
+    from gassi.core.settings_manager import load_window_geometry  # noqa: PLC0415
     saved_geometry = load_window_geometry()
     if saved_geometry:
         overlay.geometry(saved_geometry)
@@ -102,7 +130,7 @@ def main() -> None:
     async_bridge = AsyncBridge(overlay)
     region_provider = OverlayAnchoredRegionProvider(overlay)
 
-    # ── ViewModel ─────────────────────────────────────────────────────
+    # ── ViewModel ──────────────────────────────────────────────────────────────
     viewmodel = AssistantViewModel(
         settings=settings,
         ai_backend=ai_backend,
@@ -116,7 +144,7 @@ def main() -> None:
         rag_service=rag_service,
     )
 
-    # ── hotkeys ───────────────────────────────────────────────────────
+    # ── hotkeys ────────────────────────────────────────────────────────────────
     hotkey_manager = HotkeyManager()
     hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.trigger_advisor)
     hotkey_manager.register(
@@ -139,7 +167,7 @@ def main() -> None:
     overlay.set_placement_handler(viewmodel.trigger_placement)
     hotkey_manager.start()
 
-    # ── settings save handler ─────────────────────────────────────────
+    # ── settings save handler ──────────────────────────────────────────────────
     def _on_settings_saved(new_settings: dict[str, Any]) -> None:
         prev_game = settings.active_game_id
         new_game = new_settings.get("active_game_id", prev_game)
@@ -147,7 +175,8 @@ def main() -> None:
         if new_game != prev_game:
             logger.info(
                 "Active game changed: %s -> %s — restart GASSI to apply",
-                prev_game, new_game,
+                prev_game,
+                new_game,
             )
             overlay.after(
                 0,
@@ -167,7 +196,6 @@ def main() -> None:
                 "hotkey_debug_save_frame",
             }
             _old_hotkeys = {k: getattr(settings, k, None) for k in _hotkey_keys}
-            # use old value as fallback when key absent from new_settings
             _new_hotkeys = {
                 k: new_settings.get(k, getattr(settings, k, None))
                 for k in _hotkey_keys
@@ -186,16 +214,39 @@ def main() -> None:
             else:
                 logger.info("Settings saved")
 
+        # provider or backend change also requires restart
+        new_provider = new_settings.get(
+            "active_ai_provider", settings.active_ai_provider.value
+        )
+        if new_provider != settings.active_ai_provider.value:
+            logger.info(
+                "AI provider changed: %s -> %s — restart GASSI to apply",
+                settings.active_ai_provider.value,
+                new_provider,
+            )
+            overlay.after(
+                0,
+                lambda: overlay.canvas.show_advice(
+                    f"## Restart required\n"
+                    f"- AI provider changed to **{new_provider}**.\n"
+                    f"- Restart GASSI to switch backends.",
+                    is_loading=False,
+                ),
+            )
+
         if "cooldown_seconds" in new_settings:
             viewmodel._settings = AppSettings(
                 **{k: v for k, v in new_settings.items() if not k.startswith("_")}
             )
 
     overlay.set_settings_handler(_on_settings_saved)
-    overlay.set_calibration_service(calibration_service, settings.active_game_id, api_key)
+    overlay.set_calibration_service(
+        calibration_service, settings.active_game_id, _gemini_api_key_for_calib
+    )
+    overlay.set_claude_api_key(_claude_api_key)
     overlay.set_pack_loader(pack_loader)
 
-    # ── cleanup on close ──────────────────────────────────────────────
+    # ── cleanup on close ───────────────────────────────────────────────────────
     def _on_close() -> None:
         save_window_geometry(overlay.geometry())
         hotkey_manager.stop()
@@ -205,8 +256,9 @@ def main() -> None:
     overlay.set_close_handler(_on_close)
 
     logger.info(
-        "GASSI v%s started — game: %s (%s) | rag: %s | debug frames: %s",
+        "GASSI v%s started — provider: %s | game: %s (%s) | rag: %s | debug: %s",
         _pkg_version("gassi"),
+        settings.active_ai_provider.value,
         _active_manifest.display_name,
         settings.active_game_id,
         "on" if rag_service.is_available() else "off",

@@ -486,6 +486,10 @@ class MainOverlay(tk.Tk):
         self._calibration_game_id = game_id
         self._api_key = api_key
 
+    def set_claude_api_key(self, claude_api_key: str) -> None:
+        """Store Claude API key for the settings dialog model list."""
+        self._claude_api_key = claude_api_key
+
     def set_pack_loader(self, pack_loader: object) -> None:
         """Wire GamePackLoader for the active game selector in settings."""
         self._pack_loader = pack_loader
@@ -523,6 +527,7 @@ class MainOverlay(tk.Tk):
             calibration_service=getattr(self, "_calibration_service", None),
             game_id=getattr(self, "_calibration_game_id", ""),
             api_key=getattr(self, "_api_key", ""),
+            claude_api_key=getattr(self, "_claude_api_key", ""),
             pack_loader=getattr(self, "_pack_loader", None),
         )
 
