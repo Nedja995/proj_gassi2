@@ -13,6 +13,8 @@ from typing import Any
 from google import genai
 from google.genai import types
 
+from gassi.models.results import UsageStats, estimate_cost
+
 logger = logging.getLogger(__name__)
 
 # suppress AFC warning — we never use function calling tools
@@ -53,7 +55,7 @@ class GeminiBackend:
         self._model = model
         self._client = genai.Client(api_key=api_key)
 
-    async def complete_text(self, system_prompt: str, user_prompt: str) -> str:
+    async def complete_text(self, system_prompt: str, user_prompt: str) -> tuple[str, UsageStats]:
         """Send text-only prompt to Gemini."""
         try:
             response = await self._client.aio.models.generate_content(
@@ -64,7 +66,7 @@ class GeminiBackend:
                     automatic_function_calling=_AFC_CONFIG,
                 ),
             )
-            return response.text or ""
+            return response.text or "", _extract_usage(response, self._model)
         except Exception as exc:
             if _is_quota_error(exc):
                 raise _build_quota_error(exc) from exc
@@ -77,7 +79,7 @@ class GeminiBackend:
         image_bytes: bytes,
         image_mime: str = "image/png",
         response_schema: Any | None = None,
-    ) -> str:
+    ) -> tuple[str, UsageStats]:
         """Send prompt with image to Gemini multimodal endpoint.
 
         Args:
@@ -106,7 +108,7 @@ class GeminiBackend:
                 contents=[image_part, text_part],
                 config=types.GenerateContentConfig(**config_kwargs),
             )
-            return response.text or ""
+            return response.text or "", _extract_usage(response, self._model)
         except Exception as exc:
             if _is_quota_error(exc):
                 raise _build_quota_error(exc) from exc
@@ -129,6 +131,34 @@ def _build_quota_error(exc: Exception) -> Exception:
         msg = "API quota exceeded — check your Gemini plan at https://ai.dev/rate-limit"
     logger.warning("Gemini 429: %s", msg)
     return RuntimeError(msg)
+
+
+def _extract_usage(response: Any, model: str) -> UsageStats:
+    """Extract token counts from a Gemini GenerateContentResponse.
+
+    Gemini returns usage_metadata.prompt_token_count and
+    candidates[0].token_count (output). Falls back to zeros if absent.
+    """
+    try:
+        meta = getattr(response, "usage_metadata", None)
+        input_tokens = int(getattr(meta, "prompt_token_count", 0) or 0)
+        output_tokens = int(getattr(meta, "candidates_token_count", 0) or 0)
+    except Exception:  # noqa: BLE001
+        input_tokens = 0
+        output_tokens = 0
+
+    cost = estimate_cost(model, input_tokens, output_tokens)
+    usage = UsageStats(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        estimated_cost_usd=cost,
+    )
+    logger.debug(
+        "Gemini usage: in=%d out=%d cost=%s",
+        input_tokens, output_tokens,
+        f"${cost:.6f}" if cost is not None else "unknown",
+    )
+    return usage
 
 
 def fetch_available_models(

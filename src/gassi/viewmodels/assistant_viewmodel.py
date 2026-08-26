@@ -31,7 +31,7 @@ from gassi.core.settings_manager import load_prompt_history, save_prompt_history
 from gassi.models.config import AppSettings
 from gassi.models.enums import AdvisorInputSource, AssistantMode
 from gassi.models.game_pack import GamePackManifest, HudRegion
-from gassi.models.results import PlacementResult
+from gassi.models.results import PlacementResult, UsageStats
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,11 @@ class AssistantViewModel:
         # prompt history — persisted across sessions
         _saved_history = load_prompt_history()
         self._prompt_history: deque[str] = deque(_saved_history, maxlen=5)
+
+        # session token/cost accumulators (v0.7.3)
+        self._session_input_tokens: int = 0
+        self._session_output_tokens: int = 0
+        self._session_cost_usd: float = 0.0
 
         # load game pack
         self._manifest: GamePackManifest = self._pack_loader.load_manifest(
@@ -211,7 +216,7 @@ class AssistantViewModel:
                 image_bytes=image_bytes,
                 response_schema=response_schema,
             ),
-            on_done=lambda text: self._on_placement_result(text, grid_enabled, cols, rows),
+            on_done=lambda result: self._on_placement_result(result, grid_enabled, cols, rows),
             on_error=self._on_api_error,
         )
 
@@ -362,7 +367,9 @@ class AssistantViewModel:
 
     # ── callbacks (run on tkinter main thread via AsyncBridge) ────────
 
-    def _on_result(self, response_text: str) -> None:
+    def _on_result(self, result: tuple[str, UsageStats]) -> None:
+        response_text, usage = result
+        self._accumulate_usage(usage)
         self._busy = False
         # auto-expand overlay if collapsed
         overlay = self._canvas.winfo_toplevel()
@@ -375,12 +382,14 @@ class AssistantViewModel:
 
     def _on_placement_result(
         self,
-        response_text: str,
+        result: tuple[str, UsageStats],
         grid_enabled: bool,
         cols: int,
         rows: int,
     ) -> None:
         """Handle placement API response — parse cell reference when grid is on."""
+        response_text, usage = result
+        self._accumulate_usage(usage)
         self._busy = False
         overlay = self._canvas.winfo_toplevel()
         if hasattr(overlay, "auto_expand_for_result"):
@@ -447,6 +456,27 @@ class AssistantViewModel:
         self._canvas.update_status("IDLE", self._input_source.value)
 
     # ── cooldown / rate limiting ──────────────────────────────────────
+
+    def _accumulate_usage(self, usage: UsageStats) -> None:
+        """Add per-call token counts to session totals and update overlay footer."""
+        self._session_input_tokens += usage.input_tokens
+        self._session_output_tokens += usage.output_tokens
+        if usage.estimated_cost_usd is not None:
+            self._session_cost_usd += usage.estimated_cost_usd
+
+        logger.debug(
+            "Session totals: in=%d out=%d cost=$%.6f",
+            self._session_input_tokens,
+            self._session_output_tokens,
+            self._session_cost_usd,
+        )
+
+        overlay = self._canvas.winfo_toplevel()
+        if hasattr(overlay, "update_token_display"):
+            _in_k = self._session_input_tokens / 1000
+            _out_k = self._session_output_tokens / 1000
+            _cost_str = f" ~${self._session_cost_usd:.4f}" if self._session_cost_usd else ""
+            overlay.update_token_display(f"↑{_in_k:.1f}k ↓{_out_k:.1f}k{_cost_str}")
 
     def _can_trigger(self) -> bool:
         """Check if a new query is allowed (not busy, cooldown elapsed)."""

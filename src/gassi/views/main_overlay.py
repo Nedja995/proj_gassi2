@@ -151,6 +151,14 @@ class MainOverlay(tk.Tk):
         )
         self._cooldown_label.pack(side=tk.RIGHT, padx=t.padding_x)
 
+        # token/cost display (v0.7.3) — hidden until first API call
+        self._token_label = tk.Label(
+            self._footer, text="", bg=t.bg_footer,
+            fg=t.fg_dim, font=t.font("small"),
+            anchor="e",
+        )
+        self._token_label.pack(side=tk.RIGHT, padx=(0, 6))
+
         # log panel (packed before canvas so it anchors to bottom of body,
         # above footer — starts hidden)
         self._log_panel: LogPanel | None = None
@@ -207,6 +215,10 @@ class MainOverlay(tk.Tk):
         """Update the cooldown label text and optional foreground colour."""
         colour = fg if fg is not None else self._theme.fg_warning
         self._cooldown_label.config(text=text, fg=colour)
+
+    def update_token_display(self, text: str) -> None:
+        """Update the session token/cost label in the footer."""
+        self._token_label.config(text=text)
 
     # ── placement highlight (v0.3.2) ────────────────────────────────────
 

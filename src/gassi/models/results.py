@@ -3,6 +3,52 @@
 from pydantic import BaseModel, Field
 
 
+class UsageStats(BaseModel):
+    """Token usage and estimated cost for a single AI call.
+
+    Populated by each AiBackend after a successful completion.
+    Cost rates are hardcoded per known model string; None for unknown models.
+    Session-level accumulation is done in AssistantViewModel.
+    """
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    estimated_cost_usd: float | None = None
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+
+# Cost per 1M tokens (input, output) by model string substring.
+# Keys are matched via substring check — order matters (most specific first).
+# Prices in USD as of mid-2026; update as providers change pricing.
+_COST_TABLE: list[tuple[str, float, float]] = [
+    # Gemini
+    ("gemini-2.5-flash",       0.30,   1.00),
+    ("gemini-3.1-flash-lite",  0.10,   0.40),
+    ("gemini-3.5-flash",       0.30,   1.00),
+    ("gemini-3.6-flash",       0.30,   1.00),
+    ("gemini-2.5-pro",         1.25,   5.00),
+    # Claude
+    ("claude-haiku",           0.80,   4.00),
+    ("claude-sonnet",          3.00,  15.00),
+    ("claude-opus",           15.00,  75.00),
+]
+
+
+def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float | None:
+    """Return estimated USD cost for a call, or None if model is unknown."""
+    model_lower = model.lower()
+    for _key, _in_rate, _out_rate in _COST_TABLE:
+        if _key in model_lower:
+            return (
+                input_tokens * _in_rate / 1_000_000
+                + output_tokens * _out_rate / 1_000_000
+            )
+    return None
+
+
 class AdvisorResult(BaseModel):
     """Structured output from an Advisor mode query (OCR or screenshot).
 

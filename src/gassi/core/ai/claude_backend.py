@@ -19,6 +19,8 @@ raise ImportError with a clear message if anthropic is missing.
 import logging
 from typing import Any
 
+from gassi.models.results import UsageStats, estimate_cost
+
 logger = logging.getLogger(__name__)
 
 # Known Claude models — static list returned by fetch_available_claude_models().
@@ -86,8 +88,8 @@ class ClaudeBackend:
         self._client = self._anthropic.AsyncAnthropic(api_key=api_key)
         logger.debug("ClaudeBackend initialised: model=%s", self._model)
 
-    async def complete_text(self, system_prompt: str, user_prompt: str) -> str:
-        """Send a text-only prompt to Claude and return the response text."""
+    async def complete_text(self, system_prompt: str, user_prompt: str) -> tuple[str, UsageStats]:
+        """Send a text-only prompt to Claude and return (response_text, usage_stats)."""
         try:
             response = await self._client.messages.create(
                 model=self._model,
@@ -95,7 +97,7 @@ class ClaudeBackend:
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
-            return _extract_text(response)
+            return _extract_text(response), _extract_usage(response, self._model)
         except Exception as exc:
             if _is_rate_limit_error(exc):
                 raise _build_rate_limit_error(exc) from exc
@@ -108,8 +110,8 @@ class ClaudeBackend:
         image_bytes: bytes,
         image_mime: str = "image/png",
         response_schema: Any | None = None,
-    ) -> str:
-        """Send a prompt with an attached image to Claude and return the response text.
+    ) -> tuple[str, UsageStats]:
+        """Send a prompt with an attached image and return (response_text, usage_stats).
 
         Args:
             response_schema: Unused by ClaudeBackend — Claude has no native schema
@@ -148,7 +150,7 @@ class ClaudeBackend:
                     {"role": "user", "content": [image_content, text_content]},
                 ],
             )
-            return _extract_text(response)
+            return _extract_text(response), _extract_usage(response, self._model)
         except Exception as exc:
             if _is_rate_limit_error(exc):
                 raise _build_rate_limit_error(exc) from exc
@@ -171,6 +173,34 @@ def _b64encode(data: bytes) -> str:
     """Base64-encode bytes to a plain string (no line breaks)."""
     import base64  # noqa: PLC0415
     return base64.b64encode(data).decode("ascii")
+
+
+def _extract_usage(response: Any, model: str) -> UsageStats:
+    """Extract token counts from an Anthropic Message response.
+
+    Anthropic returns response.usage.input_tokens and response.usage.output_tokens.
+    Falls back to zeros if absent.
+    """
+    try:
+        usage = getattr(response, "usage", None)
+        input_tokens = int(getattr(usage, "input_tokens", 0) or 0)
+        output_tokens = int(getattr(usage, "output_tokens", 0) or 0)
+    except Exception:  # noqa: BLE001
+        input_tokens = 0
+        output_tokens = 0
+
+    cost = estimate_cost(model, input_tokens, output_tokens)
+    stats = UsageStats(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        estimated_cost_usd=cost,
+    )
+    logger.debug(
+        "Claude usage: in=%d out=%d cost=%s",
+        input_tokens, output_tokens,
+        f"${cost:.6f}" if cost is not None else "unknown",
+    )
+    return stats
 
 
 def fetch_available_claude_models() -> list[str]:
