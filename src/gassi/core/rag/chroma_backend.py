@@ -109,7 +109,15 @@ class ChromaRagService:
 
         _where_filter: dict | None = None
         if min_game_version:
-            _where_filter = {"game_version": {"$gte": min_game_version}}
+            try:
+                _version_float = float(min_game_version)
+                _where_filter = {"game_version": {"$gte": _version_float}}
+            except (ValueError, TypeError):
+                logger.warning(
+                    "RAG: could not convert min_game_version '%s' to float — "
+                    "version filter skipped",
+                    min_game_version,
+                )
 
         try:
             _query_kwargs: dict = {

@@ -130,6 +130,18 @@ def _already_ingested_sources(collection) -> set[str]:
         return set()
 
 
+def _safe_version_float(version: str) -> float:
+    """Convert a version string to float for Chroma numeric metadata storage.
+
+    Chroma's $gte operator requires int or float — string comparisons are
+    not supported. '0.6' -> 0.6, '1.0' -> 1.0, 'any' -> 0.0 (no filtering).
+    """
+    try:
+        return float(version)
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def ingest(
     game_id: str,
     source_dir: Path,
@@ -203,7 +215,9 @@ def ingest(
             {
                 "source_file": _rel_path,
                 "chunk_index": i,
-                "game_version": game_version,
+                # game_version stored as float for Chroma $gte numeric comparison.
+                # Falls back to 0.0 if version string is not numeric (e.g. "any").
+                "game_version": _safe_version_float(game_version),
             }
             for i in range(len(_chunks))
         ]
