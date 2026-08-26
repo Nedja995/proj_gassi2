@@ -7,7 +7,33 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.7.0 Multi-Backend (Cloud)
 
-See [TODO.md](TODO.md) for planned sub-versions v0.7.3–v0.7.4.
+See [TODO.md](TODO.md) for planned sub-version v0.7.4.
+
+## [0.7.3] - 2026-08-26
+
+### Added
+- `UsageStats` Pydantic model (`models/results.py`): `input_tokens`, `output_tokens`,
+  `estimated_cost_usd`. `total_tokens` property.
+- `estimate_cost()` helper with hardcoded per-1M-token rate table (Gemini Flash/Pro,
+  Claude Haiku/Sonnet/Opus). Returns `None` for unknown model strings.
+- `_extract_usage()` in `GeminiBackend`: reads `usage_metadata.prompt_token_count`
+  and `candidates_token_count` from Gemini response.
+- `_extract_usage()` in `ClaudeBackend`: reads `response.usage.input_tokens` /
+  `output_tokens` from Anthropic response.
+- Session accumulators in `AssistantViewModel`: `_session_input_tokens`,
+  `_session_output_tokens`, `_session_cost_usd`.
+- `_accumulate_usage()` in ViewModel: adds per-call stats to session totals,
+  calls `overlay.update_token_display()`. Logs session totals at DEBUG.
+- `MainOverlay._token_label`: dim label in footer, right of cooldown label.
+  Hidden (empty text) until first call. Format: `↑1.2k ↓0.8k ~$0.0012`.
+- `MainOverlay.update_token_display(text)`: public setter for ViewModel to call.
+
+### Changed
+- `AiBackend` Protocol (breaking): both `complete_text()` and `complete_with_image()`
+  now return `tuple[str, UsageStats]` instead of bare `str`. Both backends and
+  all ViewModel call sites updated atomically.
+- `_on_result()` and `_on_placement_result()` unpack `tuple[str, UsageStats]`
+  before processing response text.
 
 ## [0.7.2] - 2026-08-26
 

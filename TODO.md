@@ -357,20 +357,23 @@ Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.7.3 — Token Usage / Cost Tracking
+## v0.7.3 — Token Usage / Cost Tracking ✅ Complete
 
-- [ ] `UsageStats` Pydantic model (`models/results.py`):
+- [x] `UsageStats` Pydantic model (`models/results.py`):
       `input_tokens: int`, `output_tokens: int`, `estimated_cost_usd: float | None`
-- [ ] `AiBackend` Protocol updated: both methods return `tuple[str, UsageStats]`
+- [x] `estimate_cost()` helper with hardcoded rate table (Gemini + Claude tiers)
+- [x] `AiBackend` Protocol updated: both methods return `tuple[str, UsageStats]`
       instead of bare `str` — both backends updated atomically in this sub-version
-- [ ] `GeminiBackend`: extract token counts from response metadata, populate `UsageStats`
-- [ ] `ClaudeBackend`: extract token counts from response usage field, populate `UsageStats`
-- [ ] Session accumulator in ViewModel: `_session_input_tokens`, `_session_output_tokens`,
-      `_session_cost_usd`
-- [ ] Overlay footer: token/cost label updated after each call
-      (e.g. `↑1.2k ↓0.8k ~$0.001`); hidden when zero
-- [ ] Per-call stats logged at DEBUG level
-- [ ] Cost rates hardcoded per known model string; `None` for unknown models
+- [x] `GeminiBackend`: extracts `usage_metadata.prompt_token_count` /
+      `candidates_token_count` from response, populates `UsageStats`
+- [x] `ClaudeBackend`: extracts `response.usage.input_tokens` /
+      `output_tokens`, populates `UsageStats`
+- [x] Session accumulator in ViewModel: `_session_input_tokens`,
+      `_session_output_tokens`, `_session_cost_usd`
+- [x] `_accumulate_usage()` helper: accumulates + calls `overlay.update_token_display()`
+- [x] `MainOverlay.update_token_display()` setter; `_token_label` in footer
+      (hidden until first call; format: `↑1.2k ↓0.8k ~$0.0012`)
+- [x] Per-call stats logged at DEBUG level
 
 ---
 
