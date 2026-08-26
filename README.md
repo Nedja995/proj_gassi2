@@ -10,19 +10,19 @@ strategy and colony-sim games. Currently supports **Timberborn** and **Nebuchadn
 ## How It Works
 
 GASSI captures your game screen, extracts information via local OCR or direct screenshot,
-and sends it to an AI model (Google Gemini) for strategic advice — displayed as a translucent,
-always-on-top overlay on top of your game.
+and sends it to an AI model for strategic advice — displayed as a translucent, always-on-top
+overlay on top of your game. Supports Google Gemini and Anthropic Claude backends.
 
 ---
 
-## Features (v0.6.6)
+## Features (v0.7.4)
 
 ### Advisor Mode (`F1`)
 
 On-demand capture of pre-calibrated HUD regions. Two input sources (toggle with `Shift+F1`):
 
-- **OCR** — local text extraction via RapidOCR → text sent to Gemini (low cost)
-- **Screenshot** — HUD image sent directly to Gemini (richer context, fallback)
+- **OCR** — local text extraction via RapidOCR → text sent to AI backend (low cost)
+- **Screenshot** — HUD image sent directly to AI backend (richer context, fallback)
 
 Automatic confidence-gated fallback: if OCR confidence drops below threshold, that cycle
 switches to screenshot automatically.
@@ -32,8 +32,9 @@ switches to screenshot automatically.
 On-demand: captures full game window + your typed question → Gemini returns spatial advice.
 
 **Grid overlay** (enabled by default): a coordinate grid (A–L columns, 1–8 rows) is drawn on
-the screenshot before sending to Gemini. Gemini returns a specific cell reference (e.g. `H7`)
-alongside markdown advice.
+the screenshot before sending to the AI backend. The model returns a specific cell reference
+(e.g. `H7`) alongside markdown advice. Multi-cell building footprints are highlighted correctly
+based on the `building_footprints` registry in each game pack's manifest.
 
 **Cell highlight**: a yellow outline box appears over the target cell on the game screen for
 8 seconds (configurable). The cell interior stays fully visible — only the outline is drawn.
@@ -55,12 +56,15 @@ Click-through enabled; the highlight never blocks game input.
 
 ### Settings Dialog (`⚙`)
 
+- Select AI backend (Gemini / Claude) and model
 - Rebind all hotkeys via key-capture widget
 - Switch theme (dark / midnight / forest)
 - Adjust cooldown interval (5–60s)
-- Select AI model and default input source
+- Select default advisor input source (OCR / Screenshot)
 - Toggle grid overlay for placement mode
 - Settings persist across sessions (`settings.json` in OS app data dir)
+
+Session token usage and estimated cost shown in the overlay footer after each AI call.
 
 ### RAG Knowledge Retrieval
 
@@ -97,7 +101,7 @@ without inflating the static prompt size.
 ## Requirements
 
 - Python 3.12.x (managed via [uv](https://docs.astral.sh/uv/))
-- Google Gemini API key
+- Google Gemini API key (or Anthropic Claude API key — one is required)
 - Windows / macOS / Linux (X11). Wayland not yet supported.
 
 ---
@@ -118,11 +122,13 @@ uv pip install -e ".[dev,windows]"
 
 # Optional: install RAG support (Chroma vector DB for game knowledge retrieval)
 # Required to use the knowledge base — falls back to static prompts without it
-uv pip install -e ".[dev,rag]"
-# or both: uv pip install -e ".[dev,windows,rag]"
+uv sync --extra rag
+# or all: uv sync --extra windows --extra rag --extra claude
 
-# Store Gemini API key in OS keyring
-uv run python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_API_KEY')"
+# Store API keys in OS keyring
+uv run python -c "import keyring; keyring.set_password('gassi', 'gemini_api_key', 'YOUR_GEMINI_KEY')"
+# Optional: Claude backend
+uv run python -c "import keyring; keyring.set_password('gassi', 'claude_api_key', 'YOUR_CLAUDE_KEY')"
 ```
 
 ---
@@ -154,13 +160,15 @@ src/gassi/
 ├── main.py                      # Entry point, dependency wiring
 ├── models/
 │   ├── config.py                # AppSettings (pydantic-settings + JSON persistence)
-│   ├── enums.py                 # AssistantMode, AdvisorInputSource
+│   ├── enums.py                 # AssistantMode, AdvisorInputSource, AiProvider
 │   ├── game_pack.py             # GamePackManifest, HudRegion
-│   └── results.py               # AdvisorResult, PlacementResult, OcrResult
+│   └── results.py               # AdvisorResult, PlacementResult, OcrResult, UsageStats
 ├── core/
 │   ├── ai/
 │   │   ├── protocol.py          # AiBackend Protocol
-│   │   └── gemini_backend.py    # Gemini implementation
+│   │   ├── factory.py           # Backend factory (build_ai_backend, get_api_key)
+│   │   ├── gemini_backend.py    # Gemini implementation
+│   │   └── claude_backend.py    # Claude implementation (optional [claude] extras)
 │   ├── capture/
 │   │   ├── protocol.py          # CaptureBackend, CaptureRegionProvider Protocols
 │   │   ├── mss_backend.py       # mss screen capture
@@ -188,22 +196,27 @@ src/gassi/
 
 game_packs/
 ├── timberborn/
-│   ├── manifest.yaml            # HUD regions + metadata
+│   ├── manifest.yaml            # HUD regions, footprints, RAG config
+│   ├── knowledge/               # .md source files for RAG ingestion
+│   ├── rag/                     # Chroma vector DB (committed)
 │   └── prompts/
 │       ├── advisor_ocr.txt
 │       ├── advisor_screenshot.txt
 │       └── placement.txt
 └── nebuchadnezzar/
-    ├── manifest.yaml            # HUD regions + metadata (calibration pending)
+    ├── manifest.yaml
+    ├── knowledge/
+    ├── rag/
     └── prompts/
         ├── advisor_ocr.txt
         ├── advisor_screenshot.txt
         └── placement.txt
 
 docs/
-├── architecture.md              # Architecture Decision Records (AD-01 – AD-24)
+├── architecture.md              # Architecture Decision Records (AD-01 – AD-27)
 ├── adding_game_pack.md          # Guide: adding support for a new game
-└── v1_scope.md                  # v1 feature scope and known limitations
+├── session_handoff.md           # Session context for new chats
+└── v1_scope.md                  # Feature scope and known limitations
 
 tests/
 ├── conftest.py
@@ -258,7 +271,8 @@ folder structure, manifest calibration, prompt authoring, and early/mid/late gam
 
 GASSI wins by **hyper-specialization** — deep, formula-level knowledge for individual games —
 where generalist tools (NVIDIA G-Assist, Steam Gaming Copilot) give only surface advice.
-Planned freemium model: local SLM (free) vs. cloud API (paid).
+Multiple AI backends (Gemini, Claude) with more providers planned post-beta (Groq, Together AI,
+local SLM via Ollama/Moondream2).
 
 ---
 

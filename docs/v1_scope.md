@@ -107,16 +107,33 @@ the static prompt.
 
 ---
 
+## Feature 7: Multi-Backend AI
+
+**Shipped:** v0.7.1–v0.7.2
+
+Swappable AI backends via `AiBackend` Protocol. Settings dialog selects provider;
+factory constructs the correct backend at startup.
+
+- **Gemini** (default) — `google-genai` SDK, live model list fetch, `response_schema` for placement
+- **Claude** (optional `[claude]` dep group) — `anthropic>=0.40`, static model list,
+  JSON output via prompt instruction
+- **Backend factory** (`core/ai/factory.py`) — single construction point, keyring lookup per provider
+- **Token/cost tracking** (v0.7.3) — `UsageStats` per call, session totals in overlay footer
+- **Building footprints** (v0.7.4) — manifest registry, multi-cell highlight on placement
+
+---
+
 ## Explicitly Out of Scope (still deferred)
 
 - Arrow rendering over game screen
 - Tutorial overlay (highlight UI elements, step-through instructions)
-- Claude or Ollama backends — v0.7.0 / v0.7.1
-- Native window detection (OS-level window handle lookup) — v0.8.0
-- Wayland capture support — v0.8.0
-- TTS voice readout — v0.8.2
+- Local SLM backends (Ollama/Moondream2) — v0.9.0 post-beta
+- Groq / Together AI cloud providers — v0.9.0 post-beta
+- Native window detection (OS-level window handle lookup) — v0.9.1
+- Wayland capture support — v0.9.1
+- TTS voice readout — v0.8.1 (optional, post-beta)
 - Automated in-game clicks/keypresses (out of scope permanently — anti-cheat posture)
-- Monetization / app store distribution — v0.8.2
+- Monetization / app store distribution — post v0.8.1
 
 ---
 
@@ -126,9 +143,14 @@ the static prompt.
 - HUD regions calibrated per game pack — mods that change HUD layout require recalibration
 - Full resource panel visibility requires the player to open panels before triggering Advisor
 - Game pack switch requires GASSI restart to take effect
+- AI backend / provider switch requires GASSI restart to take effect
 - Wayland desktops (SteamOS/Steam Deck) are not supported
 - macOS click-through and transparency fallback to alpha (no `SetWindowRgn` equivalent yet)
 - `resource_bar` OCR in Nebuchadnezzar unvalidated — small digits may need preprocessor tuning
 - Fullscreen exclusive mode (DirectX/OpenGL) bypasses DWM — GASSI overlay is not visible.
   Use Borderless Windowed mode in game settings. Games without that option (e.g. Nebuchadnezzar)
   must be run in Windowed mode for GASSI to work.
+- When overlay is offscreen, F1/F2 restore the full overlay — floating windows not yet
+  implemented (v0.8.0).
+- Claude `response_schema` not enforced natively — placement JSON output relies on prompt
+  instruction; fallback parser handles malformed responses gracefully.

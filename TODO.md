@@ -396,79 +396,111 @@ Delivered across v0.7.1–v0.7.4.
 
 ---
 
-## v0.8.0 — Local SLM Support
+## v0.8.0 — UX Polish (pre-release)
 
-Freemium tier: local model for users with capable GPUs, no API key required.
+Interaction improvements that make GASSI usable when the overlay is offscreen.
+Required before beta distribution — these are the biggest daily-use pain points.
 
-- [ ] OllamaBackend implementing AiBackend Protocol
-- [ ] Qwen2.5-VL / Llama 3.2 Vision support via Ollama
-- [ ] GPU detection at startup: suggest local model if capable GPU found
-- [ ] Freemium framing: local SLM free, cloud API paid
-- [ ] Quality comparison guide: local vs cloud advice quality per game
+### v0.8.0.1 — Floating Advice Window
 
----
+- [ ] When overlay is slid offscreen and F1 fires, show advice in a separate centered
+      `tk.Toplevel` (not the main overlay). Topmost, semi-transparent, auto-dismisses
+      after N seconds or on click. Position: upper-center of screen.
+- [ ] Respects current theme and markdown rendering (reuses `OverlayCanvas` text area)
+- [ ] `floating_advice_timeout_seconds` setting (default 12s)
+- [ ] Toggle in Settings: "Show floating advice when overlay hidden" (default on)
+- [ ] Auto-expand main overlay instead when overlay is visible (current behaviour unchanged)
 
-## v0.8.1 — Platform Support
+### v0.8.0.2 — Floating Placement Dialog
 
-Expand beyond Windows + X11. Native window detection replaces manual positioning.
+- [ ] When overlay is offscreen and F2 fires, show a centered `tk.Toplevel` dialog
+      (larger than the inline strip) with combobox + history + quick-prompts.
+- [ ] Full keyboard focus, Escape dismisses, Enter submits.
+- [ ] Reuses same history + quick-prompts data as `PlacementInputStrip` — no ViewModel changes.
+- [ ] `placement_input_style: strip | dialog` setting (default `strip`);
+      dialog auto-used when overlay is offscreen regardless of setting.
 
-- [ ] Wayland capture backend (PipeWire/portal)
-- [ ] NativeWindowRegionProvider: per-OS window handle lookup (pywin32/pyobjc/Xlib)
-      replaces manual overlay positioning for game window detection
-- [ ] SteamOS / Steam Deck testing
-- [ ] macOS Screen Recording permission: first-run prompt and guidance
+### v0.8.0.3 — General UX
 
----
-
-## v0.8.2 — Anti-Cheat Posture
-
-For games with anti-cheat. Pure overlay approach already avoids memory reading;
-this adds capture hiding and documentation.
-
-- [ ] SetWindowDisplayAffinity (Windows): hide overlay from other screen captures
-- [ ] Adjustable window class/enumeration behavior
-- [ ] Per-game anti-cheat compatibility notes in game pack manifest
-
----
-
-## v0.8.3 — Distribution
-
-Packaging and installer for end-users who don't have Python/uv.
-
-- [ ] PyInstaller packaging: single-folder build, test on clean Windows VM
-- [ ] Auto-updater mechanism
-- [ ] Installer for Windows (NSIS or MSI)
-- [ ] TTS voice readout: edge-tts integration, toggle in settings (optional)
-- [ ] First-run wizard: API key entry, model selection, first calibration
-
----
-
-## v0.9.0 — UX Polish (post-first-release)
-
-Refinements to the interaction model after the core product is stable and released.
-All items here are low architectural risk — UI-only changes on top of existing infrastructure.
-
-### Floating Advice Window
-- [ ] When overlay is slid offscreen and F1 (Advisor) fires, show advice in a
-      separate centered `tk.Toplevel` instead of restoring the full overlay.
-      Topmost, semi-transparent, auto-dismisses after N seconds or on click.
-      Position: upper-center of screen (not covering game HUD).
-- [ ] Toggle in settings: "Show advice in floating window when overlay is hidden"
-- [ ] Floating window respects current theme and markdown rendering
-
-### Floating Placement Dialog
-- [ ] When overlay is slid offscreen and F2 fires, show a centered `tk.Toplevel`
-      dialog (larger than the inline strip) with the combobox + history + quick-prompts.
-      Full keyboard focus, Escape dismisses, Enter submits.
-- [ ] Same `PlacementInputStrip` data (history, quick-prompts) reused — only the
-      container widget changes. No ViewModel changes needed.
-- [ ] Toggle in settings: `placement_input_style: strip | dialog`
-      (strip = current inline bar; dialog = centered Toplevel)
-
-### General UX
-- [ ] Advisor result auto-copy to clipboard option (settings toggle)
+- [ ] Advisor result auto-copy to clipboard (settings toggle, default off)
 - [ ] Response font size setting (accessibility)
-- [ ] Overlay opacity slider in toolbar (quick access without opening settings)
+- [ ] Overlay opacity quick-slider in toolbar (avoids opening settings for common adjustment)
+
+---
+
+## v0.8.1 — Distribution (beta release target)
+
+Packaging and installer for end-users who don’t have Python/uv.
+This is the milestone that makes GASSI publicly releasable.
+
+- [ ] PyInstaller packaging: single-folder build (`--onedir`), tested on clean Windows VM
+- [ ] `gassi.spec` PyInstaller spec file: includes game_packs/, docs/, pyproject.toml version
+- [ ] First-run wizard: API key entry (Gemini + optional Claude), model selection,
+      first calibration prompt, game pack selection
+- [ ] `settings.json` migration: handle missing/old keys gracefully on upgrade
+- [ ] Installer for Windows (NSIS or MSI) — optional, zip bundle acceptable for beta
+- [ ] GitHub Releases: tag `v0.8.1-beta`, attach zip bundle, release notes
+- [ ] README: installation section for end-users (no Python knowledge assumed)
+- [ ] TTS voice readout: `edge-tts` integration, toggle in settings (optional, post-beta)
+
+---
+
+## v0.8.2 — Anti-Cheat Posture (post-beta)
+
+For games with anti-cheat. Pure overlay + CV approach already avoids memory reading;
+this adds capture hiding and explicit documentation.
+
+- [ ] `SetWindowDisplayAffinity` (Windows): hide overlay from OBS/game capture
+- [ ] Per-game `anticheat_note` surfaced in Settings UI (already in manifest model)
+- [ ] Anti-cheat compatibility notes in `adding_game_pack.md`
+
+---
+
+## v0.9.0 — Local SLM + Extra Cloud Providers (post-beta)
+
+Deferred from pre-beta roadmap. Freemium tier + alternative inference providers.
+Hardware context: GTX 1660 Super (6GB VRAM) — large vision models offload to RAM.
+
+### Local SLM (Ollama)
+
+- [ ] `OllamaBackend` implementing `AiBackend` Protocol (Ollama REST API, no SDK needed)
+- [ ] Moondream2 (2B) as primary local vision model recommendation — fits in 6GB VRAM
+- [ ] Llama-3.2-3B text-only option for low-VRAM machines (advisor OCR path only)
+- [ ] CPU offload path: Qwen2.5-VL / Llama 3.2 Vision via Ollama RAM offload (slow, documented)
+- [ ] GPU detection at startup: `nvidia-smi` subprocess or `GPUtil` — suggest best local model
+- [ ] Optional `[ollama]` dep group (no SDK — pure `httpx` calls to Ollama REST)
+- [ ] Quality comparison guide in docs: local vs cloud advice quality per game
+
+### Free Cloud API Providers
+
+- [ ] `GroqBackend`: Llama 3.2 Vision via Groq API (fast, free tier, `groq` SDK)
+      — same `AiBackend` Protocol pattern as `ClaudeBackend`
+- [ ] `TogetherAIBackend`: Qwen2.5-VL / Llama 3.2 Vision via Together AI
+- [ ] Provider selector in Settings extended to show all available backends
+- [ ] Optional dep groups: `[groq]`, `[together]`
+- [ ] API key entry in Settings for each provider (keyring storage, same pattern)
+
+---
+
+## v0.9.1 — Platform Support (post-beta)
+
+Expand beyond Windows. Native window detection.
+
+- [ ] `NativeWindowRegionProvider`: per-OS window handle lookup (pywin32/pyobjc/Xlib)
+- [ ] Wayland capture backend (PipeWire/portal)
+- [ ] SteamOS / Steam Deck testing
+- [ ] macOS Screen Recording permission: first-run prompt
+
+---
+
+## vFuture — Additional UX (post-beta backlog)
+
+Items tracked here have been partially superseded by v0.8.0 UX Polish.
+Remaining items not covered by v0.8.0:
+
+- [ ] Advisor result auto-copy to clipboard (if not shipped in v0.8.0.3)
+- [ ] Response font size setting (if not shipped in v0.8.0.3)
+- [ ] Overlay opacity quick-slider (if not shipped in v0.8.0.3)
 
 ---
 

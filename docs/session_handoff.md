@@ -10,13 +10,15 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.6.7, RAG milestone complete. Production-tested on Timberborn and
-Nebuchadnezzar. F1 (Advisor + RAG injection), F2 (Placement + grid overlay + cell highlight),
-Settings, Calibration all working. Next: v0.7.0 Multi-backend (ClaudeBackend).
+**Current state:** v0.7.4, Multi-backend milestone complete. Gemini + Claude backends,
+token/cost tracking, building footprint registry. RAG, Advisor, Placement, Calibration all
+working on Timberborn and Nebuchadnezzar. Next: v0.8.0 UX Polish (floating windows), then
+v0.8.1 Distribution (beta release).
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,
-pynput, opencv-python-headless, pywin32, chromadb (optional `[rag]`), uv package manager
+anthropic (optional `[claude]`), pynput, opencv-python-headless, pywin32,
+chromadb (optional `[rag]`), uv package manager
 
 ---
 
@@ -139,21 +141,20 @@ Every task must update ALL of these:
 ```
 v0.4.7  ✅ Complete — Nebuchadnezzar + Timberborn live testing
 v0.5.x  ✅ Complete (v0.5.1–v0.5.18) — GamePackManifest fields, atomic settings,
-           calibration fixes, hotkey fixes, placement highlight (SetWindowRgn),
-           Nebuchadnezzar advisor tuning, prompt fixes, status messages
+           calibration fixes, hotkey fixes, placement highlight (SetWindowRgn)
 v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
-           ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases,
-           ViewModel injection, version filtering, docs)
-v0.7.0  🔜 Next — Multi-backend milestone (v0.7.1–v0.7.4)
-v0.7.1  — ClaudeBackend (Anthropic SDK, AiBackend Protocol)
-v0.7.2  — Backend selector UI + wiring in Settings
-v0.7.3  — Token usage / cost tracking in overlay footer
-v0.7.4  — Building footprint registry + multi-cell highlight
-v0.8.0  — Local SLM (Ollama, Qwen2.5-VL)
-v0.8.1  — Platform (Wayland, native window detection, macOS, SteamOS)
-v0.8.2  — Anti-cheat posture (SetWindowDisplayAffinity)
-v0.8.3  — Distribution (PyInstaller, installer, TTS)
-v0.9.0  — UX polish (floating advice/placement windows, accessibility)
+           ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases)
+v0.7.0  ✅ Complete (v0.7.1–v0.7.4) — Multi-backend: ClaudeBackend, backend selector
+           UI, token/cost tracking, building footprint registry
+v0.8.0  🔜 Next — UX Polish pre-release
+  v0.8.0.1 — Floating advice window (F1 when overlay offscreen)
+  v0.8.0.2 — Floating placement dialog (F2 when overlay offscreen)
+  v0.8.0.3 — Clipboard copy, font size, opacity slider
+v0.8.1  — Distribution / beta release (PyInstaller, first-run wizard,
+           GitHub Release, end-user README)
+v0.8.2  — Anti-cheat posture (SetWindowDisplayAffinity, docs)
+v0.9.0  — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
+v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 ```
 
 ---
@@ -192,6 +193,10 @@ v0.9.0  — UX polish (floating advice/placement windows, accessibility)
 | RAG embedding | `ONNXMiniLM_L6_V2` (chromadb built-in) | AD-25. sentence-transformers pulls PyTorch (~2GB), violates AD-06 |
 | RAG dep group | optional `[rag]` — chromadb only | AD-25. App runs with NullRagService when not installed |
 | RAG injection point | OCR path only | No text query available on screenshot/placement paths |
+| AI backend selection | Settings always wins over manifest `preferred_backend` | AD-26. Pack hint is logged only |
+| ClaudeBackend JSON output | System prompt instruction, not native schema | AD-26. Claude has no `types.Schema` equivalent |
+| Token tracking return type | `tuple[str, UsageStats]` from both Protocol methods | v0.7.3. Breaking change — both backends updated atomically |
+| Footprint lookup | Keyword substring scan of advice text, longest match wins | AD-27. No extra AI call; graceful 1×1 fallback |
 
 ---
 
