@@ -54,3 +54,8 @@ class GamePackManifest(BaseModel):
     # v0.7.1: anti-cheat compatibility note for this game.
     # Displayed in settings or logs if set. Pure informational.
     anticheat_note: str | None = None
+
+    # v0.7.2: preferred AI backend for this pack.
+    # None = use global Settings selection. Values: "gemini", "claude".
+    # Informational hint only — Settings always wins (AD-26).
+    preferred_backend: str | None = None
