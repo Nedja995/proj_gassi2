@@ -15,6 +15,7 @@ from gassi.core.log_handler import OverlayLogHandler
 from gassi.core.overlay.overlay_canvas import OverlayCanvas
 from gassi.core.theme.theme import Theme, DARK_THEME
 from gassi.views.floating_advice_window import FloatingAdviceWindow
+from gassi.views.floating_placement_dialog import FloatingPlacementDialog
 from gassi.views.log_panel import LogPanel
 from gassi.views.placement_highlight import PlacementHighlightWindow
 from gassi.views.placement_strip import PlacementInputStrip
@@ -189,6 +190,9 @@ class MainOverlay(tk.Tk):
         # ── floating advice window (v0.8.0.1) ────────────────────
         self._floating_advice = FloatingAdviceWindow(self, theme=t)
 
+        # ── floating placement dialog (v0.8.0.2) ─────────────────
+        self._floating_placement = FloatingPlacementDialog(self, theme=t)
+
         # ── resize grip (bottom-right corner) ────────────────────
         self._resize_grip = tk.Label(
             self, text="◢", bg=t.bg_footer, fg=t.fg_dim,
@@ -223,6 +227,21 @@ class MainOverlay(tk.Tk):
     def update_token_display(self, text: str) -> None:
         """Update the session token/cost label in the footer."""
         self._token_label.config(text=text)
+
+    def show_floating_placement_dialog(
+        self,
+        suggestions: list[str],
+        on_submit: "Callable[[str], None]",
+    ) -> None:
+        """Show the floating placement input dialog (v0.8.0.2).
+
+        Called by main.py _open_placement when overlay is offscreen.
+        MainOverlay does NOT check _offscreen here — the caller decides.
+        """
+        self._floating_placement.show(
+            suggestions=suggestions,
+            on_submit=on_submit,
+        )
 
     def show_floating_advice(
         self,
@@ -570,6 +589,7 @@ class MainOverlay(tk.Tk):
         self._destroy_pull_tab()
         self._placement_highlight.destroy()
         self._floating_advice.destroy()
+        self._floating_placement.destroy()
         if hasattr(self, "_close_handler") and self._close_handler:
             self._close_handler()  # type: ignore[operator]
         else:

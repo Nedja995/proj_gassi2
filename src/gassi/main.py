@@ -153,7 +153,15 @@ def main() -> None:
 
     def _open_placement() -> None:
         suggestions = viewmodel.get_prompt_suggestions()
-        overlay.after(0, lambda: overlay.toggle_placement_strip(suggestions))
+        if getattr(overlay, "_offscreen", False):
+            overlay.after(
+                0,
+                lambda: overlay.show_floating_placement_dialog(
+                    suggestions, viewmodel.trigger_placement
+                ),
+            )
+        else:
+            overlay.after(0, lambda: overlay.toggle_placement_strip(suggestions))
 
     hotkey_manager.register(settings.hotkey_placement, _open_placement)
     hotkey_manager.register(
