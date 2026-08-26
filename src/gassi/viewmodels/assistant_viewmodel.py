@@ -68,6 +68,8 @@ class AssistantViewModel:
         self._busy = False
         self._last_call_time: float = 0.0
         self._cooldown_after_id: str | None = None
+        self._api_call_start_time: float = 0.0
+        self._progress_after_id: str | None = None
         self._ready_colour: str = getattr(canvas._theme, "fg_accent", "#00ff88")
 
         # prompt history — persisted across sessions
@@ -219,6 +221,9 @@ class AssistantViewModel:
             on_done=lambda result: self._on_placement_result(result, grid_enabled, cols, rows),
             on_error=self._on_api_error,
         )
+        self._start_progress_ticker(
+            f"✓ Screenshot captured ({frame.shape[1]}×{frame.shape[0]}px{_grid_note})\nAnalyzing with {self._settings.gemini_model}"
+        )
 
     def get_prompt_suggestions(self) -> list[str]:
         """Return prompt suggestions: recent history first, then quick-prompts.
@@ -333,6 +338,9 @@ class AssistantViewModel:
             on_done=self._on_result,
             on_error=self._on_api_error,
         )
+        self._start_progress_ticker(
+            f"✓ HUD captured ({len(combined_text_parts)} regions)\nAnalyzing with {self._settings.gemini_model}"
+        )
 
     def _process_screenshot_advisor(self) -> None:
         """Capture full screen, send ONE image call to Gemini."""
@@ -364,11 +372,17 @@ class AssistantViewModel:
             on_done=self._on_result,
             on_error=self._on_api_error,
         )
+        self._start_progress_ticker(
+            f"✓ Screenshot captured ({frame.shape[1]}×{frame.shape[0]}px)\nAnalyzing with {self._settings.gemini_model}"
+        )
 
     # ── callbacks (run on tkinter main thread via AsyncBridge) ────────
 
     def _on_result(self, result: tuple[str, UsageStats]) -> None:
         response_text, usage = result
+        self._stop_progress_ticker()
+        _elapsed = time.monotonic() - self._api_call_start_time
+        logger.info("AI response received in %.1fs", _elapsed)
         self._accumulate_usage(usage)
         self._busy = False
 
@@ -404,6 +418,9 @@ class AssistantViewModel:
     ) -> None:
         """Handle placement API response — parse cell reference when grid is on."""
         response_text, usage = result
+        self._stop_progress_ticker()
+        _elapsed = time.monotonic() - self._api_call_start_time
+        logger.info("Placement AI response received in %.1fs", _elapsed)
         self._accumulate_usage(usage)
         self._busy = False
         overlay = self._canvas.winfo_toplevel()
@@ -467,6 +484,7 @@ class AssistantViewModel:
         self._canvas.update_status("IDLE", self._input_source.value)
 
     def _on_api_error(self, error: Exception) -> None:
+        self._stop_progress_ticker()
         self._busy = False
         logger.error("API error: %s", error)
         self._canvas.show_advice(f"Error: {error}", is_loading=False)
@@ -551,6 +569,39 @@ class AssistantViewModel:
         self._last_call_time = time.monotonic()
         cooldown_sec = int(self._settings.cooldown_seconds)
         self._tick_cooldown(cooldown_sec)
+
+    def _start_progress_ticker(self, base_message: str) -> None:
+        """Start a periodic elapsed-time ticker while an API call is in-flight.
+
+        Updates the canvas every 5 seconds with elapsed time so the user
+        knows the call is still running. Cancels itself when _busy is False.
+        """
+        self._api_call_start_time = time.monotonic()
+        self._stop_progress_ticker()
+        self._progress_base_message = base_message
+        self._tick_progress()
+
+    def _tick_progress(self) -> None:
+        """Update the canvas with elapsed time. Reschedules every 5 seconds."""
+        if not self._busy:
+            return
+        elapsed = int(time.monotonic() - self._api_call_start_time)
+        dots = "." * ((elapsed // 5) % 4 + 1)
+        self._canvas.show_advice(
+            f"{self._progress_base_message}{dots}\n\n⏳ Waiting for AI response ({elapsed}s)",
+            is_loading=True,
+        )
+        logger.debug("API call in-flight: %ds elapsed", elapsed)
+        self._progress_after_id = self._canvas.after(5000, self._tick_progress)
+
+    def _stop_progress_ticker(self) -> None:
+        """Cancel the in-flight progress ticker."""
+        if self._progress_after_id is not None:
+            try:
+                self._canvas.after_cancel(self._progress_after_id)
+            except Exception:  # noqa: BLE001
+                pass
+            self._progress_after_id = None
 
     def _tick_cooldown(self, remaining: int) -> None:
         """Update the cooldown display every second.
