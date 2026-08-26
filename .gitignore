@@ -45,3 +45,8 @@ htmlcov/
 game_packs/*/user_overrides/
 docs/LOW_PRIORITY_TODO/vscode_console.txt
 docs/LOW_PRIORITY_TODO/vscode_console2.txt
+
+# Game pack data files / RAG (not tracked)
+game_packs/timberborn/rag/chroma.sqlite3
+game_packs/timberborn/rag/b039758a-c21e-49e7-baa1-fcc4fb9c96d0/data_level0.bin
+game_packs/timberborn/rag/b039758a-c21e-49e7-baa1-fcc4fb9c96d0/length.bin

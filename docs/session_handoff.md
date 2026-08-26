@@ -10,10 +10,12 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.7.4, Multi-backend milestone complete. Gemini + Claude backends,
-token/cost tracking, building footprint registry. RAG, Advisor, Placement, Calibration all
-working on Timberborn and Nebuchadnezzar. Next: v0.8.0 UX Polish (floating windows), then
-v0.8.1 Distribution (beta release).
+**Current state:** v0.8.1, floating advice window shipped. RAG game_version bug fixed.
+Progress ticker added for long AI calls. Next: v0.8.0.2 (floating placement dialog).
+Distribution (v0.8.1 milestone) is the beta release target after UX polish is done.
+
+**Note on versioning:** `pyproject.toml` is at `0.8.1` — this was the first sub-version
+of the v0.8.0 UX Polish milestone. v0.8.0.2 will bump to `0.8.2`, etc.
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,
@@ -146,8 +148,8 @@ v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
            ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases)
 v0.7.0  ✅ Complete (v0.7.1–v0.7.4) — Multi-backend: ClaudeBackend, backend selector
            UI, token/cost tracking, building footprint registry
-v0.8.0  🔜 Next — UX Polish pre-release
-  v0.8.0.1 — Floating advice window (F1 when overlay offscreen)
+v0.8.0  🔜 Active — UX Polish pre-release
+  v0.8.0.1 ✅ — FloatingAdviceWindow (F1 when overlay offscreen, themed, auto-dismiss)
   v0.8.0.2 — Floating placement dialog (F2 when overlay offscreen)
   v0.8.0.3 — Clipboard copy, font size, opacity slider
 v0.8.1  — Distribution / beta release (PyInstaller, first-run wizard,
@@ -197,6 +199,8 @@ v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 | ClaudeBackend JSON output | System prompt instruction, not native schema | AD-26. Claude has no `types.Schema` equivalent |
 | Token tracking return type | `tuple[str, UsageStats]` from both Protocol methods | v0.7.3. Breaking change — both backends updated atomically |
 | Footprint lookup | Keyword substring scan of advice text, longest match wins | AD-27. No extra AI call; graceful 1×1 fallback |
+| RAG game_version type | Stored as `float` in Chroma metadata, queried as `float` | Chroma `$gte` requires numeric. String `"0.6"` caused silent RAG off. Re-ingest after fix. |
+| AI call progress | `_start_progress_ticker()` updates canvas every 5s with elapsed time | Long calls (Gemini 3-4min on slow quota) were silent. Ticker stops on result/error. |
 
 ---
 
@@ -256,16 +260,31 @@ MainOverlay (tk.Tk)
 
 **State flags:** `_offscreen: bool`, `_collapsed: bool`, `_click_through_active: bool`
 
-**For v0.8.0.1 floating advice window:**
-- Check `self._offscreen` in `_on_result` path — if True, show floating window instead of
-  calling `auto_expand_for_result()`
-- Floating window is a new `tk.Toplevel` with an `OverlayCanvas` text area inside
-- Position: upper-center of primary monitor (not over HUD)
-- `MainOverlay` needs: `show_floating_advice(text)` method + `_floating_advice_window` attr
-- `AppSettings` needs: `floating_advice_timeout_seconds: int = 12`,
-  `show_floating_advice_when_hidden: bool = True`
-- ViewModel calls `overlay.show_floating_advice(text)` — MainOverlay decides whether
-  to use floating or inline based on `_offscreen` state
+**v0.8.0.1 SHIPPED — `FloatingAdviceWindow`:**
+- `views/floating_advice_window.py` — `FloatingAdviceWindow(parent, theme)`
+- Created in `MainOverlay.__init__` alongside `PlacementHighlightWindow`
+- `MainOverlay.show_floating_advice(advice_text, timeout_seconds=12)` — public method
+- Destroyed in `_on_close_click()`
+- ViewModel `_on_result` checks `overlay._offscreen` + `settings.show_floating_advice_when_hidden`
+  — routes to floating window or inline canvas accordingly
+- Position: 8% from top, centered. 35% width × 28% height, min 340×180px
+- withdraw()/deiconify() pattern (no HWND Win32 style tricks needed — normal Toplevel)
+- Markdown rendering: standalone implementation (h2/h3/bullet/bold tags), does NOT
+  import or reuse OverlayCanvas to avoid coupling
+- `AppSettings.show_floating_advice_when_hidden: bool = True`
+- `AppSettings.floating_advice_timeout_seconds: int = 12`
+- Settings dialog: "Floating advice" toggle in General tab
+
+**For v0.8.0.2 — Floating placement dialog:**
+- When overlay is offscreen and F2 fires, show a centered `tk.Toplevel` dialog
+- Larger than the inline `PlacementInputStrip`, full keyboard focus, Esc dismisses
+- Reuses same history + quick-prompts data from ViewModel (`get_prompt_suggestions()`)
+- No ViewModel changes needed — only view layer
+- `MainOverlay` needs: `show_floating_placement_dialog(suggestions, on_submit)` method
+- The on_submit callback is `viewmodel.trigger_placement` (already exists)
+- `toggle_placement_strip()` should check `_offscreen` and show dialog instead of strip
+  OR ViewModel checks `_offscreen` before calling `toggle_placement_strip`
+- New file: `views/floating_placement_dialog.py`
 
 ---
 
@@ -317,6 +336,17 @@ uv run python tools/ingest_knowledge.py \
     --game-version 0.6 --reset
 ```
 Use `--reset` when editing existing files. Omit for incremental (new files only).
+
+**⚠️ Re-ingestion required after RAG bug fix:**
+The `game_version` metadata was stored as string in the original collections.
+After the `ingest_knowledge.py` fix (stores as `float`), re-run ingestion with `--reset`:
+```bash
+uv run python tools/ingest_knowledge.py --game-id timberborn \
+    --source-dir game_packs/timberborn/knowledge --game-version 0.6 --reset
+uv run python tools/ingest_knowledge.py --game-id nebuchadnezzar \
+    --source-dir game_packs/nebuchadnezzar/knowledge --game-version 1.0 --reset
+```
+Then commit the updated `rag/` binaries.
 
 **Current collections:** Timberborn (`timberborn_knowledge`, 6 files), Nebuchadnezzar (`nebuchadnezzar_knowledge`, 6 files).
 
