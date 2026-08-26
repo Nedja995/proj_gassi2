@@ -219,6 +219,54 @@ it, but manual correction of `hud_regions_user.yaml` may still be needed.
 Region labels in `hud_regions_user.yaml` must match `LABEL_CONFIGS` in `preprocessor.py`
 for the correct OCR preprocessing config to be applied. Check after any calibration run.
 
+## MainOverlay Structure (key for v0.8.0 UX work)
+
+`views/main_overlay.py` — `MainOverlay(tk.Tk)` root window.
+
+**Widget hierarchy (pack order matters):**
+```
+MainOverlay (tk.Tk)
+├── _toolbar (tk.Frame, bg_header, pack TOP) — always visible
+│   ├── LEFT: _slide_btn (◄), _collapse_btn (▲), _title_label, _status_label
+│   └── RIGHT: _close_btn, _lock_btn, _settings_btn, _log_btn (optional)
+└── _body (tk.Frame, bg_primary, pack BOTH+expand) — hidden when collapsed
+    ├── _footer (tk.Frame, bg_footer, h=footer_height, pack BOTTOM first)
+    │   ├── _hints_label (LEFT) — “F1 Adv │ F2 Place…”
+    │   ├── _token_label (RIGHT, v0.7.3) — “↑1.2k ↓0.8k ~$0.001”, empty until first call
+    │   └── _cooldown_label (RIGHT) — “Ready in Ns” / “✓ Ready”
+    ├── _log_panel (LogPanel, pack BOTTOM, hidden by default)
+    ├── _placement_strip (PlacementInputStrip, hidden by default)
+    └── canvas (OverlayCanvas, pack BOTH+expand)
+```
+
+**Key public methods used by ViewModel / main.py:**
+- `update_status(mode, source)` — toolbar status label
+- `update_cooldown(text, fg)` — footer cooldown label
+- `update_token_display(text)` — footer token label (v0.7.3)
+- `show_placement_highlight(pixel_rect, cell_ref, monitor_rect, auto_dismiss_ms, footprint)`
+- `clear_placement_highlight()`
+- `toggle_placement_strip(suggestions)`
+- `auto_expand_for_result()` — slides onscreen + expands if collapsed
+- `set_calibration_service(service, game_id, api_key)`
+- `set_claude_api_key(key)`
+- `set_pack_loader(loader)`
+- `set_settings_handler(handler)`
+- `set_close_handler(handler)`
+- `set_placement_handler(handler)`
+
+**State flags:** `_offscreen: bool`, `_collapsed: bool`, `_click_through_active: bool`
+
+**For v0.8.0.1 floating advice window:**
+- Check `self._offscreen` in `_on_result` path — if True, show floating window instead of
+  calling `auto_expand_for_result()`
+- Floating window is a new `tk.Toplevel` with an `OverlayCanvas` text area inside
+- Position: upper-center of primary monitor (not over HUD)
+- `MainOverlay` needs: `show_floating_advice(text)` method + `_floating_advice_window` attr
+- `AppSettings` needs: `floating_advice_timeout_seconds: int = 12`,
+  `show_floating_advice_when_hidden: bool = True`
+- ViewModel calls `overlay.show_floating_advice(text)` — MainOverlay decides whether
+  to use floating or inline based on `_offscreen` state
+
 ---
 
 ## RAG Subsystem — How It Works (AD-25)
