@@ -5,9 +5,33 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.8.0 Local SLM
+## [Unreleased] — v0.8.0 UX Polish
 
-See [TODO.md](TODO.md) for planned items.
+See [TODO.md](TODO.md) for planned sub-versions v0.8.0.2–0.8.0.3.
+
+## [0.8.1] - 2026-08-26
+
+### Added
+- `views/floating_advice_window.py`: `FloatingAdviceWindow` — semi-transparent centered
+  `tk.Toplevel` shown when main overlay is offscreen and F1 advisor result arrives.
+  Themed, always-on-top, auto-dismisses after `floating_advice_timeout_seconds`.
+- Markdown rendering in floating window: same `##`, `- bullet`, `**bold**` tag logic
+  as `OverlayCanvas` — no shared code (standalone implementation to avoid coupling).
+- Header bar (title + ✕ button), footer hint, click-background-to-dismiss.
+- Position: upper-center of primary monitor (8% from top, centered horizontally).
+  35% screen width × 28% screen height; min 340×180px.
+- `AppSettings.show_floating_advice_when_hidden: bool = True`
+- `AppSettings.floating_advice_timeout_seconds: int = 12`
+- `MainOverlay.show_floating_advice(advice_text, timeout_seconds)` public method.
+- `MainOverlay._floating_advice: FloatingAdviceWindow` created at init, destroyed on close.
+- Settings dialog: "Floating advice" toggle checkbutton in General tab.
+  `SettingsDialog._HEIGHT` increased to 540px.
+
+### Changed
+- `AssistantViewModel._on_result`: when overlay is offscreen and
+  `show_floating_advice_when_hidden` is True, routes advice to
+  `overlay.show_floating_advice()` instead of `auto_expand_for_result()` +
+  `canvas.show_advice()`. Inline path unchanged when overlay is visible.
 
 ## [0.7.4] - 2026-08-26
 

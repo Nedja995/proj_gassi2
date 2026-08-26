@@ -401,15 +401,22 @@ Delivered across v0.7.1–v0.7.4.
 Interaction improvements that make GASSI usable when the overlay is offscreen.
 Required before beta distribution — these are the biggest daily-use pain points.
 
-### v0.8.0.1 — Floating Advice Window
+### v0.8.0.1 — Floating Advice Window ✅ Complete
 
-- [ ] When overlay is slid offscreen and F1 fires, show advice in a separate centered
-      `tk.Toplevel` (not the main overlay). Topmost, semi-transparent, auto-dismisses
-      after N seconds or on click. Position: upper-center of screen.
-- [ ] Respects current theme and markdown rendering (reuses `OverlayCanvas` text area)
-- [ ] `floating_advice_timeout_seconds` setting (default 12s)
-- [ ] Toggle in Settings: "Show floating advice when overlay hidden" (default on)
-- [ ] Auto-expand main overlay instead when overlay is visible (current behaviour unchanged)
+- [x] `views/floating_advice_window.py`: `FloatingAdviceWindow` — semi-transparent centered
+      `tk.Toplevel`, themed, reuses same markdown tag rendering as `OverlayCanvas`
+- [x] Position: upper-center of primary monitor (`_WIN_Y_FRACTION = 0.08`),
+      35% screen width × 28% screen height, min 340×180px
+- [x] Header bar with title + ✕ close button; footer hint; click background to dismiss
+- [x] Auto-dismiss after `floating_advice_timeout_seconds` (default 12s)
+- [x] `show_floating_advice_when_hidden: bool = True` in `AppSettings`
+- [x] `floating_advice_timeout_seconds: int = 12` in `AppSettings`
+- [x] `MainOverlay.show_floating_advice(advice_text, timeout_seconds)` public method
+- [x] `MainOverlay._floating_advice` created at init; destroyed on `_on_close_click`
+- [x] ViewModel `_on_result`: checks `_offscreen` + setting — routes to floating window
+      or inline canvas (current behaviour) accordingly
+- [x] Settings dialog: "Floating advice" toggle checkbutton in General tab
+- [x] `SettingsDialog._HEIGHT` increased to 540px
 
 ### v0.8.0.2 — Floating Placement Dialog
 
