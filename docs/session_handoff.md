@@ -10,13 +10,15 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.8.2. v0.8.0 UX Polish complete (FloatingAdviceWindow + FloatingPlacementDialog).
-Next: v0.8.1 Distribution milestone — API key in Settings dialog, PyInstaller build, zip bundle.
-Key v0.8.1 decisions: no first-run wizard; API key via masked Settings field + keyring;
-zip bundle only for beta (NSIS/MSI deferred to vFuture); TTS deferred to vFuture.
+**Current state:** v0.8.5. v0.8.1 Distribution nearly complete (API key in Settings,
+settings.json safety, PyInstaller build all done). Build tested on dev machine.
+Next: v0.8.1.4 zip bundle + GitHub Release.
 
-**Note on versioning:** `pyproject.toml` is at `0.8.2`. Each sub-version gets a discrete
-bump: v0.8.1.1 will bump to `0.8.3`, v0.8.1.2 to `0.8.4`, etc.
+**Note on versioning:** `pyproject.toml` is at `0.8.5`. The fallback version in
+`main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
+
+**Build command:** `uv run python -m PyInstaller gassi.spec --clean`
+See `docs/build_release.md` for full build, test, and release instructions.
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,

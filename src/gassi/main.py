@@ -4,7 +4,15 @@ Wires all components together and starts the tkinter mainloop.
 """
 
 import logging
-from importlib.metadata import version as _pkg_version
+from importlib.metadata import version as _pkg_version, PackageNotFoundError
+
+
+def _get_version() -> str:
+    """Return package version, with fallback for PyInstaller frozen builds."""
+    try:
+        return _pkg_version("gassi")
+    except PackageNotFoundError:
+        return "0.8.5"  # keep in sync with pyproject.toml
 from typing import Any
 
 import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory
@@ -263,7 +271,7 @@ def main() -> None:
 
     logger.info(
         "GASSI v%s started — provider: %s | game: %s (%s) | rag: %s | debug: %s",
-        _pkg_version("gassi"),
+        _get_version(),
         settings.active_ai_provider.value,
         _active_manifest.display_name,
         settings.active_game_id,

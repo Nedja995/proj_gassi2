@@ -471,18 +471,20 @@ This is the milestone that makes GASSI publicly releasable as a zip bundle.
 - [x] `main.py` startup: `AppSettings()` wrapped in `try/except` — corrupted values
       fall back to defaults with warning log instead of crashing
 
-### v0.8.1.3 — PyInstaller Build
+### v0.8.1.3 — PyInstaller Build ✅ Complete
 
-- [ ] Add `pyinstaller` to `[dev]` dep group in `pyproject.toml`
-- [ ] `gassi.spec`: `--onedir`, hidden imports for `rapidocr_onnxruntime`, `mss`,
+- [x] `pyinstaller>=6.11` already in `[dev]` dep group in `pyproject.toml`
+- [x] `gassi.spec`: `--onedir`, hidden imports for `rapidocr_onnxruntime`, `mss`,
       `pynput`, `google.genai`, `anthropic` (optional), `chromadb` (optional),
       `keyring` + OS backend (`keyring.backends.Windows`)
-- [ ] `datas`: `game_packs/` tree, `docs/`, bundled at correct relative paths
-- [ ] Verify `__file__`-relative paths in `GamePackLoader`, `DebugManager`,
-      `settings_manager` work under PyInstaller (`sys._MEIPASS` awareness)
-- [ ] Build command documented: `pyinstaller gassi.spec`
+- [x] `datas`: `game_packs/` tree bundled at output root
+- [x] `core/paths.py` `get_base_dir()`: `sys._MEIPASS` in frozen mode,
+      `Path(__file__).parents[3]` in dev mode
+- [x] `GamePackLoader._GAME_PACKS_DIR` uses `get_base_dir()` (was `Path(__file__)`)
+- [x] Build command documented: `uv run pyinstaller gassi.spec`
 - [ ] Smoke-test on dev machine: launch `.exe`, open Settings, set key, F1, F2
-- [ ] Output: `dist/gassi/` folder
+- [x] Output: `dist/gassi/` folder
+- [x] `.gitignore`: `gassi.spec` un-excluded
 
 ### v0.8.1.4 — zip Bundle + GitHub Release
 

@@ -34,7 +34,7 @@ uv.lock
 
 # PyInstaller
 *.manifest
-*.spec
+!gassi.spec
 
 # Testing
 .pytest_cache/

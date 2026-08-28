@@ -7,7 +7,36 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.8.1 Distribution
 
-See [TODO.md](TODO.md) for planned sub-versions v0.8.1.3–0.8.1.4.
+See [TODO.md](TODO.md) for planned sub-version v0.8.1.4.
+
+## [0.8.5] - 2026-08-28
+
+### Added
+- `gassi.spec`: PyInstaller `--onedir` spec file. Bundles `game_packs/` tree
+  into output root. Hidden imports for all core + optional deps. Excludes
+  PyTorch/TensorFlow/scipy/pandas to keep bundle lean. Console mode for beta.
+- `core/paths.py`: `get_base_dir()` helper — returns project root in dev mode,
+  `sys._MEIPASS` in frozen (PyInstaller) mode. Single source of truth for
+  resolving bundled data paths.
+- `.gitignore`: `gassi.spec` un-excluded (was blocked by `*.spec` rule).
+
+### Changed
+- `GamePackLoader`: `_GAME_PACKS_DIR` now uses `get_base_dir() / "game_packs"`
+  instead of `Path(__file__).resolve().parents[3]` — works in both dev and
+  PyInstaller frozen modes.
+
+### Build
+- Build command: `uv run python -m PyInstaller gassi.spec --clean`
+- Output: `dist/gassi/gassi.exe` + `dist/gassi/game_packs/`
+- `docs/build_release.md`: full build, test, and release guide including
+  dev-machine testing notes (shared keyring/AppData), smoke test checklist,
+  zip creation, GitHub Release steps, known beta limitations.
+
+### Fixed
+- `gassi.spec`: added `rapidocr_onnxruntime/config.yaml` and `models/` to datas —
+  RapidOCR failed with `FileNotFoundError` on frozen builds.
+- `main.py`: `_get_version()` fallback for `importlib.metadata.PackageNotFoundError`
+  in frozen builds (PyInstaller doesn't bundle package metadata).
 
 ## [0.8.4] - 2026-08-28
 

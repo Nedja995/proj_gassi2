@@ -12,11 +12,12 @@ from pathlib import Path
 
 import yaml
 
+from gassi.core.paths import get_base_dir
 from gassi.models.game_pack import GamePackManifest, HudRegion
 
 logger = logging.getLogger(__name__)
 
-_GAME_PACKS_DIR = Path(__file__).resolve().parents[3] / "game_packs"
+_GAME_PACKS_DIR = get_base_dir() / "game_packs"
 _USER_REGIONS_FILENAME = "hud_regions_user.yaml"
 
 
