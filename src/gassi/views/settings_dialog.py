@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable
 
+import keyring
+
 from gassi.core.calibration_service import CalibrationService
 from gassi.core.ai.gemini_backend import fetch_available_models
 from gassi.core.ai.claude_backend import fetch_available_claude_models
@@ -32,10 +34,10 @@ def _display_hotkey(hotkey_str: str) -> str:
     """Convert pynput hotkey string to readable display.
 
     Examples:
-        '<f1>'          → 'F1'
-        '<alt>+8'       → 'Alt + 8'
-        '<ctrl>+<f2>'   → 'Ctrl + F2'
-        '<shift>+a'     → 'Shift + A'
+        '<f1>'          -> 'F1'
+        '<alt>+8'       -> 'Alt + 8'
+        '<ctrl>+<f2>'   -> 'Ctrl + F2'
+        '<shift>+a'     -> 'Shift + A'
     """
     parts = hotkey_str.split("+")
     display_parts = []
@@ -141,7 +143,7 @@ class HotkeyCapture(tk.Frame):
             return
 
         # pynput format: special keys get <>, printable chars do not
-        # e.g. F1 → "<f1>", 8 → "8", a → "a", space → "<space>"
+        # e.g. F1 -> "<f1>", 8 -> "8", a -> "a", space -> "<space>"
         if key_name in self._SPECIAL_KEYS:
             pynput_key = f"<{key_name}>"
         elif len(key_name) == 1:
@@ -165,7 +167,7 @@ class SettingsDialog(tk.Toplevel):
     """Modal settings dialog with tabs for different setting categories."""
 
     _WIDTH = 480
-    _HEIGHT = 540  # increased from 510 to accommodate floating advice toggle row
+    _HEIGHT = 640  # increased to accommodate API key fields (v0.8.1.1)
 
     def __init__(
         self,
@@ -300,7 +302,7 @@ class SettingsDialog(tk.Toplevel):
         frame = tk.Frame(parent, bg=t.bg_primary, padx=16, pady=16)
         row = 0
 
-        # ── active game pack selector ──────────────────────────────────
+        # -- active game pack selector -----------------------------------
         tk.Label(
             frame, text="Active game", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -331,7 +333,7 @@ class SettingsDialog(tk.Toplevel):
         game_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # ── AI backend provider selector ───────────────────────────────
+        # -- AI backend provider selector --------------------------------
         tk.Label(
             frame, text="AI Backend", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -366,7 +368,7 @@ class SettingsDialog(tk.Toplevel):
             row += 1
         row += 1
 
-        # ── AI model combobox — content switches per provider ──────────
+        # -- AI model combobox — content switches per provider -----------
         tk.Label(
             frame, text="AI Model", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -399,7 +401,7 @@ class SettingsDialog(tk.Toplevel):
         # kick off initial model fetch for starting provider
         self.after(100, self._refresh_model_list)
 
-        # ── theme picker ───────────────────────────────────────────────
+        # -- theme picker ------------------------------------------------
         tk.Label(
             frame, text="Theme", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -413,7 +415,7 @@ class SettingsDialog(tk.Toplevel):
         theme_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # ── cooldown ───────────────────────────────────────────────────
+        # -- cooldown ----------------------------------------------------
         tk.Label(
             frame, text="Cooldown (seconds)", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -435,7 +437,7 @@ class SettingsDialog(tk.Toplevel):
         self._cooldown_scale.pack(side=tk.LEFT)
         row += 1
 
-        # ── advisor input source ───────────────────────────────────────
+        # -- advisor input source ----------------------------------------
         tk.Label(
             frame, text="Default input", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -451,7 +453,7 @@ class SettingsDialog(tk.Toplevel):
         source_menu.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # ── grid overlay toggle ────────────────────────────────────────
+        # -- grid overlay toggle -----------------------------------------
         tk.Label(
             frame, text="Grid overlay", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -468,7 +470,7 @@ class SettingsDialog(tk.Toplevel):
         grid_check.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # ── floating advice toggle ──────────────────────────────────
+        # -- floating advice toggle (v0.8.0.1) ---------------------------
         tk.Label(
             frame, text="Floating advice", bg=t.bg_primary, fg=t.fg_text,
             font=t.font("normal"),
@@ -485,7 +487,47 @@ class SettingsDialog(tk.Toplevel):
         floating_check.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
-        # ── calibration ────────────────────────────────────────────────
+        # -- API keys (v0.8.1.1) -----------------------------------------
+        separator_keys = ttk.Separator(frame, orient=tk.HORIZONTAL)
+        separator_keys.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(10, 8))
+        row += 1
+
+        tk.Label(
+            frame, text="Gemini API key", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=4, padx=(0, 16))
+
+        # populate from keyring; displayed masked
+        _gemini_key_stored = keyring.get_password("gassi", "gemini_api_key") or ""
+        self._gemini_key_var = tk.StringVar(value=_gemini_key_stored)
+        gemini_key_entry = ttk.Entry(
+            frame, textvariable=self._gemini_key_var,
+            show="*", width=30,
+        )
+        gemini_key_entry.grid(row=row, column=1, sticky="w", pady=4)
+        row += 1
+
+        tk.Label(
+            frame, text="Claude API key", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=4, padx=(0, 16))
+
+        _claude_key_stored = keyring.get_password("gassi", "claude_api_key") or ""
+        self._claude_key_var = tk.StringVar(value=_claude_key_stored)
+        claude_key_entry = ttk.Entry(
+            frame, textvariable=self._claude_key_var,
+            show="*", width=30,
+        )
+        claude_key_entry.grid(row=row, column=1, sticky="w", pady=4)
+
+        tk.Label(
+            frame,
+            text="Keys stored in OS keyring — never written to disk.",
+            bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+        ).grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
+        row += 2
+
+        # -- calibration -------------------------------------------------
         if self._calibration_service is not None:
             separator = ttk.Separator(frame, orient=tk.HORIZONTAL)
             separator.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
@@ -501,7 +543,7 @@ class SettingsDialog(tk.Toplevel):
             ).pack(anchor="w")
 
             tk.Button(
-                calib_frame, text="📏  Calibrate HUD",
+                calib_frame, text="Calibrate HUD",
                 bg=t.bg_header, fg=t.fg_accent,
                 font=t.font("normal", bold=True),
                 bd=0, activebackground=t.bg_button_hover,
@@ -547,7 +589,7 @@ class SettingsDialog(tk.Toplevel):
             self._model_var.set(current)
             self._model_combo.config(values=[current], state="readonly")
             self._model_status.config(
-                text="⟳ Fetching models...", fg=t.fg_dim,
+                text="Fetching models...", fg=t.fg_dim,
             )
             if self._api_key:
                 self.after(0, self._fetch_gemini_models)
@@ -560,7 +602,7 @@ class SettingsDialog(tk.Toplevel):
                 )
 
     def _open_calibration_dialog(self) -> None:
-        from gassi.views.calibration_dialog import CalibrationDialog
+        from gassi.views.calibration_dialog import CalibrationDialog  # noqa: PLC0415
         CalibrationDialog(
             parent=self,
             theme=self._theme,
@@ -600,7 +642,7 @@ class SettingsDialog(tk.Toplevel):
             t = self._theme
             if error:
                 self._model_status.config(
-                    text="⚠ Fetch failed — showing fallback models",
+                    text="Fetch failed — showing fallback models",
                     fg=t.fg_warning,
                 )
             else:
@@ -612,7 +654,7 @@ class SettingsDialog(tk.Toplevel):
             pass  # dialog was closed before fetch completed
 
     def _save(self) -> None:
-        """Collect all settings and save."""
+        """Collect all settings, persist to JSON and keyring, notify caller."""
         settings: dict[str, Any] = {}
 
         # hotkeys
@@ -646,6 +688,20 @@ class SettingsDialog(tk.Toplevel):
             settings["claude_model"] = self._current.get("claude_model", "claude-sonnet-4-6")
 
         save_settings(settings)
+
+        # persist API keys to OS keyring — write only if non-empty and changed
+        _new_gemini_key = self._gemini_key_var.get().strip()
+        if _new_gemini_key:
+            _stored_gemini = keyring.get_password("gassi", "gemini_api_key") or ""
+            if _new_gemini_key != _stored_gemini:
+                keyring.set_password("gassi", "gemini_api_key", _new_gemini_key)
+
+        _new_claude_key = self._claude_key_var.get().strip()
+        if _new_claude_key:
+            _stored_claude = keyring.get_password("gassi", "claude_api_key") or ""
+            if _new_claude_key != _stored_claude:
+                keyring.set_password("gassi", "claude_api_key", _new_claude_key)
+
         self._on_save(settings)
         self.destroy()
 

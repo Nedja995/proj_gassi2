@@ -4,7 +4,6 @@ Wires all components together and starts the tkinter mainloop.
 """
 
 import logging
-import sys
 from importlib.metadata import version as _pkg_version
 from typing import Any
 
@@ -33,28 +32,18 @@ _KEYRING_USERNAME_CLAUDE = "claude_api_key"
 
 
 def _get_api_key(provider: AiProvider) -> str:
-    """Retrieve API key for the active provider from OS keyring. Exits on missing key."""
-    key = _factory_get_api_key(provider)
-    if not key:
-        username = (
-            _KEYRING_USERNAME_GEMINI
-            if provider == AiProvider.GEMINI
-            else _KEYRING_USERNAME_CLAUDE
-        )
-        logging.getLogger(__name__).error(
-            "No API key found in keyring for provider '%s'. Store one with:\n"
-            "  python -c \"import keyring; "
-            "keyring.set_password('gassi', '%s', 'YOUR_KEY')\"",
-            provider.value,
-            username,
-        )
-        sys.exit(1)
-    return key
+    """Retrieve API key for the active provider from OS keyring.
+
+    Returns empty string if no key is stored — caller handles absence
+    by showing an overlay message and opening Settings (v0.8.1.1).
+    No longer exits on missing key so the app stays running for first-run.
+    """
+    return _factory_get_api_key(provider) or ""
 
 
 def main() -> None:
     """Application entry point — compose and start."""
-    # ── logging setup ──────────────────────────────────────────────────────────
+    # -- logging setup --------------------------------------------------------
     overlay_log_handler = OverlayLogHandler(max_lines=200)
     overlay_log_handler.setLevel(logging.DEBUG)
 
@@ -62,32 +51,32 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[
-            logging.StreamHandler(sys.stdout),
+            logging.StreamHandler(),
             overlay_log_handler,
         ],
     )
     logger = logging.getLogger(__name__)
 
-    # ── settings ───────────────────────────────────────────────────────────────
+    # -- settings -------------------------------------------------------------
     saved = load_saved_settings()
     settings = AppSettings(**{k: v for k, v in saved.items() if not k.startswith("_")})
 
     theme = THEMES.get(settings.theme_name, FOREST_THEME)
 
-    # ── API keys ───────────────────────────────────────────────────────────────
+    # -- API keys -------------------------------------------------------------
     api_key = _get_api_key(settings.active_ai_provider)
     # Retrieve Claude key silently for the settings dialog (may be empty string).
     # Not used at runtime unless the provider is switched to Claude.
     _claude_api_key: str = _factory_get_api_key(AiProvider.CLAUDE) or ""
 
-    # ── core components ────────────────────────────────────────────────────────
+    # -- core components ------------------------------------------------------
     ai_backend = build_ai_backend(settings=settings, api_key=api_key)
     capture_backend = MssCaptureBackend()
     ocr_engine = RapidOcrEngine()
     pack_loader = GamePackLoader()
     debug_manager = DebugManager()
 
-    # ── game pack + RAG service ────────────────────────────────────────────────
+    # -- game pack + RAG service ----------------------------------------------
     _active_manifest = pack_loader.load_manifest(settings.active_game_id)
     _game_pack_path = pack_loader._packs_dir / settings.active_game_id
 
@@ -119,7 +108,7 @@ def main() -> None:
         ocr_confidence_threshold=settings.ocr_confidence_threshold,
     )
 
-    # ── UI ─────────────────────────────────────────────────────────────────────
+    # -- UI -------------------------------------------------------------------
     overlay = MainOverlay(theme=theme, log_handler=overlay_log_handler)
 
     from gassi.core.settings_manager import load_window_geometry  # noqa: PLC0415
@@ -130,7 +119,7 @@ def main() -> None:
     async_bridge = AsyncBridge(overlay)
     region_provider = OverlayAnchoredRegionProvider(overlay)
 
-    # ── ViewModel ──────────────────────────────────────────────────────────────
+    # -- ViewModel ------------------------------------------------------------
     viewmodel = AssistantViewModel(
         settings=settings,
         ai_backend=ai_backend,
@@ -144,7 +133,7 @@ def main() -> None:
         rag_service=rag_service,
     )
 
-    # ── hotkeys ────────────────────────────────────────────────────────────────
+    # -- hotkeys --------------------------------------------------------------
     hotkey_manager = HotkeyManager()
     hotkey_manager.register(settings.hotkey_advisor_toggle, viewmodel.trigger_advisor)
     hotkey_manager.register(
@@ -175,7 +164,7 @@ def main() -> None:
     overlay.set_placement_handler(viewmodel.trigger_placement)
     hotkey_manager.start()
 
-    # ── settings save handler ──────────────────────────────────────────────────
+    # -- settings save handler ------------------------------------------------
     def _on_settings_saved(new_settings: dict[str, Any]) -> None:
         prev_game = settings.active_game_id
         new_game = new_settings.get("active_game_id", prev_game)
@@ -254,7 +243,7 @@ def main() -> None:
     overlay.set_claude_api_key(_claude_api_key)
     overlay.set_pack_loader(pack_loader)
 
-    # ── cleanup on close ───────────────────────────────────────────────────────
+    # -- cleanup on close -----------------------------------------------------
     def _on_close() -> None:
         save_window_geometry(overlay.geometry())
         hotkey_manager.stop()
@@ -272,6 +261,24 @@ def main() -> None:
         "on" if rag_service.is_available() else "off",
         debug_manager.get_debug_dir(),
     )
+
+    # v0.8.1.1: if no Gemini key is stored, show overlay message and
+    # auto-open Settings so first-run users can enter their key.
+    # App continues running — no exit. After the user saves a key and
+    # restarts, the backend will be constructed with the real key.
+    if not api_key:
+        logger.warning("No Gemini API key found — prompting user via Settings")
+        overlay.after(
+            0,
+            lambda: overlay.canvas.show_advice(
+                "## No API key set\n"
+                "- Open Settings (\u2699) and paste your Gemini API key.\n"
+                "- Save and restart GASSI to apply.",
+                is_loading=False,
+            ),
+        )
+        overlay.after(500, overlay._open_settings)
+
     overlay.mainloop()
 
 
