@@ -429,9 +429,8 @@ Required before beta distribution — these are the biggest daily-use pain point
 
 ### v0.8.0.3 — General UX
 
-- [ ] Advisor result auto-copy to clipboard (settings toggle, default off)
-- [ ] Response font size setting (accessibility)
-- [ ] Overlay opacity quick-slider in toolbar (avoids opening settings for common adjustment)
+All items moved to `vFuture — Additional UX (post-beta backlog)`.
+Nothing remaining — this sub-version is retired.
 
 ---
 
@@ -502,12 +501,11 @@ Expand beyond Windows. Native window detection.
 
 ## vFuture — Additional UX (post-beta backlog)
 
-Items tracked here have been partially superseded by v0.8.0 UX Polish.
-Remaining items not covered by v0.8.0:
-
-- [ ] Advisor result auto-copy to clipboard (if not shipped in v0.8.0.3)
-- [ ] Response font size setting (if not shipped in v0.8.0.3)
-- [ ] Overlay opacity quick-slider (if not shipped in v0.8.0.3)
+- [ ] Advisor result auto-copy to clipboard (settings toggle, default off)
+- [ ] Response font size setting (accessibility)
+- [ ] Overlay opacity quick-slider in toolbar (avoids opening settings for common adjustment)
+- [ ] `placement_input_style: strip | dialog` setting (default `strip`) — allow user to
+      prefer floating dialog even when overlay is visible
 
 ---
 
