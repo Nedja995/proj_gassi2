@@ -54,7 +54,7 @@ Transparent always-on-top cell highlight window over the game screen.
 
 ### Completed
 - [x] `PlacementHighlightWindow` — separate transparent `tk.Toplevel`, full monitor size
-- [x] Dashed yellow bounding box + cell label rendered at Gemini’s returned cell position
+- [x] Dashed yellow bounding box + cell label rendered at Gemini's returned cell position
 - [x] Windows `-transparentcolor`, macOS `-transparent`, Linux `-alpha` fallback
 - [x] Click-through via `WS_EX_TRANSPARENT` on highlight HWND (separate from main overlay)
 - [x] Auto-dismiss after `placement_highlight_seconds` (default 8s)
@@ -312,7 +312,7 @@ Delivered across v0.6.1–v0.6.7. All sub-versions complete.
 
 ---
 
-## v0.7.0 — Multi-Backend (Cloud) 🔜 Next
+## v0.7.0 — Multi-Backend (Cloud) ✅ Complete
 
 Protocol-based AI backend swap. ClaudeBackend as the second implementation,
 validates that AiBackend Protocol is truly backend-agnostic.
@@ -425,7 +425,7 @@ Required before beta distribution — these are the biggest daily-use pain point
 - [x] Full keyboard focus, Escape dismisses, Enter submits.
 - [x] Reuses same history + quick-prompts data as `PlacementInputStrip` — no ViewModel changes.
 - [x] Dialog hides itself before `on_submit` so it is absent from the placement screenshot.
-- [x] `placement_input_style` setting deferred to v0.9.0 UX backlog (not needed for current behaviour).
+- [x] `placement_input_style` setting deferred to vFuture UX backlog (not needed for current behaviour).
 
 ### v0.8.0.3 — General UX
 
@@ -436,18 +436,60 @@ Nothing remaining — this sub-version is retired.
 
 ## v0.8.1 — Distribution (beta release target)
 
-Packaging and installer for end-users who don’t have Python/uv.
-This is the milestone that makes GASSI publicly releasable.
+Packaging for end-users who don't have Python/uv installed.
+This is the milestone that makes GASSI publicly releasable as a zip bundle.
 
-- [ ] PyInstaller packaging: single-folder build (`--onedir`), tested on clean Windows VM
-- [ ] `gassi.spec` PyInstaller spec file: includes game_packs/, docs/, pyproject.toml version
-- [ ] First-run wizard: API key entry (Gemini + optional Claude), model selection,
-      first calibration prompt, game pack selection
-- [ ] `settings.json` migration: handle missing/old keys gracefully on upgrade
-- [ ] Installer for Windows (NSIS or MSI) — optional, zip bundle acceptable for beta
-- [ ] GitHub Releases: tag `v0.8.1-beta`, attach zip bundle, release notes
-- [ ] README: installation section for end-users (no Python knowledge assumed)
-- [ ] TTS voice readout: `edge-tts` integration, toggle in settings (optional, post-beta)
+**Scope decisions (2026-08-28):**
+- No first-run wizard — on missing API key, show overlay canvas message + auto-open Settings
+- API keys entered via Settings dialog (masked `ttk.Entry`, saved to OS keyring) — no terminal needed
+- zip bundle only for beta — NSIS/MSI installer deferred to vFuture
+- Testing on dev machine only for beta (no clean VM available currently)
+- TTS moved to vFuture
+- `settings.json` migration = verify no crash on missing/old keys (pydantic defaults cover this)
+
+### v0.8.1.1 — API Key Entry in Settings Dialog
+
+- [ ] `SettingsDialog` General tab: masked `ttk.Entry` (`show="*"`) for Gemini API key
+- [ ] On Settings open: populate field from keyring (masked); empty string if not set
+- [ ] On Settings save: if field non-empty and changed, write to keyring via
+      `keyring.set_password('gassi', 'gemini_api_key', value)`
+- [ ] Optional Claude API key field (same pattern, same tab, below Gemini field)
+- [ ] `main.py` `_get_api_key()`: replace `sys.exit(1)` with `return ""` on missing key
+- [ ] `main.py` startup: if Gemini key empty, show overlay canvas message
+      `"No API key set — open Settings (⚙) to add your Gemini API key"` and auto-open Settings
+- [ ] `main.py` startup: app continues running (no exit) — user sets key and saves
+- [ ] After Settings save with a key: restart notice in overlay
+      `"API key saved — restart GASSI to apply"` (backend constructed at startup, not live)
+
+### v0.8.1.2 — settings.json Upgrade Safety
+
+- [ ] Verify app starts cleanly with an empty or missing `settings.json`
+- [ ] Verify app starts cleanly with a `settings.json` missing keys added in recent versions
+      (pydantic defaults cover this — confirm no `KeyError` / `ValidationError`)
+- [ ] Verify app starts cleanly with unknown/extra keys in `settings.json`
+      (pydantic-settings ignores extras by default — confirm)
+- [ ] Document any migration edge cases found in CHANGELOG
+
+### v0.8.1.3 — PyInstaller Build
+
+- [ ] Add `pyinstaller` to `[dev]` dep group in `pyproject.toml`
+- [ ] `gassi.spec`: `--onedir`, hidden imports for `rapidocr_onnxruntime`, `mss`,
+      `pynput`, `google.genai`, `anthropic` (optional), `chromadb` (optional),
+      `keyring` + OS backend (`keyring.backends.Windows`)
+- [ ] `datas`: `game_packs/` tree, `docs/`, bundled at correct relative paths
+- [ ] Verify `__file__`-relative paths in `GamePackLoader`, `DebugManager`,
+      `settings_manager` work under PyInstaller (`sys._MEIPASS` awareness)
+- [ ] Build command documented: `pyinstaller gassi.spec`
+- [ ] Smoke-test on dev machine: launch `.exe`, open Settings, set key, F1, F2
+- [ ] Output: `dist/gassi/` folder
+
+### v0.8.1.4 — zip Bundle + GitHub Release
+
+- [ ] zip `dist/gassi/` -> `GASSI-v0.8.1-beta-win64.zip`
+- [ ] `RELEASE_NOTES.md`: what's in the beta, known limitations, how to get API key
+- [ ] GitHub Release: tag `v0.8.1-beta`, attach zip, paste release notes
+- [ ] README end-user installation section: download zip, extract, run `gassi.exe`,
+      open Settings to enter Gemini API key — no Python or terminal required
 
 ---
 
@@ -506,6 +548,8 @@ Expand beyond Windows. Native window detection.
 - [ ] Overlay opacity quick-slider in toolbar (avoids opening settings for common adjustment)
 - [ ] `placement_input_style: strip | dialog` setting (default `strip`) — allow user to
       prefer floating dialog even when overlay is visible
+- [ ] TTS voice readout: `edge-tts` integration, toggle in Settings (deferred from v0.8.1)
+- [ ] Windows installer (NSIS or MSI) — deferred from v0.8.1 beta (zip bundle sufficient for beta)
 
 ---
 

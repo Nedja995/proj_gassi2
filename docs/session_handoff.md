@@ -10,12 +10,13 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.8.1, floating advice window shipped. RAG game_version bug fixed.
-Progress ticker added for long AI calls. Next: v0.8.0.2 (floating placement dialog).
-Distribution (v0.8.1 milestone) is the beta release target after UX polish is done.
+**Current state:** v0.8.2. v0.8.0 UX Polish complete (FloatingAdviceWindow + FloatingPlacementDialog).
+Next: v0.8.1 Distribution milestone — API key in Settings dialog, PyInstaller build, zip bundle.
+Key v0.8.1 decisions: no first-run wizard; API key via masked Settings field + keyring;
+zip bundle only for beta (NSIS/MSI deferred to vFuture); TTS deferred to vFuture.
 
-**Note on versioning:** `pyproject.toml` is at `0.8.1` — this was the first sub-version
-of the v0.8.0 UX Polish milestone. v0.8.0.2 will bump to `0.8.2`, etc.
+**Note on versioning:** `pyproject.toml` is at `0.8.2`. Each sub-version gets a discrete
+bump: v0.8.1.1 will bump to `0.8.3`, v0.8.1.2 to `0.8.4`, etc.
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,
@@ -150,10 +151,13 @@ v0.7.0  ✅ Complete (v0.7.1–v0.7.4) — Multi-backend: ClaudeBackend, backend
            UI, token/cost tracking, building footprint registry
 v0.8.0  🔜 Active — UX Polish pre-release
   v0.8.0.1 ✅ — FloatingAdviceWindow (F1 when overlay offscreen, themed, auto-dismiss)
-  v0.8.0.2 — Floating placement dialog (F2 when overlay offscreen)
-  v0.8.0.3 — Clipboard copy, font size, opacity slider
-v0.8.1  — Distribution / beta release (PyInstaller, first-run wizard,
-           GitHub Release, end-user README)
+  v0.8.0.2 ✅ — Floating placement dialog (F2 when overlay offscreen)
+  v0.8.0.3 — retired, items moved to vFuture
+v0.8.1  — Distribution / beta release (PyInstaller, zip bundle, GitHub Release)
+  v0.8.1.1 — API key entry in Settings dialog (masked ttk.Entry, keyring write)
+  v0.8.1.2 — settings.json upgrade safety verification
+  v0.8.1.3 — PyInstaller build + gassi.spec
+  v0.8.1.4 — zip bundle + GitHub Release + end-user README
 v0.8.2  — Anti-cheat posture (SetWindowDisplayAffinity, docs)
 v0.9.0  — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
 v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
