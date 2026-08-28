@@ -15,7 +15,7 @@ overlay on top of your game. Supports Google Gemini and Anthropic Claude backend
 
 ---
 
-## Features (v0.7.4)
+## Features (v0.8.5)
 
 ### Advisor Mode (`F1`)
 
@@ -100,13 +100,26 @@ without inflating the static prompt size.
 
 ## Requirements
 
-- Python 3.12.x (managed via [uv](https://docs.astral.sh/uv/))
-- Google Gemini API key (or Anthropic Claude API key — one is required)
-- Windows / macOS / Linux (X11). Wayland not yet supported.
+- Windows 10 or 11 (64-bit)
+- Google Gemini API key (free tier: 1500 req/day) — get one at https://aistudio.google.com/apikey
 
 ---
 
-## Installation
+## Quick Start (End Users)
+
+1. Download `GASSI-v0.8.5-beta-win64.zip` from the [latest release](../../releases/latest)
+2. Extract the zip to any folder
+3. Run `gassi.exe`
+4. On first run, Settings opens automatically — paste your Gemini API key and save
+5. Restart `gassi.exe`
+6. Start your game in **Borderless Windowed** mode
+7. Press **F1** for advice, **F2** for placement help
+
+**No Python required. No terminal. No config files.**
+
+---
+
+## Developer Setup
 
 ```bash
 # Clone
@@ -215,6 +228,7 @@ game_packs/
 docs/
 ├── architecture.md              # Architecture Decision Records (AD-01 – AD-27)
 ├── adding_game_pack.md          # Guide: adding support for a new game
+├── build_release.md             # Build, test, and release guide
 ├── session_handoff.md           # Session context for new chats
 └── v1_scope.md                  # Feature scope and known limitations
 

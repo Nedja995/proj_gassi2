@@ -9,6 +9,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [TODO.md](TODO.md) for planned sub-version v0.8.1.4.
 
+## [0.8.6] - 2026-08-28
+
+### Added
+- `RELEASE_NOTES.md`: end-user release notes for v0.8.5-beta. Covers installation
+  (download zip, run exe, paste API key), hotkey reference, known limitations.
+- `README.md`: "Quick Start (End Users)" section — 7-step no-Python installation.
+  Features version bumped to v0.8.5. Developer setup section renamed.
+  `docs/build_release.md` added to project structure.
+
 ## [0.8.5] - 2026-08-28
 
 ### Added

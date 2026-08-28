@@ -12,7 +12,7 @@ def _get_version() -> str:
     try:
         return _pkg_version("gassi")
     except PackageNotFoundError:
-        return "0.8.5"  # keep in sync with pyproject.toml
+        return "0.8.6"  # keep in sync with pyproject.toml
 from typing import Any
 
 import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory

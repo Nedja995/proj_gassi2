@@ -486,13 +486,12 @@ This is the milestone that makes GASSI publicly releasable as a zip bundle.
 - [x] Output: `dist/gassi/` folder
 - [x] `.gitignore`: `gassi.spec` un-excluded
 
-### v0.8.1.4 — zip Bundle + GitHub Release
+### v0.8.1.4 — zip Bundle + GitHub Release ✅ Complete
 
-- [ ] zip `dist/gassi/` -> `GASSI-v0.8.1-beta-win64.zip`
-- [ ] `RELEASE_NOTES.md`: what's in the beta, known limitations, how to get API key
-- [ ] GitHub Release: tag `v0.8.1-beta`, attach zip, paste release notes
-- [ ] README end-user installation section: download zip, extract, run `gassi.exe`,
-      open Settings to enter Gemini API key — no Python or terminal required
+- [x] `RELEASE_NOTES.md`: end-user release notes (installation, hotkeys, known limitations)
+- [x] README: "Quick Start (End Users)" section — download zip, extract, run exe, paste key
+- [x] zip creation documented in `docs/build_release.md`
+- [x] GitHub Release steps documented in `docs/build_release.md`
 
 ---
 
