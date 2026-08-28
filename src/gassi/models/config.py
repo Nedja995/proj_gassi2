@@ -14,7 +14,7 @@ class AppSettings(BaseSettings):
     and retrieved via OS keyring, not here.
     """
 
-    model_config = {"env_prefix": "GASSI_"}
+    model_config = {"env_prefix": "GASSI_", "extra": "ignore"}
 
     # AI backend provider (v0.7.2)
     active_ai_provider: AiProvider = AiProvider.GEMINI

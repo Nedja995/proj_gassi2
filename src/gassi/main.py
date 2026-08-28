@@ -59,7 +59,16 @@ def main() -> None:
 
     # -- settings -------------------------------------------------------------
     saved = load_saved_settings()
-    settings = AppSettings(**{k: v for k, v in saved.items() if not k.startswith("_")})
+    try:
+        settings = AppSettings(
+            **{k: v for k, v in saved.items() if not k.startswith("_")}
+        )
+    except Exception as exc:  # noqa: BLE001
+        # Corrupted or incompatible settings.json — start with defaults
+        logging.getLogger(__name__).warning(
+            "Failed to load settings (using defaults): %s", exc
+        )
+        settings = AppSettings()
 
     theme = THEMES.get(settings.theme_name, FOREST_THEME)
 
