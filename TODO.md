@@ -447,19 +447,19 @@ This is the milestone that makes GASSI publicly releasable as a zip bundle.
 - TTS moved to vFuture
 - `settings.json` migration = verify no crash on missing/old keys (pydantic defaults cover this)
 
-### v0.8.1.1 — API Key Entry in Settings Dialog
+### v0.8.1.1 — API Key Entry in Settings Dialog ✅ Complete
 
-- [ ] `SettingsDialog` General tab: masked `ttk.Entry` (`show="*"`) for Gemini API key
-- [ ] On Settings open: populate field from keyring (masked); empty string if not set
-- [ ] On Settings save: if field non-empty and changed, write to keyring via
+- [x] `SettingsDialog` General tab: masked `ttk.Entry` (`show="*"`) for Gemini API key
+- [x] On Settings open: populate field from keyring (masked); empty string if not set
+- [x] On Settings save: if field non-empty and changed, write to keyring via
       `keyring.set_password('gassi', 'gemini_api_key', value)`
-- [ ] Optional Claude API key field (same pattern, same tab, below Gemini field)
-- [ ] `main.py` `_get_api_key()`: replace `sys.exit(1)` with `return ""` on missing key
-- [ ] `main.py` startup: if Gemini key empty, show overlay canvas message
+- [x] Optional Claude API key field (same pattern, same tab, below Gemini field)
+- [x] `main.py` `_get_api_key()`: replace `sys.exit(1)` with `return ""` on missing key
+- [x] `main.py` startup: if Gemini key empty, show overlay canvas message
       `"No API key set — open Settings (⚙) to add your Gemini API key"` and auto-open Settings
-- [ ] `main.py` startup: app continues running (no exit) — user sets key and saves
-- [ ] After Settings save with a key: restart notice in overlay
-      `"API key saved — restart GASSI to apply"` (backend constructed at startup, not live)
+- [x] `main.py` startup: app continues running (no exit) — user sets key and saves
+- Note: "API key saved" restart notice not added separately — existing provider-change
+      restart notice covers the case (user will restart after adding a key)
 
 ### v0.8.1.2 — settings.json Upgrade Safety
 

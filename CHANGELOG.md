@@ -5,9 +5,29 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.8.0 UX Polish
+## [Unreleased] — v0.8.1 Distribution
 
-See [TODO.md](TODO.md) for planned sub-versions v0.8.0.3.
+See [TODO.md](TODO.md) for planned sub-versions v0.8.1.2–0.8.1.4.
+
+## [0.8.3] - 2026-08-28
+
+### Added
+- `SettingsDialog` General tab: API key section (v0.8.1.1) with masked `ttk.Entry`
+  fields for Gemini and Claude API keys, separated by a horizontal rule.
+- On Settings open: fields pre-populated from OS keyring (displayed masked).
+- On Settings save: non-empty changed keys written to keyring via
+  `keyring.set_password("gassi", "gemini_api_key" | "claude_api_key", value)`.
+  Empty fields and unchanged values are never written.
+- Hint label: "Keys stored in OS keyring — never written to disk."
+- `SettingsDialog._HEIGHT` bumped from 540 to 640px.
+
+### Changed
+- `main.py` `_get_api_key()`: returns `""` on missing key instead of calling
+  `sys.exit(1)`. App no longer exits on first run without a key.
+- `main.py` startup: if Gemini key is empty, shows overlay canvas message
+  `"## No API key set"` and auto-opens Settings after 500ms delay.
+- `main.py`: removed `import sys` (no longer needed).
+- `main.py`: `logging.StreamHandler()` no longer passes `sys.stdout` explicitly.
 
 ## [0.8.2] - 2026-08-26
 
