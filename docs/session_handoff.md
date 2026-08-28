@@ -108,18 +108,14 @@ elif platform.system() == "Darwin":
 ## Version and Commit Discipline
 
 **Every feature is split into discrete sub-versions** (e.g. v0.4.1, v0.4.2, v0.4.3).
-Each sub-version gets its own commit. Docs (CHANGELOG, TODO, pyproject.toml) are committed
-separately as a final commit per batch.
+Each sub-version gets its own commit. Code and docs (CHANGELOG, TODO, pyproject.toml)
+are committed together in a single commit per sub-version.
 
 **Commit structure per sub-version:**
 ```bash
-# Code commit — only files changed for that specific sub-version
-git add <specific files only>
+# Single commit per sub-version — code + docs together
+git add <specific changed files> CHANGELOG.md TODO.md pyproject.toml
 git commit -m "v0.X.Y: short description of what changed"
-
-# Docs commit — after all sub-versions in a batch are done
-git add CHANGELOG.md TODO.md pyproject.toml
-git commit -m "docs: changelog, todo, pyproject for v0.X.Y-v0.X.Z"
 ```
 
 **Never** `git add .` — always add specific files so each commit is clean and revertable.

@@ -461,14 +461,15 @@ This is the milestone that makes GASSI publicly releasable as a zip bundle.
 - Note: "API key saved" restart notice not added separately — existing provider-change
       restart notice covers the case (user will restart after adding a key)
 
-### v0.8.1.2 — settings.json Upgrade Safety
+### v0.8.1.2 — settings.json Upgrade Safety ✅ Complete
 
-- [ ] Verify app starts cleanly with an empty or missing `settings.json`
-- [ ] Verify app starts cleanly with a `settings.json` missing keys added in recent versions
-      (pydantic defaults cover this — confirm no `KeyError` / `ValidationError`)
-- [ ] Verify app starts cleanly with unknown/extra keys in `settings.json`
-      (pydantic-settings ignores extras by default — confirm)
-- [ ] Document any migration edge cases found in CHANGELOG
+- [x] Verify app starts cleanly with an empty or missing `settings.json`
+- [x] Verify app starts cleanly with a `settings.json` missing keys added in recent versions
+      (pydantic defaults cover this — confirmed)
+- [x] Verify app starts cleanly with unknown/extra keys in `settings.json`
+      (`extra = "ignore"` added to `AppSettings.model_config` — explicit guarantee)
+- [x] `main.py` startup: `AppSettings()` wrapped in `try/except` — corrupted values
+      fall back to defaults with warning log instead of crashing
 
 ### v0.8.1.3 — PyInstaller Build
 

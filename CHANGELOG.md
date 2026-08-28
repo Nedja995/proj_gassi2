@@ -7,7 +7,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] — v0.8.1 Distribution
 
-See [TODO.md](TODO.md) for planned sub-versions v0.8.1.2–0.8.1.4.
+See [TODO.md](TODO.md) for planned sub-versions v0.8.1.3–0.8.1.4.
+
+## [0.8.4] - 2026-08-28
+
+### Changed
+- `AppSettings.model_config`: explicit `extra = "ignore"` — unknown keys in
+  `settings.json` are silently discarded instead of risking a `ValidationError`.
+- `main.py` startup: `AppSettings()` construction wrapped in `try/except`;
+  corrupted or type-incompatible `settings.json` values fall back to defaults
+  with a warning log instead of crashing.
+
+### Verified (v0.8.1.2 upgrade safety)
+- Missing `settings.json`: app starts with all defaults — `load_saved_settings()`
+  returns `{}`, all `AppSettings` fields have defaults.
+- Missing keys in `settings.json`: pydantic fills defaults for absent fields.
+- Extra/unknown keys: `extra = "ignore"` silently discards them.
+- Corrupt JSON: `json.JSONDecodeError` caught in `load_saved_settings()`, returns `{}`.
+- Wrong value types: `try/except` around `AppSettings()` falls back to defaults.
 
 ## [0.8.3] - 2026-08-28
 
