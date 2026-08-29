@@ -10,15 +10,15 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.8.5. v0.8.1 Distribution nearly complete (API key in Settings,
-settings.json safety, PyInstaller build all done). Build tested on dev machine.
-Next: v0.8.1.4 zip bundle + GitHub Release.
+**Current state:** v0.8.6. v0.8.1 Distribution milestone complete — API key in Settings,
+settings.json safety, PyInstaller build, zip bundle, RELEASE_NOTES.md, end-user README.
+Beta build tested on dev machine. Next: v0.8.2 Anti-Cheat Posture.
 
-**Note on versioning:** `pyproject.toml` is at `0.8.5`. The fallback version in
+**Note on versioning:** `pyproject.toml` is at `0.8.6`. The fallback version in
 `main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
 
 **Build command:** `uv run python -m PyInstaller gassi.spec --clean`
-See `docs/build_release.md` for full build, test, and release instructions.
+See `docs/build_release.md` for full build, test, and release procedure.
 
 **Repo:** `F:\__STORAGE\__PROJECTS_F\proj-gassi\proj_gassi2`
 **Stack:** Python 3.12, tkinter/ttk, pydantic-settings, mss, RapidOCR (ONNX), google-genai,
@@ -147,16 +147,16 @@ v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
            ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases)
 v0.7.0  ✅ Complete (v0.7.1–v0.7.4) — Multi-backend: ClaudeBackend, backend selector
            UI, token/cost tracking, building footprint registry
-v0.8.0  🔜 Active — UX Polish pre-release
+v0.8.0  ✅ Complete — UX Polish pre-release
   v0.8.0.1 ✅ — FloatingAdviceWindow (F1 when overlay offscreen, themed, auto-dismiss)
   v0.8.0.2 ✅ — Floating placement dialog (F2 when overlay offscreen)
   v0.8.0.3 — retired, items moved to vFuture
-v0.8.1  — Distribution / beta release (PyInstaller, zip bundle, GitHub Release)
-  v0.8.1.1 — API key entry in Settings dialog (masked ttk.Entry, keyring write)
-  v0.8.1.2 — settings.json upgrade safety verification
-  v0.8.1.3 — PyInstaller build + gassi.spec
-  v0.8.1.4 — zip bundle + GitHub Release + end-user README
-v0.8.2  — Anti-cheat posture (SetWindowDisplayAffinity, docs)
+v0.8.1  ✅ Complete — Distribution / beta release
+  v0.8.1.1 ✅ — API key entry in Settings dialog (masked ttk.Entry, keyring write)
+  v0.8.1.2 ✅ — settings.json upgrade safety (extra=ignore, try/except fallback)
+  v0.8.1.3 ✅ — PyInstaller build + gassi.spec + paths.py (sys._MEIPASS)
+  v0.8.1.4 ✅ — zip bundle + GitHub Release + RELEASE_NOTES.md + end-user README
+v0.8.2  🔜 Next — Anti-cheat posture (SetWindowDisplayAffinity, docs)
 v0.9.0  — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
 v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 ```
@@ -203,6 +203,12 @@ v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 | Footprint lookup | Keyword substring scan of advice text, longest match wins | AD-27. No extra AI call; graceful 1×1 fallback |
 | RAG game_version type | Stored as `float` in Chroma metadata, queried as `float` | Chroma `$gte` requires numeric. String `"0.6"` caused silent RAG off. Re-ingest after fix. |
 | AI call progress | `_start_progress_ticker()` updates canvas every 5s with elapsed time | Long calls (Gemini 3-4min on slow quota) were silent. Ticker stops on result/error. |
+| ViewModel checks _offscreen | ViewModel (or main.py closure) decides strip vs dialog | MainOverlay stays dumb — never checks _offscreen itself |
+| API key storage | OS keyring (via `keyring` library) | Keys never written to disk/settings.json. Masked entry in Settings dialog. |
+| No sys.exit on missing key | `_get_api_key()` returns `""`, app shows message + opens Settings | First-run UX — app stays running for user to paste key |
+| PyInstaller path resolution | `core/paths.py` `get_base_dir()` — `sys._MEIPASS` or `__file__` parents | Only `GamePackLoader` needed the fix; settings/debug use OS AppData |
+| Package version in frozen build | `_get_version()` with `PackageNotFoundError` fallback | PyInstaller doesn't bundle `importlib.metadata` package info |
+| LF line endings enforced | `.gitattributes` `* text=auto eol=lf` + `.editorconfig` | CRLF caused `edit_file` tool failures; normalized project-wide |
 
 ---
 
@@ -252,7 +258,9 @@ MainOverlay (tk.Tk)
 - `show_placement_highlight(pixel_rect, cell_ref, monitor_rect, auto_dismiss_ms, footprint)`
 - `clear_placement_highlight()`
 - `toggle_placement_strip(suggestions)`
+- `show_floating_placement_dialog(suggestions, on_submit)` — floating F2 dialog (v0.8.0.2)
 - `auto_expand_for_result()` — slides onscreen + expands if collapsed
+- `_open_settings()` — opens Settings dialog (used by auto-open on missing key)
 - `set_calibration_service(service, game_id, api_key)`
 - `set_claude_api_key(key)`
 - `set_pack_loader(loader)`
@@ -277,16 +285,22 @@ MainOverlay (tk.Tk)
 - `AppSettings.floating_advice_timeout_seconds: int = 12`
 - Settings dialog: "Floating advice" toggle in General tab
 
-**For v0.8.0.2 — Floating placement dialog:**
-- When overlay is offscreen and F2 fires, show a centered `tk.Toplevel` dialog
-- Larger than the inline `PlacementInputStrip`, full keyboard focus, Esc dismisses
-- Reuses same history + quick-prompts data from ViewModel (`get_prompt_suggestions()`)
-- No ViewModel changes needed — only view layer
-- `MainOverlay` needs: `show_floating_placement_dialog(suggestions, on_submit)` method
-- The on_submit callback is `viewmodel.trigger_placement` (already exists)
-- `toggle_placement_strip()` should check `_offscreen` and show dialog instead of strip
-  OR ViewModel checks `_offscreen` before calling `toggle_placement_strip`
-- New file: `views/floating_placement_dialog.py`
+**v0.8.0.2 SHIPPED — `FloatingPlacementDialog`:**
+- `views/floating_placement_dialog.py` — centered `tk.Toplevel` for F2 when overlay offscreen
+- Created in `MainOverlay.__init__` alongside `FloatingAdviceWindow`
+- `MainOverlay.show_floating_placement_dialog(suggestions, on_submit)` — public method
+- Destroyed in `_on_close_click()`
+- `main.py` `_open_placement()` checks `overlay._offscreen` — dispatches to dialog or strip
+- Dialog hides itself before `on_submit` so it's absent from the placement screenshot
+
+**v0.8.1 SHIPPED — Distribution:**
+- API key fields in Settings dialog (masked `ttk.Entry`, keyring read/write)
+- `main.py` no longer exits on missing key — shows canvas message + auto-opens Settings
+- `AppSettings.model_config` has `extra = "ignore"` + startup `try/except` fallback
+- `core/paths.py` `get_base_dir()` — `sys._MEIPASS` in frozen mode, `__file__` parents in dev
+- `gassi.spec` — PyInstaller `--onedir`, bundles game_packs + rapidocr config/models
+- `main.py` `_get_version()` — fallback for `PackageNotFoundError` in frozen builds
+- `RELEASE_NOTES.md`, `docs/build_release.md`, end-user README section
 
 ---
 
