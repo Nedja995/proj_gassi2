@@ -131,7 +131,7 @@ git commit -m "v0.X.Y: short description of what changed"
 
 Every task must update ALL of these:
 1. `CHANGELOG.md` — add `## [X.Y.Z] - YYYY-MM-DD` section with Added/Fixed/Changed
-2. `TODO.md` — mark completed items `[x]`, add new sub-version to Completed section
+2. `TODO.md` — mark completed items `[x]`; add new version section if needed
 3. `pyproject.toml` — bump `version = "X.Y.Z"`
 4. `docs/architecture.md` — add ADR if a non-obvious design decision was made
 5. `README.md` — update Features section version number and feature list if visible behaviour changed
@@ -140,36 +140,20 @@ Every task must update ALL of these:
 
 ## Current Roadmap Summary
 
-```
-v0.4.7  ✅ Complete — Nebuchadnezzar + Timberborn live testing
-v0.5.x  ✅ Complete (v0.5.1–v0.5.18) — GamePackManifest fields, atomic settings,
-           calibration fixes, hotkey fixes, placement highlight (SetWindowRgn)
-v0.6.0  ✅ Complete (v0.6.1–v0.6.7) — RAG pipeline (Chroma + ONNXMiniLM,
-           ingestion CLI, Timberborn + Nebuchadnezzar knowledge bases)
-v0.7.0  ✅ Complete (v0.7.1–v0.7.4) — Multi-backend: ClaudeBackend, backend selector
-           UI, token/cost tracking, building footprint registry
-v0.8.0  ✅ Complete — UX Polish pre-release
-  v0.8.0.1 ✅ — FloatingAdviceWindow (F1 when overlay offscreen, themed, auto-dismiss)
-  v0.8.0.2 ✅ — Floating placement dialog (F2 when overlay offscreen)
-  v0.8.0.3 — retired, items moved to vFuture
-v0.8.1  ✅ Complete — Distribution / beta release
-  v0.8.1.1 ✅ — API key entry in Settings dialog (masked ttk.Entry, keyring write)
-  v0.8.1.2 ✅ — settings.json upgrade safety (extra=ignore, try/except fallback)
-  v0.8.1.3 ✅ — PyInstaller build + gassi.spec + paths.py (sys._MEIPASS)
-  v0.8.1.4 ✅ — zip bundle + GitHub Release + RELEASE_NOTES.md + end-user README
-v0.8.2  ✅ Complete — Anti-cheat posture (SetWindowDisplayAffinity, docs)
-v0.9.0  🔧 In progress — Local SLM + cloud providers (AD-29: openai SDK shared transport)
-  v0.9.1 ✅ — Foundation: AiProvider enum, AppSettings fields, [providers] dep, factory stubs
-  v0.9.2 ✅ — OpenAiCompatBackend base class
-  v0.9.3 ✅ — OllamaBackend + fetch_ollama_models() + VRAM annotations
-  v0.9.4 ✅ — GroqBackend + TogetherBackend + HuggingFaceBackend + cost table
-  v0.9.5 ✅ — Settings UI: all six providers, tier labels, dynamic credential/model
-  v0.9.6 ✅ — Docs: local_models.md, README v0.9.5, session_handoff
-v0.9.7  ✅ — NativeWindowRegionProvider (Windows) + Settings toggle
-v0.9.8  ✅ — macOS ScreenShotError catch + readable permission message
-v0.9.9  ✅ — docs/platform_support.md (matrix, Steam Deck procedure, Wayland)
-v0.9.10 🔜 — Architecture milestone (scope TBD)
-```
+- [x] v0.1.0–v0.1.3 — Project scaffold, UX shell, settings, debug tools
+- [x] v0.2.0 — Calibration service + OCR pipeline
+- [x] v0.3.0–v0.3.2 — Input improvements, grid overlay, placement bounding box
+- [x] v0.4.0–v0.4.7 — Nebuchadnezzar game pack, active game selector, live testing
+- [x] v0.5.x — GamePackManifest fields, atomic settings, calibration + hotkey fixes
+- [x] v0.6.0 — RAG pipeline (Chroma + ONNXMiniLM, ingestion CLI, knowledge bases)
+- [x] v0.7.0 — Multi-backend: ClaudeBackend, token/cost tracking, footprint registry
+- [x] v0.8.0 — UX polish: FloatingAdviceWindow, FloatingPlacementDialog
+- [x] v0.8.1 — Distribution: API key UI, settings safety, PyInstaller, zip/release
+- [x] v0.8.2 — Anti-cheat posture (SetWindowDisplayAffinity, docs)
+- [x] v0.9.0 — Local SLM + cloud providers (Ollama, Groq, Together, HuggingFace; AD-29)
+- [x] v0.9.7 — Platform support: NativeWindowRegionProvider, macOS ScreenShotError,
+              docs/platform_support.md
+- [ ] v0.9.10 — Architecture milestone (scope TBD)
 
 ---
 
