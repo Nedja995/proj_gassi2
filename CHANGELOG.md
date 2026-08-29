@@ -5,6 +5,27 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-08-29
+
+### Added
+- `docs/local_models.md`: local inference guide. Hardware tiers (6 GB / 8–10 GB /
+  16–24 GB / CPU-only), VRAM table per tier, pull commands, text-only vs vision
+  model guidance, remote Ollama setup (OLLAMA_HOST), quality comparison table
+  (all six providers), cloud free-tier quick-reference, GPU detection vFuture note.
+
+### Changed
+- `README.md` updated to v0.9.5: How It Works blurb lists all six backends;
+  Features section adds AI Provider Tiers table and `[providers]` dep group note;
+  Requirements section lists all five key/account sources; Quick Start references
+  `docs/local_models.md`; Developer Setup adds all five keyring commands and
+  `--extra providers` install step; Project Structure updated with all new
+  `core/ai/` files, `rag/`, `capture_affinity.py`, `paths.py`, floating windows,
+  `tools/`; Architecture section adds OpenAI-compat transport bullet and AD-29
+  reference; Market Position updated for six-provider freemium model.
+- `docs/session_handoff.md`: current state updated to v0.9.6; roadmap marks
+  v0.9.0 milestone complete; v0.9.7 Platform marked as next.
+- `pyproject.toml` version bumped to `0.9.6`.
+
 ## [0.9.5] - 2026-08-29
 
 ### Added

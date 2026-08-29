@@ -584,14 +584,15 @@ HuggingFace Inference API (cloud free). Gemini and Claude keep their native SDKs
 - [x] `_HEIGHT` 660 → 720px
 - [x] `main.py` no-key warning provider-aware (skips Ollama); fallback version updated
 
-### v0.9.6 — Docs
+### v0.9.6 — Docs ✅ Complete
 
-- [ ] `docs/local_models.md` finalised: hardware tiers, model table with VRAM/quality
-      tradeoffs, install guide (Ollama + model pull commands), CPU offload note
-- [ ] `docs/architecture.md`: AD-29 complete (already stubbed in v0.9.1)
-- [ ] `README.md`: provider table updated, `[providers]` install step added,
-      freemium model documented
-- [ ] `docs/session_handoff.md`: v0.9.x provider architecture summarised
+- [x] `docs/local_models.md` — hardware tiers, VRAM table, pull commands, text-only
+      vs vision guidance, remote Ollama (OLLAMA_HOST), quality comparison table
+      (all six providers), cloud free-tier quick-reference, GPU detection vFuture note
+- [x] `README.md` updated to v0.9.5: provider table, six keyring commands,
+      `--extra providers` install step, full project structure, AD-29 arch note,
+      six-provider freemium market position
+- [x] `docs/session_handoff.md` v0.9.0 milestone marked complete; v0.9.7 next
 
 ---
 
