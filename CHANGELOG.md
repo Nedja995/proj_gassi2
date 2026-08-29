@@ -5,6 +5,59 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-08-29
+
+### Added
+- `core/ai/groq_backend.py`: `GroqBackend` — extends `OpenAiCompatBackend`.
+  `base_url="https://api.groq.com/openai/v1"`. Static model list `GROQ_MODELS`
+  (vision first: llama-3.2-11b/90b-vision-preview; text: llama-3.3-70b,
+  llama-3.1-8b-instant, mixtral-8x7b). `fetch_available_groq_models()` helper.
+- `core/ai/together_backend.py`: `TogetherBackend` — extends `OpenAiCompatBackend`.
+  `base_url="https://api.together.xyz/v1"`. Static model list `TOGETHER_MODELS`
+  (vision: Llama-3.2-11B-Vision-Turbo, Qwen2.5-VL-7B/72B; text: Llama-3.1-8B/70B-Turbo).
+  `fetch_available_together_models()` helper.
+- `core/ai/huggingface_backend.py`: `HuggingFaceBackend` — extends `OpenAiCompatBackend`.
+  `base_url="https://api-inference.huggingface.co/v1"`. Targets Inference API
+  (cloud/serverless) only — local `transformers` blocked by AD-06. Module docstring
+  documents this constraint and the vFuture tracking item explicitly.
+  Static model list `HUGGINGFACE_MODELS`. `fetch_available_huggingface_models()` helper.
+- `models/results.py` `_COST_TABLE` extended: Groq models ($0.00 free tier),
+  Together AI models (pay-per-token mid-2026 rates), HuggingFace Inference API
+  models ($0.00 free tier). Ollama omitted (local, no API cost).
+
+## [0.9.3] - 2026-08-29
+
+### Added
+- `core/ai/ollama_backend.py`: `OllamaBackend` — extends `OpenAiCompatBackend`.
+  Appends `/v1` to `base_url` from `AppSettings.ollama_base_url`.
+  Uses `api_key="ollama"` (required non-empty string; Ollama server ignores it).
+  `OLLAMA_RECOMMENDED_MODELS` — static fallback list ordered for GTX 1660 Super
+  (moondream2 → llama3.2:3b → qwen2.5vl:7b → llama3.2-vision).
+  `OLLAMA_MODEL_VRAM` — dict of VRAM annotation strings for Settings UI hints.
+- `fetch_ollama_models(base_url, on_done, on_error)` — background thread,
+  `GET /api/tags`, stdlib `urllib.request` only (no extra dep). Returns pulled
+  model names list; falls back to `OLLAMA_RECOMMENDED_MODELS` on server unreachable.
+
+## [0.9.2] - 2026-08-29
+
+### Added
+- `core/ai/openai_compat_backend.py`: `OpenAiCompatBackend` — shared base class
+  for all OpenAI-compatible providers (Ollama, Groq, Together AI, HuggingFace).
+- `complete_text()`: `/v1/chat/completions` with system + user message roles.
+- `complete_with_image()`: vision path — base64 data URI in `image_url` content
+  block; standard OpenAI vision spec supported by all four providers.
+  `response_schema` accepted for Protocol compatibility, ignored (AD-29).
+- `_extract_text()` / `_extract_usage()` module-level helpers: reads
+  `response.choices[0].message.content` and `response.usage.prompt_tokens` /
+  `completion_tokens`; graceful zero fallback when provider omits usage.
+- `_is_rate_limit_error()` / `_build_rate_limit_error()` — shared error
+  handling covering 429, rate_limit, quota, overloaded, capacity markers.
+- `_b64encode_image()` — base64 encode helper.
+- Deferred `openai` import at construction time — same pattern as ClaudeBackend;
+  importing the module is safe without `[providers]` extras installed.
+- Subclass interface documented: set `_provider_name`, `_base_url`, `_api_key`,
+  `_model` before calling `super().__init__()`.
+
 ## [0.9.1] - 2026-08-29
 
 ### Added

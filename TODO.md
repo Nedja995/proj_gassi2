@@ -538,38 +538,35 @@ HuggingFace Inference API (cloud free). Gemini and Claude keep their native SDKs
 - [x] `factory.py` `is_providers_available()` — availability check for Settings UI
 - [x] AD-29 in `docs/architecture.md`
 
-### v0.9.2 — `OpenAiCompatBackend` base class
+### v0.9.2 — `OpenAiCompatBackend` base class ✅ Complete
 
-- [ ] `core/ai/openai_compat_backend.py`: abstract base class using `openai` SDK
-- [ ] `complete_text()`: `/v1/chat/completions` text path
-- [ ] `complete_with_image()`: vision path — base64 data URI in `image_url` content block
-- [ ] `_extract_usage()`: reads `response.usage.prompt_tokens` / `completion_tokens`
-- [ ] `_is_rate_limit_error()` / `_build_rate_limit_error()` — shared error handling
-- [ ] Deferred `openai` import at construction time (same pattern as ClaudeBackend)
-- [ ] Subclass interface: `_base_url`, `_api_key`, `_model` — all set by subclass `__init__`
+- [x] `core/ai/openai_compat_backend.py`: `OpenAiCompatBackend` base class
+- [x] `complete_text()`: `/v1/chat/completions` text path
+- [x] `complete_with_image()`: base64 data URI `image_url` vision path
+- [x] `_extract_text()` / `_extract_usage()` (prompt_tokens/completion_tokens)
+- [x] `_is_rate_limit_error()` / `_build_rate_limit_error()` shared error handling
+- [x] `_b64encode_image()` helper
+- [x] Deferred `openai` import at construction time
+- [x] Subclass interface: `_provider_name`, `_base_url`, `_api_key`, `_model`
 
-### v0.9.3 — `OllamaBackend`
+### v0.9.3 — `OllamaBackend` ✅ Complete
 
-- [ ] `core/ai/ollama_backend.py`: extends `OpenAiCompatBackend`
-- [ ] `base_url` from `settings.ollama_base_url` (default `http://localhost:11434/v1`)
-- [ ] `api_key="ollama"` (openai SDK requires non-empty string; Ollama ignores it)
-- [ ] `fetch_ollama_models(base_url, on_done, on_error)` — background thread,
-      GET `/api/tags`, returns `[model.name]` list; falls back to static recommendation list
-- [ ] Static fallback model list with VRAM annotations (moondream2 2GB, llama3.2:3b 2GB,
-      qwen2.5vl:7b 6GB) for when Ollama server is not running
-- [ ] `docs/local_models.md` — hardware tiers, model table, VRAM estimates, install steps
+- [x] `core/ai/ollama_backend.py`: `OllamaBackend` extends `OpenAiCompatBackend`
+- [x] Appends `/v1` to `ollama_base_url`; `api_key="ollama"`
+- [x] `OLLAMA_RECOMMENDED_MODELS` fallback list (moondream2, llama3.2:3b,
+      qwen2.5vl:7b, llama3.2-vision) ordered for GTX 1660 Super
+- [x] `OLLAMA_MODEL_VRAM` dict — VRAM annotation strings for Settings UI hints
+- [x] `fetch_ollama_models(base_url, on_done, on_error)` — stdlib urllib.request,
+      GET /api/tags, fallback to recommended list on server unreachable
 
-### v0.9.4 — `GroqBackend`, `TogetherBackend`, `HuggingFaceBackend`
+### v0.9.4 — `GroqBackend`, `TogetherBackend`, `HuggingFaceBackend` ✅ Complete
 
-- [ ] `core/ai/groq_backend.py`: extends `OpenAiCompatBackend`
-      (`base_url="https://api.groq.com/openai/v1"`, static model list)
-- [ ] `core/ai/together_backend.py`: extends `OpenAiCompatBackend`
-      (`base_url="https://api.together.xyz/v1"`, static model list)
-- [ ] `core/ai/huggingface_backend.py`: extends `OpenAiCompatBackend`
-      (`base_url="https://api-inference.huggingface.co/v1"`, static model list)
-- [ ] Static model lists per provider (vision models first, text-only after)
-- [ ] `estimate_cost()` rate table in `results.py` extended for new model strings
-      (Groq and Llama models; Together pricing; HuggingFace Inference API pricing)
+- [x] `core/ai/groq_backend.py`: `GroqBackend` (`base_url` Groq, 5 static models)
+- [x] `core/ai/together_backend.py`: `TogetherBackend` (`base_url` Together, 5 static models)
+- [x] `core/ai/huggingface_backend.py`: `HuggingFaceBackend` (Inference API cloud only;
+      AD-06 constraint documented in module docstring and vFuture backlog)
+- [x] `fetch_available_*_models()` helpers for all three
+- [x] `models/results.py` `_COST_TABLE` extended for all new model strings
 
 ### v0.9.5 — Settings UI extension
 

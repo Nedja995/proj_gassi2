@@ -23,6 +23,8 @@ class UsageStats(BaseModel):
 # Cost per 1M tokens (input, output) by model string substring.
 # Keys are matched via substring check — order matters (most specific first).
 # Prices in USD as of mid-2026; update as providers change pricing.
+# Local providers (Ollama) have no API cost — omitted from table.
+# Free-tier providers (Groq) have $0 cost up to quota — modelled as zero.
 _COST_TABLE: list[tuple[str, float, float]] = [
     # Gemini
     ("gemini-2.5-flash",       0.30,   1.00),
@@ -34,6 +36,23 @@ _COST_TABLE: list[tuple[str, float, float]] = [
     ("claude-haiku",           0.80,   4.00),
     ("claude-sonnet",          3.00,  15.00),
     ("claude-opus",           15.00,  75.00),
+    # Groq (free tier — zero cost up to daily quota; $0 above quota not modelled)
+    ("llama-3.2-11b-vision",   0.00,   0.00),
+    ("llama-3.2-90b-vision",   0.00,   0.00),
+    ("llama-3.3-70b",          0.00,   0.00),
+    ("llama-3.1-8b",           0.00,   0.00),
+    ("mixtral-8x7b",           0.00,   0.00),
+    # Together AI (pay-per-token; prices as of mid-2026)
+    ("llama-3.2-11b-vision-instruct-turbo",  0.18,  0.18),
+    ("qwen2.5-vl-7b",                        0.30,  0.30),
+    ("qwen2.5-vl-72b",                       0.90,  0.90),
+    ("meta-llama-3.1-8b-instruct-turbo",     0.18,  0.18),
+    ("meta-llama-3.1-70b-instruct-turbo",    0.88,  0.88),
+    # HuggingFace Inference API (free tier; no published per-token price)
+    ("qwen2.5-vl",             0.00,   0.00),
+    ("llama-3.2-11b-vision-instruct",  0.00,  0.00),
+    ("meta-llama-3.1-8b-instruct",     0.00,  0.00),
+    ("mistral-7b",             0.00,   0.00),
 ]
 
 
