@@ -293,3 +293,7 @@ local SLM via Ollama/Moondream2).
 ## License
 
 MIT
+
+## get lines
+
+```git ls-files | ForEach-Object { Get-Content $_ } | Measure-Object -Line -Word -Character```
