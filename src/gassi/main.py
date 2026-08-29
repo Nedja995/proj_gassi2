@@ -12,7 +12,7 @@ def _get_version() -> str:
     try:
         return _pkg_version("gassi")
     except PackageNotFoundError:
-        return "0.9.5"  # keep in sync with pyproject.toml
+        return "0.9.7"  # keep in sync with pyproject.toml
 from typing import Any
 
 import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory
@@ -21,6 +21,7 @@ from gassi.core.ai.factory import build_ai_backend, get_api_key as _factory_get_
 from gassi.core.async_bridge import AsyncBridge
 from gassi.core.calibration_service import CalibrationService
 from gassi.core.capture.mss_backend import MssCaptureBackend
+from gassi.core.capture.native_window_provider import NativeWindowRegionProvider
 from gassi.core.capture.region_provider import OverlayAnchoredRegionProvider
 from gassi.core.debug_manager import DebugManager
 from gassi.core.game_pack_loader import GamePackLoader
@@ -134,7 +135,20 @@ def main() -> None:
         overlay.geometry(saved_geometry)
 
     async_bridge = AsyncBridge(overlay)
-    region_provider = OverlayAnchoredRegionProvider(overlay)
+    if settings.use_native_window_detection:
+        region_provider = NativeWindowRegionProvider(
+            overlay=overlay,
+            title_pattern=_active_manifest.window_title_pattern,
+            window_class=_active_manifest.window_class,
+        )
+        logger.info(
+            "Region provider: NativeWindowRegionProvider (title='%s', class=%r)",
+            _active_manifest.window_title_pattern,
+            _active_manifest.window_class,
+        )
+    else:
+        region_provider = OverlayAnchoredRegionProvider(overlay)
+        logger.info("Region provider: OverlayAnchoredRegionProvider (manual positioning)")
 
     # -- ViewModel ------------------------------------------------------------
     viewmodel = AssistantViewModel(

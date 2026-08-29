@@ -83,5 +83,12 @@ class AppSettings(BaseSettings):
     # Requires Windows 10 build 19041+. Silently no-op on older Windows / non-Windows.
     hide_from_capture: bool = True
 
+    # Native window detection (v0.9.7)
+    # When True, use NativeWindowRegionProvider to auto-detect the game window
+    # by title/class instead of deriving the capture rect from overlay geometry.
+    # Windows-only in v0.9.7; falls back to overlay rect on other platforms.
+    # Default False — opt-in, preserving existing manual positioning behaviour.
+    use_native_window_detection: bool = False
+
     # Debug
     debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

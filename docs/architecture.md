@@ -331,3 +331,43 @@ core/ai/
 ├── huggingface_backend.py    — extends OpenAiCompatBackend
 └── factory.py                — builds correct backend per AiProvider
 ```
+
+## AD-30: NativeWindowRegionProvider — opt-in, title-primary, class-secondary (v0.9.7)
+
+**Decision:** `NativeWindowRegionProvider` is opt-in (`use_native_window_detection: bool = False`
+in `AppSettings`) and uses `window_title_pattern` as the primary lookup key, with
+`window_class` as an optional Windows-specific fast path.
+
+**Detection strategy (Windows):**
+1. If `window_class` is set: `win32gui.FindWindow(class, None)` — exact class match,
+   fastest, zero false positives. Falls through on failure or no result.
+2. `win32gui.EnumWindows` title-pattern substring scan (case-insensitive) — stops on
+   first visible window whose title contains `window_title_pattern`.
+3. `GetClientRect` + `ClientToScreen` via ctypes to get the drawable area without
+   titlebar/borders. Returns `(x, y, w, h)` in screen coordinates.
+4. Any error or no match — returns `None`; caller falls back to overlay rect.
+
+**Rationale:**
+- **Opt-in default:** existing users rely on manual overlay positioning. Changing the
+  default would silently alter capture behaviour for all users. Opt-in preserves
+  the known-good path; users who want auto-detection enable it explicitly.
+- **Title-primary:** `window_title_pattern` already exists in all manifests and is
+  used by the focus check. It is the most portable key (works on all three platforms
+  in principle). Class-based lookup is Windows-only and requires `window_class` to
+  be set in the manifest — a higher-effort configuration.
+- **Class as fast path, not replacement:** class lookup is O(1) vs O(N) enumeration,
+  but not all games have a stable Win32 class name. Using class only when explicitly
+  set avoids maintenance burden for pack authors.
+- **`GetClientRect` over `GetWindowRect`:** returns the drawable client area excluding
+  the window frame (titlebar, borders). For borderless/fullscreen games the rects are
+  identical; for windowed games with a frame, the client area is what the game renders
+  into and what mss should capture.
+- **ctypes over pywin32 for `ClientToScreen`:** pywin32 does not expose `ClientToScreen`
+  directly. ctypes is used for this one call, consistent with the pattern established
+  in AD-24 (GDI32 calls) and AD-28 (SetWindowDisplayAffinity).
+- **macOS stub / Linux no-op:** the provider still returns a result on all platforms
+  (falls back to overlay rect), so no caller code needs platform guards. The platform
+  check is encapsulated entirely within `NativeWindowRegionProvider`.
+- **Wayland deferred:** mss captures via XWayland, which covers Proton/Steam games.
+  Pure Wayland capture requires dbus-python + GStreamer (large dep surface). Deferred
+  to vFuture; documented as known limitation in `docs/platform_support.md`.

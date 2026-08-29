@@ -239,7 +239,7 @@ class SettingsDialog(tk.Toplevel):
     """
 
     _WIDTH = 480
-    _HEIGHT = 720  # increased for 6-provider layout + Ollama URL field
+    _HEIGHT = 740  # v0.9.7: +20px for native window detection toggle
 
     def __init__(
         self,
@@ -634,6 +634,22 @@ class SettingsDialog(tk.Toplevel):
         ).grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
+        # -- native window detection (v0.9.7) ----------------------------
+        tk.Label(
+            frame, text="Auto-detect window", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        self._native_window_var = tk.BooleanVar(
+            value=bool(self._current.get("use_native_window_detection", False))
+        )
+        ttk.Checkbutton(
+            frame,
+            text="Find game window by title instead of overlay position (Windows only)",
+            variable=self._native_window_var,
+        ).grid(row=row, column=1, sticky="w", pady=6)
+        row += 1
+
         # -- calibration -------------------------------------------------
         if self._calibration_service is not None:
             ttk.Separator(frame, orient=tk.HORIZONTAL).grid(
@@ -878,6 +894,7 @@ class SettingsDialog(tk.Toplevel):
         settings["grid_overlay_enabled"] = self._grid_var.get()
         settings["show_floating_advice_when_hidden"] = self._floating_advice_var.get()
         settings["hide_from_capture"] = self._hide_capture_var.get()
+        settings["use_native_window_detection"] = self._native_window_var.get()
         settings["active_game_id"] = self._game_display_to_id.get(
             self._game_var.get(), self._game_var.get()
         )

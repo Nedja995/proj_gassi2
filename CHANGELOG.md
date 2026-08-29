@@ -5,6 +5,56 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9] - 2026-08-29
+
+### Added
+- `docs/platform_support.md`: platform support matrix (Windows/macOS/Linux/SteamOS),
+  feature-by-feature status table, macOS Screen Recording guide, Steam Deck testing
+  procedure, Wayland known limitation with vFuture rationale, contributor patterns.
+
+### Changed
+- `pyproject.toml` version bumped to `0.9.9`.
+- `docs/session_handoff.md`: v0.9.7 milestone marked complete; current state updated.
+
+## [0.9.8] - 2026-08-29
+
+### Fixed
+- `core/capture/mss_backend.py`: catch `mss.exception.ScreenShotError` on macOS
+  and re-raise as a readable `RuntimeError` with Screen Recording permission
+  instructions. On other platforms the exception propagates unchanged.
+  Prevents a raw mss exception crashing the app when the macOS permission is
+  denied or revoked. Docstring updated with Wayland and macOS capture notes.
+
+### Changed
+- `pyproject.toml` version bumped to `0.9.8`.
+
+## [0.9.7] - 2026-08-29
+
+### Added
+- `core/capture/native_window_provider.py`: `NativeWindowRegionProvider` —
+  per-OS game window detection as a drop-in replacement for
+  `OverlayAnchoredRegionProvider`. Satisfies `CaptureRegionProvider` Protocol.
+- Windows implementation: `FindWindow(class, None)` (class-based, exact)
+  followed by `EnumWindows` title-pattern substring scan. Uses
+  `GetClientRect` + `ClientToScreen` (ctypes) to return the drawable client
+  area without titlebar/borders. pywin32 required; deferred import, fail-open.
+- macOS stub: `_find_window_macos()` returns `None` — fails open to overlay
+  rect. NSWorkspace implementation tracked as TODO.
+- `AppSettings.use_native_window_detection: bool = False` — opt-in, default
+  False to preserve existing manual overlay-positioning behaviour.
+- `main.py`: conditional construction of `NativeWindowRegionProvider` vs
+  `OverlayAnchoredRegionProvider` based on `settings.use_native_window_detection`.
+  Passes `window_title_pattern` (primary) and `window_class` (secondary, Windows
+  class-lookup shortcut) from the active manifest.
+- `views/settings_dialog.py`: "Auto-detect window" checkbutton in General tab
+  (below floating advice row); persisted via `_save()` as `use_native_window_detection`.
+  `_HEIGHT` bumped from 720 to 740px.
+
+### Changed
+- `main.py`: fallback version string updated to `"0.9.7"`.
+- `main.py`: startup log now includes region provider type.
+- `pyproject.toml` version bumped to `0.9.7`.
+
 ## [0.9.6] - 2026-08-29
 
 ### Added

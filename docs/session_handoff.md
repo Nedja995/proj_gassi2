@@ -10,13 +10,12 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.9.6. v0.9.0 milestone complete — all six AI backends
-implemented and wired. `docs/local_models.md` added (hardware tiers, VRAM
-table, quality comparison, remote Ollama, cloud free-tier guide). README
-updated to v0.9.5 (provider table, all six keyring commands, updated project
-structure, AD-29 architecture note). Next: v0.9.7 Platform milestone.
+**Current state:** v0.9.9. v0.9.7 Platform milestone complete. Three sub-versions
+delivered: `NativeWindowRegionProvider` (Windows, v0.9.7), macOS `ScreenShotError`
+catch in `MssCaptureBackend` (v0.9.8), `docs/platform_support.md` matrix + Steam
+Deck test procedure + Wayland vFuture rationale (v0.9.9). Next: v0.9.10 (scope TBD).
 
-**Note on versioning:** `pyproject.toml` is at `0.9.6`. The fallback version in
+**Note on versioning:** `pyproject.toml` is at `0.9.9`. The fallback version in
 `main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
 
 **Build command:** `uv run python -m PyInstaller gassi.spec --clean`
@@ -166,7 +165,10 @@ v0.9.0  🔧 In progress — Local SLM + cloud providers (AD-29: openai SDK shar
   v0.9.4 ✅ — GroqBackend + TogetherBackend + HuggingFaceBackend + cost table
   v0.9.5 ✅ — Settings UI: all six providers, tier labels, dynamic credential/model
   v0.9.6 ✅ — Docs: local_models.md, README v0.9.5, session_handoff
-v0.9.7  🔜 — Platform (Wayland, native window detection, macOS, SteamOS)
+v0.9.7  ✅ — NativeWindowRegionProvider (Windows) + Settings toggle
+v0.9.8  ✅ — macOS ScreenShotError catch + readable permission message
+v0.9.9  ✅ — docs/platform_support.md (matrix, Steam Deck procedure, Wayland)
+v0.9.10 🔜 — Architecture milestone (scope TBD)
 ```
 
 ---

@@ -596,14 +596,33 @@ HuggingFace Inference API (cloud free). Gemini and Claude keep their native SDKs
 
 ---
 
-## v0.9.7 — Platform Support (post-beta)
+## v0.9.7 — Platform Support (post-beta) ✅ Complete
 
 Expand beyond Windows. Native window detection.
 
-- [ ] `NativeWindowRegionProvider`: per-OS window handle lookup (pywin32/pyobjc/Xlib)
-- [ ] Wayland capture backend (PipeWire/portal)
-- [ ] SteamOS / Steam Deck testing
-- [ ] macOS Screen Recording permission: first-run prompt
+### Completed
+
+- [x] `NativeWindowRegionProvider`: Windows `FindWindow`/`EnumWindows` + `GetClientRect`/
+      `ClientToScreen` via ctypes. macOS stub (fails open). `use_native_window_detection`
+      setting (opt-in, default False). Settings UI checkbutton. `main.py` factory wiring.
+- [x] macOS Screen Recording permission: catch `mss.exception.ScreenShotError` in
+      `MssCaptureBackend.grab()`, re-raise as readable `RuntimeError` with permission
+      instructions (v0.9.8).
+- [x] `docs/platform_support.md`: support matrix, macOS guide, Steam Deck test procedure,
+      Wayland known limitation documented (v0.9.9).
+- [ ] Wayland capture backend (PipeWire/portal) — **deferred to vFuture**. mss works via
+      XWayland for most Proton/Steam games. Pure Wayland requires dbus-python + GStreamer
+      Python bindings — large dep surface, unclear demand from target game list.
+- [ ] SteamOS / Steam Deck: testing procedure documented in `docs/platform_support.md`;
+      no code changes until test results identify actual failures.
+- [ ] macOS native window detection via NSWorkspace / CGWindowListCopyWindowInfo —
+      deferred; macOS game testing not yet done. Tracked for next macOS session.
+
+---
+
+## v0.9.10 — Architecture Milestone
+
+Next planned milestone. Scope TBD.
 
 ---
 
@@ -624,6 +643,16 @@ Expand beyond Windows. Native window detection.
       Requires a conscious decision to allow PyTorch as an optional dep (new AD needed).
       Would enable offline use of any HuggingFace model without an internet connection.
       Candidate trigger: if Ollama proves insufficient for a target model family.
+- [ ] Wayland capture backend — PipeWire / `xdg-desktop-portal` D-Bus API. Requires
+      `dbus-python` + GStreamer Python bindings. Deferred from v0.9.7 (large dep surface,
+      XWayland covers the Proton/Steam game use case). Implement only if user demand is
+      confirmed via GitHub issues.
+- [ ] macOS native window detection — `NativeWindowRegionProvider._find_window_macos()`
+      via `NSWorkspace.sharedWorkspace().runningApplications` + `Quartz.CGWindowListCopyWindowInfo`.
+      Deferred from v0.9.7; requires pyobjc (macOS only). Implement after macOS game testing
+      confirms the overlay anchoring workaround is inadequate.
+- [ ] SteamOS / Steam Deck testing — run the procedure in `docs/platform_support.md` and
+      file issues for any actual failures found. No code changes until failures are known.
 
 ---
 
@@ -640,6 +669,18 @@ Expand beyond Windows. Native window detection.
 ---
 
 ## Completed
+
+### v0.9.7–v0.9.9 (2026-08-29)
+- [x] `NativeWindowRegionProvider`: Windows `FindWindow`/`EnumWindows` + ctypes
+      `GetClientRect`/`ClientToScreen`. macOS stub (fails open to overlay rect).
+      `use_native_window_detection: bool = False` in `AppSettings` (opt-in).
+      Settings UI checkbutton in General tab. `main.py` factory wiring with startup log.
+- [x] `MssCaptureBackend.grab()`: catch `mss.exception.ScreenShotError` on macOS,
+      re-raise as readable `RuntimeError` with Screen Recording permission instructions.
+- [x] `docs/platform_support.md`: feature support matrix, macOS permission guide,
+      Steam Deck test procedure, Wayland known limitation + vFuture rationale.
+- [x] Wayland, macOS native detection, SteamOS testing deferred to vFuture with
+      rationale documented in TODO and `docs/platform_support.md`.
 
 ### v0.9.1 (2026-08-29)
 - [x] `AiProvider` enum: `OLLAMA`, `GROQ`, `TOGETHER`, `HUGGINGFACE` added
