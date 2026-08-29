@@ -131,7 +131,7 @@ git commit -m "v0.X.Y: short description of what changed"
 
 Every task must update ALL of these:
 1. `CHANGELOG.md` — add `## [X.Y.Z] - YYYY-MM-DD` section with Added/Fixed/Changed
-2. `TODO.md` — mark completed items `[x]`; add new version section if needed
+2. `TODO.md` — mark completed items `[x]`; add new version section if needed; versions sorted descending (newest at top, oldest at bottom)
 3. `pyproject.toml` — bump `version = "X.Y.Z"`
 4. `docs/architecture.md` — add ADR if a non-obvious design decision was made
 5. `README.md` — update Features section version number and feature list if visible behaviour changed
