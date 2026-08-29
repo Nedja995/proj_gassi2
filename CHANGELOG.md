@@ -5,6 +5,46 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-08-29
+
+### Added
+- `views/settings_dialog.py`: full six-provider Settings UI (v0.9.5).
+- `_PROVIDER_DISPLAY` — tier-annotated display labels for all providers:
+  `[Local]`, `[Cloud — free]`, `[Cloud — paid]`.
+- `_DISPLAY_TO_PROVIDER` reverse lookup dict.
+- `_PROVIDER_INSTALL_HINT` — per-provider install hint strings shown when
+  required extras are absent.
+- `_PROVIDER_KEYRING` — per-provider keyring username map (mirrors factory).
+- `_PROVIDER_MODEL_SETTING` — per-provider `AppSettings` field name map.
+- All six providers always visible in the provider combobox; unavailable
+  providers show an install hint label on selection instead of being hidden.
+- Dynamic credential section: Ollama shows configurable URL field;
+  all cloud providers show a masked API key entry pre-populated from keyring;
+  section hidden/shown via `grid()`/`grid_remove()` on provider change.
+- Dynamic model picker: Gemini fetches live; Claude/Groq/Together/HuggingFace
+  use static lists; Ollama fetches live from `/api/tags` with fallback to
+  `OLLAMA_RECOMMENDED_MODELS`.
+- VRAM annotation: Ollama model status label shows VRAM hint from
+  `OLLAMA_MODEL_VRAM` for the selected model; updates on combobox selection.
+- Provider-tier separator between game/capture and provider sections.
+- `_load_model_list()` / `_set_model_list()` / `_update_vram_hint()` —
+  extracted model loading logic, replaces previous `_refresh_model_list()`.
+- `_active_provider()` helper — resolves `AiProvider` from display string.
+- `_refresh_provider_ui()` — single method updating install hint,
+  credential section, and model list on provider change.
+- Per-provider model persistence in `_save()`: all six model keys written
+  to settings independently; switching back restores prior selection.
+- `ollama_base_url` persisted to settings on save.
+- `_HEIGHT` bumped 660 → 720px for expanded provider section.
+
+### Changed
+- `main.py` fallback version string updated to `"0.9.5"`.
+- `main.py` no-key startup warning is now provider-aware: skips for Ollama
+  (local, no key needed); shows provider name in overlay message and log.
+- Settings dialog no longer imports removed two-provider logic;
+  `fetch_available_models` renamed import to `fetch_gemini_models`.
+- `pyproject.toml` version bumped to `0.9.5`.
+
 ## [0.9.4] - 2026-08-29
 
 ### Added

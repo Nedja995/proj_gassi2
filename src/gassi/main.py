@@ -12,7 +12,7 @@ def _get_version() -> str:
     try:
         return _pkg_version("gassi")
     except PackageNotFoundError:
-        return "0.8.7"  # keep in sync with pyproject.toml
+        return "0.9.5"  # keep in sync with pyproject.toml
 from typing import Any
 
 import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory
@@ -297,18 +297,21 @@ def main() -> None:
         debug_manager.get_debug_dir(),
     )
 
-    # v0.8.1.1: if no Gemini key is stored, show overlay message and
-    # auto-open Settings so first-run users can enter their key.
-    # App continues running — no exit. After the user saves a key and
-    # restarts, the backend will be constructed with the real key.
-    if not api_key:
-        logger.warning("No Gemini API key found — prompting user via Settings")
+    # v0.8.1.1: if no API key is stored for the active provider, show overlay
+    # message and auto-open Settings. Ollama is local (no key needed) — skip.
+    # App continues running — no exit.
+    if not api_key and settings.active_ai_provider in AiProvider.cloud_providers():
+        logger.warning(
+            "No API key found for provider '%s' — prompting user via Settings",
+            settings.active_ai_provider.value,
+        )
         overlay.after(
             0,
             lambda: overlay.canvas.show_advice(
-                "## No API key set\n"
-                "- Open Settings (\u2699) and paste your Gemini API key.\n"
-                "- Save and restart GASSI to apply.",
+                f"## No API key set\n"
+                f"- Open Settings (\u2699) and paste your "
+                f"{settings.active_ai_provider.value.capitalize()} API key.\n"
+                f"- Save and restart GASSI to apply.",
                 is_loading=False,
             ),
         )

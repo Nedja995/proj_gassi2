@@ -568,18 +568,21 @@ HuggingFace Inference API (cloud free). Gemini and Claude keep their native SDKs
 - [x] `fetch_available_*_models()` helpers for all three
 - [x] `models/results.py` `_COST_TABLE` extended for all new model strings
 
-### v0.9.5 — Settings UI extension
+### v0.9.5 — Settings UI extension ✅ Complete
 
-- [ ] Provider selector `ttk.Combobox` extended to all six providers
-- [ ] Providers hidden/greyed when extras not installed (uses `is_providers_available()`,
-      `is_claude_available()`); install hint label shown
-- [ ] Per-provider model picker: Ollama fetches live from `/api/tags`;
-      others show static lists
-- [ ] API key fields for Groq, Together, HuggingFace (masked entry, keyring, same pattern
-      as Gemini/Claude fields in v0.8.3)
-- [ ] Ollama URL field (editable, default `http://localhost:11434`)
-- [ ] Provider-tier labels in dropdown: `[Local]`, `[Cloud — free]`, `[Cloud — paid]`
-- [ ] Local model recommendation tooltip / hint label in Settings when Ollama selected
+- [x] Provider selector `ttk.Combobox` extended to all six providers with tier labels
+- [x] All providers always visible; unavailable ones show install hint on selection
+- [x] `_refresh_provider_ui()` — single update method for hint/credential/model
+- [x] Dynamic credential section: Ollama URL field vs cloud API key entry,
+      shown/hidden via `grid()`/`grid_remove()` on provider switch
+- [x] API key entry pre-populated from keyring per provider; saved on Settings save
+- [x] Dynamic model picker: Gemini live fetch; Ollama live `/api/tags` fetch;
+      Claude/Groq/Together/HuggingFace static lists
+- [x] Ollama VRAM annotation from `OLLAMA_MODEL_VRAM`; updates on model selection
+- [x] Per-provider model persistence — all six model keys saved independently
+- [x] `ollama_base_url` persisted on save
+- [x] `_HEIGHT` 660 → 720px
+- [x] `main.py` no-key warning provider-aware (skips Ollama); fallback version updated
 
 ### v0.9.6 — Docs
 

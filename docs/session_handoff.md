@@ -10,13 +10,14 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.9.4. All backend implementations complete —
-`OpenAiCompatBackend` base class + `OllamaBackend` + `GroqBackend` +
-`TogetherBackend` + `HuggingFaceBackend`. Cost table extended for all new
-providers. Next: v0.9.5 Settings UI extension (provider selector, model
-pickers, key fields, Ollama URL field).
+**Current state:** v0.9.5. Settings UI fully extended to all six providers.
+Provider combobox with tier labels, dynamic credential section (Ollama URL
+vs cloud key entry), live model fetch for Gemini + Ollama, static lists for
+Claude/Groq/Together/HuggingFace, VRAM annotations for Ollama models.
+`main.py` no-key warning is now provider-aware. Next: v0.9.6 docs
+(`local_models.md`, README provider table, session_handoff update).
 
-**Note on versioning:** `pyproject.toml` is at `0.9.4`. The fallback version in
+**Note on versioning:** `pyproject.toml` is at `0.9.5`. The fallback version in
 `main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
 
 **Build command:** `uv run python -m PyInstaller gassi.spec --clean`
@@ -164,7 +165,8 @@ v0.9.0  🔧 In progress — Local SLM + cloud providers (AD-29: openai SDK shar
   v0.9.2 ✅ — OpenAiCompatBackend base class
   v0.9.3 ✅ — OllamaBackend + fetch_ollama_models() + VRAM annotations
   v0.9.4 ✅ — GroqBackend + TogetherBackend + HuggingFaceBackend + cost table
-  v0.9.5 🔜 — Settings UI: all six providers, model pickers, key fields, Ollama URL
+  v0.9.5 ✅ — Settings UI: all six providers, tier labels, dynamic credential/model
+  v0.9.6 🔜 — Docs: local_models.md, README, session_handoff
 v0.9.7  — Platform (Wayland, native window detection, macOS, SteamOS)
 ```
 
