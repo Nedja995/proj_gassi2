@@ -1,6 +1,6 @@
 [project]
 name = "gassi"
-version = "0.8.7"
+version = "0.9.1"
 description = "Hybrid AI Gaming Assistant — game-specific strategy advisor via screen capture and AI"
 readme = "README.md"
 license = "MIT"
@@ -40,6 +40,15 @@ claude = [
     # Not installed by default — only needed when ClaudeBackend is selected.
     # Install with: uv sync --extra claude
     "anthropic>=0.40",
+]
+providers = [
+    # OpenAI-compatible transport for Ollama, Groq, Together AI, and HuggingFace
+    # Inference API (v0.9.1). A single dep covers all four providers — each backend
+    # subclass supplies its own base_url and auth header. Ollama uses localhost;
+    # Groq / Together / HuggingFace are cloud providers with a free tier.
+    # Not installed by default — only needed when any of these providers is selected.
+    # Install with: uv sync --extra providers
+    "openai>=1.50",
 ]
 rag = [
     # Local vector DB for game knowledge retrieval (v0.6.x).

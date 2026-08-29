@@ -10,11 +10,13 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.8.7. v0.8.2 Anti-Cheat Posture complete — `SetWindowDisplayAffinity`
-applied to all overlay windows, `anticheat_note` surfaced in Settings, `adding_game_pack.md`
-updated. Next: v0.9.0 Local SLM + extra cloud providers.
+**Current state:** v0.9.1. v0.9.0 milestone underway — multi-provider architecture
+foundation committed. `AiProvider` enum extended (OLLAMA/GROQ/TOGETHER/HUGGINGFACE),
+`AppSettings` new model/URL fields, `[providers]` dep group (`openai>=1.50`), factory
+fully wired with stubs, AD-29 in architecture.md. Next: v0.9.2 `OpenAiCompatBackend`
+base class.
 
-**Note on versioning:** `pyproject.toml` is at `0.8.7`. The fallback version in
+**Note on versioning:** `pyproject.toml` is at `0.9.1`. The fallback version in
 `main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
 
 **Build command:** `uv run python -m PyInstaller gassi.spec --clean`
@@ -157,8 +159,14 @@ v0.8.1  ✅ Complete — Distribution / beta release
   v0.8.1.3 ✅ — PyInstaller build + gassi.spec + paths.py (sys._MEIPASS)
   v0.8.1.4 ✅ — zip bundle + GitHub Release + RELEASE_NOTES.md + end-user README
 v0.8.2  ✅ Complete — Anti-cheat posture (SetWindowDisplayAffinity, docs)
-v0.9.0  🔜 Next — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
-v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
+v0.9.0  🔧 In progress — Local SLM + cloud providers (AD-29: openai SDK shared transport)
+  v0.9.1 ✅ — Foundation: AiProvider enum, AppSettings fields, [providers] dep, factory stubs
+  v0.9.2 🔜 — OpenAiCompatBackend base class
+  v0.9.3 — OllamaBackend + fetch_ollama_models() + docs/local_models.md
+  v0.9.4 — GroqBackend + TogetherBackend + HuggingFaceBackend (Inference API cloud)
+  v0.9.5 — Settings UI: all six providers, model pickers, key fields, Ollama URL
+  v0.9.6 — Docs: local_models.md, README, session_handoff
+v0.9.7  — Platform (Wayland, native window detection, macOS, SteamOS)
 ```
 
 ---

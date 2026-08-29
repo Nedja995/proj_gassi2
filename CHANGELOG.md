@@ -5,6 +5,39 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-08-29
+
+### Added
+- `AiProvider` enum extended with `OLLAMA`, `GROQ`, `TOGETHER`, `HUGGINGFACE`.
+  Convenience class methods: `openai_compat_providers()`, `cloud_providers()`,
+  `local_providers()` — used by factory and Settings UI to categorise providers.
+- `AppSettings` new fields: `ollama_model` (default `"moondream2"`),
+  `groq_model` (default `"llama-3.2-11b-vision-preview"`),
+  `together_model` (default `"meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo"`),
+  `huggingface_model` (default `"Qwen/Qwen2.5-VL-7B-Instruct"`),
+  `ollama_base_url` (default `"http://localhost:11434"`) — configurable for remote
+  Ollama instances (network server, Docker container, LAN).
+- `[providers]` optional dep group in `pyproject.toml`: `openai>=1.50`.
+  Covers all four OpenAI-compatible providers with a single dep.
+  Install with: `uv sync --extra providers`.
+- `factory.py`: `_PROVIDER_KEYRING_USERNAME` dict — maps each cloud provider to its
+  keyring username. `get_api_key()` uses dict lookup; Ollama returns `None` (no key).
+- `factory.py`: `build_ai_backend()` extended with branches for all four new providers.
+  Each branch calls `_require_providers_extras()` before the deferred import so the
+  error is clear when `[providers]` is not installed.
+- `factory.py`: `_require_providers_extras()` — shared helper that raises `ImportError`
+  with a precise install hint if a required package is absent.
+- `factory.py`: `is_providers_available()` — availability check for Settings UI;
+  returns `True` when the `openai` SDK is importable.
+- AD-29 added to `docs/architecture.md` — full rationale for OpenAI-compatible
+  transport design, provider map table, HuggingFace cloud-vs-local scope note
+  (local `transformers` blocked by AD-06 / PyTorch, tracked in vFuture), file layout.
+
+### Changed
+- `factory.py` module docstring updated to document all six providers, keyring
+  usernames, and dep group requirements.
+- `pyproject.toml` version bumped to `0.9.1`.
+
 ## [0.8.7] - 2026-08-29
 
 ### Added

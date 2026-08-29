@@ -517,28 +517,85 @@ this adds capture hiding and explicit documentation.
 Deferred from pre-beta roadmap. Freemium tier + alternative inference providers.
 Hardware context: GTX 1660 Super (6GB VRAM) — large vision models offload to RAM.
 
-### Local SLM (Ollama)
+Architecture decision (AD-29): all OpenAI-compatible providers share a single
+`OpenAiCompatBackend` base class and the `[providers]` dep group (`openai>=1.50`).
+This covers Ollama (local), Groq (cloud free), Together AI (cloud free), and
+HuggingFace Inference API (cloud free). Gemini and Claude keep their native SDKs.
 
-- [ ] `OllamaBackend` implementing `AiBackend` Protocol (Ollama REST API, no SDK needed)
-- [ ] Moondream2 (2B) as primary local vision model recommendation — fits in 6GB VRAM
-- [ ] Llama-3.2-3B text-only option for low-VRAM machines (advisor OCR path only)
-- [ ] CPU offload path: Qwen2.5-VL / Llama 3.2 Vision via Ollama RAM offload (slow, documented)
-- [ ] GPU detection at startup: `nvidia-smi` subprocess or `GPUtil` — suggest best local model
-- [ ] Optional `[ollama]` dep group (no SDK — pure `httpx` calls to Ollama REST)
-- [ ] Quality comparison guide in docs: local vs cloud advice quality per game
+### v0.9.1 — Foundation: enum, settings, dep group, factory skeleton ✅ Complete
 
-### Free Cloud API Providers
+- [x] `AiProvider` enum extended: `OLLAMA`, `GROQ`, `TOGETHER`, `HUGGINGFACE`
+      (HuggingFace = Inference API cloud only; local transformers blocked by AD-06)
+- [x] `AiProvider` convenience class methods: `openai_compat_providers()`,
+      `cloud_providers()`, `local_providers()` — used by factory and Settings UI
+- [x] `AppSettings` new fields: `ollama_model`, `groq_model`, `together_model`,
+      `huggingface_model`, `ollama_base_url` (configurable for remote Ollama instances)
+- [x] `[providers]` dep group in `pyproject.toml`: `openai>=1.50`
+- [x] `factory.py` `_PROVIDER_KEYRING_USERNAME` dict — all cloud provider keyring names
+- [x] `factory.py` `build_ai_backend()` — branches for all four new providers (stubs;
+      deferred imports to backends implemented in v0.9.2–v0.9.4)
+- [x] `factory.py` `_require_providers_extras()` — shared import guard helper
+- [x] `factory.py` `is_providers_available()` — availability check for Settings UI
+- [x] AD-29 in `docs/architecture.md`
 
-- [ ] `GroqBackend`: Llama 3.2 Vision via Groq API (fast, free tier, `groq` SDK)
-      — same `AiBackend` Protocol pattern as `ClaudeBackend`
-- [ ] `TogetherAIBackend`: Qwen2.5-VL / Llama 3.2 Vision via Together AI
-- [ ] Provider selector in Settings extended to show all available backends
-- [ ] Optional dep groups: `[groq]`, `[together]`
-- [ ] API key entry in Settings for each provider (keyring storage, same pattern)
+### v0.9.2 — `OpenAiCompatBackend` base class
+
+- [ ] `core/ai/openai_compat_backend.py`: abstract base class using `openai` SDK
+- [ ] `complete_text()`: `/v1/chat/completions` text path
+- [ ] `complete_with_image()`: vision path — base64 data URI in `image_url` content block
+- [ ] `_extract_usage()`: reads `response.usage.prompt_tokens` / `completion_tokens`
+- [ ] `_is_rate_limit_error()` / `_build_rate_limit_error()` — shared error handling
+- [ ] Deferred `openai` import at construction time (same pattern as ClaudeBackend)
+- [ ] Subclass interface: `_base_url`, `_api_key`, `_model` — all set by subclass `__init__`
+
+### v0.9.3 — `OllamaBackend`
+
+- [ ] `core/ai/ollama_backend.py`: extends `OpenAiCompatBackend`
+- [ ] `base_url` from `settings.ollama_base_url` (default `http://localhost:11434/v1`)
+- [ ] `api_key="ollama"` (openai SDK requires non-empty string; Ollama ignores it)
+- [ ] `fetch_ollama_models(base_url, on_done, on_error)` — background thread,
+      GET `/api/tags`, returns `[model.name]` list; falls back to static recommendation list
+- [ ] Static fallback model list with VRAM annotations (moondream2 2GB, llama3.2:3b 2GB,
+      qwen2.5vl:7b 6GB) for when Ollama server is not running
+- [ ] `docs/local_models.md` — hardware tiers, model table, VRAM estimates, install steps
+
+### v0.9.4 — `GroqBackend`, `TogetherBackend`, `HuggingFaceBackend`
+
+- [ ] `core/ai/groq_backend.py`: extends `OpenAiCompatBackend`
+      (`base_url="https://api.groq.com/openai/v1"`, static model list)
+- [ ] `core/ai/together_backend.py`: extends `OpenAiCompatBackend`
+      (`base_url="https://api.together.xyz/v1"`, static model list)
+- [ ] `core/ai/huggingface_backend.py`: extends `OpenAiCompatBackend`
+      (`base_url="https://api-inference.huggingface.co/v1"`, static model list)
+- [ ] Static model lists per provider (vision models first, text-only after)
+- [ ] `estimate_cost()` rate table in `results.py` extended for new model strings
+      (Groq and Llama models; Together pricing; HuggingFace Inference API pricing)
+
+### v0.9.5 — Settings UI extension
+
+- [ ] Provider selector `ttk.Combobox` extended to all six providers
+- [ ] Providers hidden/greyed when extras not installed (uses `is_providers_available()`,
+      `is_claude_available()`); install hint label shown
+- [ ] Per-provider model picker: Ollama fetches live from `/api/tags`;
+      others show static lists
+- [ ] API key fields for Groq, Together, HuggingFace (masked entry, keyring, same pattern
+      as Gemini/Claude fields in v0.8.3)
+- [ ] Ollama URL field (editable, default `http://localhost:11434`)
+- [ ] Provider-tier labels in dropdown: `[Local]`, `[Cloud — free]`, `[Cloud — paid]`
+- [ ] Local model recommendation tooltip / hint label in Settings when Ollama selected
+
+### v0.9.6 — Docs
+
+- [ ] `docs/local_models.md` finalised: hardware tiers, model table with VRAM/quality
+      tradeoffs, install guide (Ollama + model pull commands), CPU offload note
+- [ ] `docs/architecture.md`: AD-29 complete (already stubbed in v0.9.1)
+- [ ] `README.md`: provider table updated, `[providers]` install step added,
+      freemium model documented
+- [ ] `docs/session_handoff.md`: v0.9.x provider architecture summarised
 
 ---
 
-## v0.9.1 — Platform Support (post-beta)
+## v0.9.7 — Platform Support (post-beta)
 
 Expand beyond Windows. Native window detection.
 
@@ -558,6 +615,14 @@ Expand beyond Windows. Native window detection.
       prefer floating dialog even when overlay is visible
 - [ ] TTS voice readout: `edge-tts` integration, toggle in Settings (deferred from v0.8.1)
 - [ ] Windows installer (NSIS or MSI) — deferred from v0.8.1 beta (zip bundle sufficient for beta)
+- [ ] GPU detection at startup (`nvidia-smi` subprocess or `GPUtil`) — surface best local
+      model recommendation based on available VRAM. Deferred in favour of live Ollama
+      `/api/tags` model list (AD-29). Requires evaluation of `GPUtil` maintenance status
+      and cross-vendor GPU support (AMD ROCm, Intel Arc) before implementing.
+- [ ] HuggingFace local inference via `transformers` library — blocked by AD-06 (no PyTorch).
+      Requires a conscious decision to allow PyTorch as an optional dep (new AD needed).
+      Would enable offline use of any HuggingFace model without an internet connection.
+      Candidate trigger: if Ollama proves insufficient for a target model family.
 
 ---
 
@@ -574,6 +639,19 @@ Expand beyond Windows. Native window detection.
 ---
 
 ## Completed
+
+### v0.9.1 (2026-08-29)
+- [x] `AiProvider` enum: `OLLAMA`, `GROQ`, `TOGETHER`, `HUGGINGFACE` added
+      (HuggingFace = Inference API cloud only; local transformers blocked by AD-06)
+- [x] `AiProvider` class methods: `openai_compat_providers()`, `cloud_providers()`, `local_providers()`
+- [x] `AppSettings`: `ollama_model`, `groq_model`, `together_model`, `huggingface_model`,
+      `ollama_base_url` fields added
+- [x] `[providers]` dep group: `openai>=1.50`
+- [x] `factory.py`: `_PROVIDER_KEYRING_USERNAME` dict, extended `build_ai_backend()`,
+      `_require_providers_extras()`, `is_providers_available()`
+- [x] AD-29 in `docs/architecture.md`
+- [x] GPU detection + HuggingFace local inference added to vFuture backlog
+- [x] Platform milestone renamed v0.9.7 to make room for v0.9.2–0.9.6
 
 ### v0.5.18 (2026-08-25)
 - [x] OCR advisor: shows `✓ HUD captured (N regions) / Analyzing with <model>...` after capture

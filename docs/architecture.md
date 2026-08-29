@@ -271,3 +271,63 @@ footprint is passed to `cell_to_screen_pixels()` (which expands the pixel rect b
 - **`SetWindowRgn` unchanged:** the hollow frame region calculation in
   `PlacementHighlightWindow._apply_region_and_clickthrough()` already works for any
   `(pw, ph)` rect; no Win32 changes needed for multi-cell footprints.
+
+## AD-29: OpenAI-compatible transport for all non-SDK providers (v0.9.1)
+
+**Decision:** All providers beyond Gemini and Claude are implemented using the `openai`
+Python SDK pointed at provider-specific `base_url` values. A single optional dep group
+`[providers]` (`openai>=1.50`) covers Ollama, Groq, Together AI, and HuggingFace
+Inference API. A shared `OpenAiCompatBackend` base class handles the common request
+shape, vision encoding, token extraction, and error handling. Each provider subclass
+(`OllamaBackend`, `GroqBackend`, `TogetherBackend`, `HuggingFaceBackend`) only defines
+its `_base_url`, `_default_model`, and any provider-specific auth or quirks.
+
+**Provider map:**
+
+| Provider | base_url | Auth | Free tier | Vision |
+|---|---|---|---|---|
+| Ollama | `http://localhost:11434/v1` | none (local) | yes | yes (moondream2) |
+| Groq | `https://api.groq.com/openai/v1` | Bearer key | yes | yes (Llama 3.2V) |
+| Together AI | `https://api.together.xyz/v1` | Bearer key | limited | yes (Qwen2.5-VL) |
+| HuggingFace Inference API | `https://api-inference.huggingface.co/v1` | Bearer token | yes (rate-limited) | yes (Qwen2.5-VL) |
+
+**HuggingFace scope:** `HuggingFaceBackend` targets the **Inference API (serverless cloud)**
+only. Local HuggingFace inference via the `transformers` library is explicitly excluded —
+it pulls PyTorch as a hard dependency, violating AD-06. That path is tracked in vFuture
+and requires a conscious PyTorch exemption decision before it can be implemented.
+
+**Rationale:**
+- **Single dep group:** all four providers share the same OpenAI-compatible REST shape.
+  One `openai>=1.50` dep covers them all. Adding a future OpenAI-compat provider is one
+  new subclass and one new `base_url` constant — no new deps.
+- **`openai` SDK over raw `httpx`:** the SDK provides async support, typed response
+  objects, streaming, retry logic, and vision encoding (`image_url` with base64 data
+  URIs) for free. Raw `httpx` would require reimplementing all of this.
+- **Separate SDK for Gemini and Claude:** Gemini requires `response_schema`
+  (a Gemini-specific SDK feature used by placement mode for structured JSON output)
+  that has no equivalent in the OpenAI-compat spec. Claude's native SDK provides
+  typed error objects and streaming patterns that map cleanly to the anthropic SDK.
+  Replacing either with the `openai` SDK would lose these capabilities.
+- **`ollama_base_url` in AppSettings:** Ollama endpoint is user-configurable to support
+  remote Ollama servers, Docker containers, or LAN instances — not just localhost.
+- **One `[providers]` group:** keeping Ollama + cloud providers in one group simplifies
+  installation and avoids partial installs. The openai SDK is ~15MB — acceptable.
+- **`is_providers_available()` in factory:** used by Settings UI to hide or grey-out
+  all four providers when extras are absent, with a single install hint.
+- **GPU detection deferred:** instead of detecting GPU at startup, the Settings UI
+  fetches available Ollama models live from `/api/tags`. GPU detection (nvidia-smi
+  or GPUtil) is tracked in TODO for a future milestone as a model recommendation aid.
+
+**File layout:**
+```
+core/ai/
+├── protocol.py               — AiBackend Protocol (unchanged)
+├── gemini_backend.py         — google-genai SDK
+├── claude_backend.py         — anthropic SDK
+├── openai_compat_backend.py  — shared base class (openai SDK)
+├── ollama_backend.py         — extends OpenAiCompatBackend
+├── groq_backend.py           — extends OpenAiCompatBackend
+├── together_backend.py       — extends OpenAiCompatBackend
+├── huggingface_backend.py    — extends OpenAiCompatBackend
+└── factory.py                — builds correct backend per AiProvider
+```

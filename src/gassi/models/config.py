@@ -16,12 +16,23 @@ class AppSettings(BaseSettings):
 
     model_config = {"env_prefix": "GASSI_", "extra": "ignore"}
 
-    # AI backend provider (v0.7.2)
+    # AI backend provider (v0.7.2 — extended v0.9.1)
     active_ai_provider: AiProvider = AiProvider.GEMINI
 
     # AI backend — model per provider
+    # Each provider persists its last-used model independently so switching
+    # back restores the prior selection (same pattern as gemini/claude, v0.7.2).
     gemini_model: str = "gemini-2.5-flash"
     claude_model: str = "claude-sonnet-4-6"
+    # v0.9.x OpenAI-compatible providers
+    ollama_model: str = "moondream2"
+    groq_model: str = "llama-3.2-11b-vision-preview"
+    together_model: str = "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo"
+    huggingface_model: str = "Qwen/Qwen2.5-VL-7B-Instruct"
+
+    # Ollama server URL — configurable for remote Ollama instances.
+    # Default: localhost. Change to point at a network server or Docker container.
+    ollama_base_url: str = "http://localhost:11434"
 
     # Advisor mode
     advisor_input_source: AdvisorInputSource = AdvisorInputSource.OCR
