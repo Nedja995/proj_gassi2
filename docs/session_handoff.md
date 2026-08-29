@@ -10,11 +10,11 @@ development without going through previous chat history.
 A Windows desktop overlay (Python/tkinter) that provides real-time AI strategy advice
 for PC games via screen capture + Gemini API. No game memory reading — pure CV + overlay.
 
-**Current state:** v0.8.6. v0.8.1 Distribution milestone complete — API key in Settings,
-settings.json safety, PyInstaller build, zip bundle, RELEASE_NOTES.md, end-user README.
-Beta build tested on dev machine. Next: v0.8.2 Anti-Cheat Posture.
+**Current state:** v0.8.7. v0.8.2 Anti-Cheat Posture complete — `SetWindowDisplayAffinity`
+applied to all overlay windows, `anticheat_note` surfaced in Settings, `adding_game_pack.md`
+updated. Next: v0.9.0 Local SLM + extra cloud providers.
 
-**Note on versioning:** `pyproject.toml` is at `0.8.6`. The fallback version in
+**Note on versioning:** `pyproject.toml` is at `0.8.7`. The fallback version in
 `main.py` `_get_version()` must be kept in sync (PyInstaller doesn't bundle metadata).
 
 **Build command:** `uv run python -m PyInstaller gassi.spec --clean`
@@ -156,8 +156,8 @@ v0.8.1  ✅ Complete — Distribution / beta release
   v0.8.1.2 ✅ — settings.json upgrade safety (extra=ignore, try/except fallback)
   v0.8.1.3 ✅ — PyInstaller build + gassi.spec + paths.py (sys._MEIPASS)
   v0.8.1.4 ✅ — zip bundle + GitHub Release + RELEASE_NOTES.md + end-user README
-v0.8.2  🔜 Next — Anti-cheat posture (SetWindowDisplayAffinity, docs)
-v0.9.0  — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
+v0.8.2  ✅ Complete — Anti-cheat posture (SetWindowDisplayAffinity, docs)
+v0.9.0  🔜 Next — Local SLM + cloud providers (Ollama/Moondream2, Groq, Together AI)
 v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 ```
 
@@ -209,6 +209,8 @@ v0.9.1  — Platform (Wayland, native window detection, macOS, SteamOS)
 | PyInstaller path resolution | `core/paths.py` `get_base_dir()` — `sys._MEIPASS` or `__file__` parents | Only `GamePackLoader` needed the fix; settings/debug use OS AppData |
 | Package version in frozen build | `_get_version()` with `PackageNotFoundError` fallback | PyInstaller doesn't bundle `importlib.metadata` package info |
 | LF line endings enforced | `.gitattributes` `* text=auto eol=lf` + `.editorconfig` | CRLF caused `edit_file` tool failures; normalized project-wide |
+| SetWindowDisplayAffinity | `core/capture_affinity.py`, ctypes, all overlay windows | AD-28. WDA_EXCLUDEFROMCAPTURE hides from OBS/game capture APIs. Lazily-built Toplevels apply on `_build()` via `parent._hide_from_capture` flag. Fail-open on older Windows. |
+| anticheat_note routing | `main.py` → `overlay.set_anticheat_note()` → `SettingsDialog` | Same setter pattern as `set_calibration_service`. Read-only label in General tab, hidden when empty. |
 
 ---
 
@@ -292,6 +294,15 @@ MainOverlay (tk.Tk)
 - Destroyed in `_on_close_click()`
 - `main.py` `_open_placement()` checks `overlay._offscreen` — dispatches to dialog or strip
 - Dialog hides itself before `on_submit` so it's absent from the placement screenshot
+
+**v0.8.2 SHIPPED — Anti-Cheat Posture:**
+- `core/capture_affinity.py`: `apply_capture_affinity_to_widget()` — ctypes `SetWindowDisplayAffinity`
+- Applied to all overlay windows (root, PlacementHighlight, FloatingAdvice, FloatingPlacement, pull-tab)
+- Lazily-built Toplevels read `parent._hide_from_capture` in `_build()` and apply on construction
+- `AppSettings.hide_from_capture: bool = True` — persisted, Settings toggle applies immediately
+- `anticheat_note` from manifest → `overlay.set_anticheat_note()` → read-only Settings label
+- `docs/adding_game_pack.md` Section 8: anti-cheat risk table, WDA_EXCLUDEFROMCAPTURE explanation
+- AD-28 in `docs/architecture.md`
 
 **v0.8.1 SHIPPED — Distribution:**
 - API key fields in Settings dialog (masked `ttk.Entry`, keyring read/write)

@@ -439,7 +439,54 @@ Before considering a pack ready:
 
 ---
 
-## 8. Switching Packs
+## 8. Anti-Cheat Compatibility
+
+GASSI's pure screen-capture approach (AD-15) avoids the most common ban triggers:
+no process injection, no memory reading, no automated in-game inputs.
+
+For each game pack, document the anti-cheat situation in `manifest.yaml`:
+
+```yaml
+anticheat_note: "No anti-cheat. Single-player only — screen capture is safe."
+```
+
+This note is displayed read-only in **Settings → General → Anti-cheat** when the pack
+is active, so users can make an informed decision before running GASSI alongside the game.
+
+### `SetWindowDisplayAffinity` — hide from OBS and game capture APIs
+
+When **Settings → General → Hide from capture** is enabled (default on), GASSI calls
+`SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` on every overlay window at startup:
+
+- Main overlay root
+- `PlacementHighlightWindow` (applied on first show)
+- `FloatingAdviceWindow` (applied on first show)
+- `FloatingPlacementDialog` (applied on first show)
+- Pull-back tab (applied when created)
+
+This hides all overlay pixels from screen-capture APIs used by OBS, Windows Game Bar,
+and the DirectX/GDI capture paths that some anti-cheat systems scan. The overlay is
+still visible to the user on screen — only capture streams are affected.
+
+**Requirements:** Windows 10 build 19041 (20H1) or later. On older Windows versions
+or non-Windows platforms, the call silently fails and is logged at WARNING level.
+
+**AD-28** documents this decision in `docs/architecture.md`.
+
+### Risk classification by game type
+
+| Game type | Anti-cheat risk | Recommended `anticheat_note` |
+|-----------|----------------|-------------------------------|
+| Single-player, no AC | None | State that clearly |
+| Online PvP with Easy Anti-Cheat / BattlEye | Low–medium | Note AC name; advise testing in offline mode first |
+| Competitive online (VAC, FACEIT) | Medium | Warn user; consider not shipping a pack |
+| Games that scan overlay DLLs / `SetWindowDisplayAffinity` state | High | Do not ship pack |
+
+GASSI will not ship packs for games where the risk is High.
+
+---
+
+## 9. Switching Packs
 
 Open **Settings → General → Active game** dropdown → select your game → Save & Close.
 

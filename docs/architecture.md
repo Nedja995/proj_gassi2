@@ -217,6 +217,37 @@ free-form text for both backends without changes.
   cheapest/fastest first (Haiku → Sonnet → Opus). The ViewModel's settings dialog
   uses this list in v0.7.2 the same way `fetch_available_models()` works for Gemini.
 
+## AD-28: SetWindowDisplayAffinity — hide overlay from capture APIs
+
+**Decision:** At startup (and on settings toggle), GASSI calls
+`SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` on all overlay windows:
+main root, `PlacementHighlightWindow`, `FloatingAdviceWindow`,
+`FloatingPlacementDialog`, and the pull-tab. The flag value `0x00000011`
+(Win10 build 19041+) excludes the window from all DirectX/GDI screen-capture
+APIs. Lazily-built Toplevels apply the flag inside their own `_build()` method
+by reading `parent._hide_from_capture`. The call is wrapped in
+`core/capture_affinity.py` using ctypes directly; failure is logged at WARNING
+and silently ignored (fail-open). A boolean `hide_from_capture` setting in
+`AppSettings` (default `True`) controls the feature; toggling it in Settings
+applies immediately without restart.
+
+**Rationale:**
+- **Anti-cheat posture (AD-15):** GASSI already avoids memory reading. Hiding
+  from capture APIs removes the second most common flag that anti-cheat overlays
+  check — whether a foreign window appears in OBS or game bar capture streams.
+- **User choice:** Not all users want this. Streamers may want GASSI visible in
+  their capture. Default-on is the correct default (most users want privacy);
+  a clear Settings toggle preserves choice.
+- **All windows:** Applying only to the root window is insufficient — Toplevels
+  (PlacementHighlight, FloatingAdvice, FloatingPlacement) are independent Win32
+  windows that each need individual affinity calls.
+- **Fail-open:** `WDA_EXCLUDEFROMCAPTURE` requires build 19041. Older Windows
+  returns `ERROR_INVALID_PARAMETER (87)`. Logging at WARNING is sufficient —
+  the app is fully functional without this feature.
+- **ctypes over pywin32:** `SetWindowDisplayAffinity` is in `user32.dll`.
+  ctypes access is direct and avoids pywin32's HWND wrapper type conversion
+  issues seen elsewhere (AD-24).
+
 ## AD-27: Building footprint registry — manifest dict + keyword scan, no extra AI call
 
 **Decision:** `GamePackManifest.building_footprints` is a `dict[str, list[int]]` mapping

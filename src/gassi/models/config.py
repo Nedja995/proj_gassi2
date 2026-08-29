@@ -66,5 +66,11 @@ class AppSettings(BaseSettings):
     show_floating_advice_when_hidden: bool = True
     floating_advice_timeout_seconds: int = Field(default=12, ge=4, le=60)
 
+    # Anti-cheat posture (v0.8.2)
+    # When True, SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE) is applied to all
+    # overlay windows at startup — hides them from OBS, game bar, and DirectX capture.
+    # Requires Windows 10 build 19041+. Silently no-op on older Windows / non-Windows.
+    hide_from_capture: bool = True
+
     # Debug
     debug_log_max_lines: int = Field(default=200, ge=50, le=1000)

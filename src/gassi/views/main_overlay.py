@@ -20,6 +20,8 @@ from gassi.views.log_panel import LogPanel
 from gassi.views.placement_highlight import PlacementHighlightWindow
 from gassi.views.placement_strip import PlacementInputStrip
 
+from gassi.core.capture_affinity import apply_capture_affinity_to_widget
+
 logger = logging.getLogger(__name__)
 
 _TAB_WIDTH = 28
@@ -186,6 +188,10 @@ class MainOverlay(tk.Tk):
 
         # ── placement highlight (v0.3.2) ──────────────────────────
         self._placement_highlight = PlacementHighlightWindow(self, theme=t)
+
+        # hide_from_capture flag — set to settings.hide_from_capture at startup
+        # via apply_capture_affinity_to_all(). Read by sub-windows on lazy build.
+        self._hide_from_capture: bool = True
 
         # ── floating advice window (v0.8.0.1) ────────────────────
         self._floating_advice = FloatingAdviceWindow(self, theme=t)
@@ -435,6 +441,10 @@ class MainOverlay(tk.Tk):
         tab_btn.pack(fill=tk.BOTH, expand=True)
         tab_btn.bind("<Button-1>", lambda _e: self.slide_onscreen())
 
+        # Apply capture affinity to the pull-tab if hide_from_capture is active
+        if self._hide_from_capture:
+            apply_capture_affinity_to_widget(tab, hide=True)
+
         self._tab_window = tab
 
     def _destroy_pull_tab(self) -> None:
@@ -548,6 +558,53 @@ class MainOverlay(tk.Tk):
         """Wire GamePackLoader for the active game selector in settings."""
         self._pack_loader = pack_loader
 
+    def set_anticheat_note(self, note: str) -> None:
+        """Store the active pack's anticheat_note for the settings dialog."""
+        self._anticheat_note = note
+
+    def apply_capture_affinity_to_all(self, hide: bool) -> None:
+        """Apply SetWindowDisplayAffinity to all overlay windows (v0.8.2).
+
+        Targets: main overlay root + PlacementHighlightWindow + FloatingAdviceWindow
+        + FloatingPlacementDialog + pull-back tab (if visible).
+
+        Called at startup (hide=settings.hide_from_capture) and from
+        the settings save handler when the toggle changes.
+        """
+        # Persist flag so lazily-built sub-window Toplevels pick it up in _build()
+        self._hide_from_capture = hide
+
+        # Main root window
+        apply_capture_affinity_to_widget(self, hide)
+
+        # PlacementHighlightWindow (Toplevel created lazily in show();
+        # apply now if already built, otherwise set a pending flag so
+        # _build_toplevel can pick it up — handled via show() calling
+        # apply_capture_affinity_to_widget on the fresh toplevel).
+        _highlight_top = getattr(self._placement_highlight, "_toplevel", None)
+        if _highlight_top is not None and _highlight_top.winfo_exists():
+            apply_capture_affinity_to_widget(_highlight_top, hide)
+
+        # FloatingAdviceWindow
+        _advice_top = getattr(self._floating_advice, "_toplevel", None)
+        if _advice_top is not None and _advice_top.winfo_exists():
+            apply_capture_affinity_to_widget(_advice_top, hide)
+
+        # FloatingPlacementDialog
+        _placement_top = getattr(self._floating_placement, "_toplevel", None)
+        if _placement_top is not None and _placement_top.winfo_exists():
+            apply_capture_affinity_to_widget(_placement_top, hide)
+
+        # Pull-back tab (only exists when overlay is offscreen)
+        if self._tab_window is not None and self._tab_window.winfo_exists():
+            apply_capture_affinity_to_widget(self._tab_window, hide)
+
+        logger.debug(
+            "Capture affinity updated: %s (%d sub-windows checked)",
+            "hidden" if hide else "visible",
+            4,
+        )
+
     def set_settings_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Set the callback for when settings are saved."""
         self._settings_handler = handler
@@ -583,6 +640,7 @@ class MainOverlay(tk.Tk):
             api_key=getattr(self, "_api_key", ""),
             claude_api_key=getattr(self, "_claude_api_key", ""),
             pack_loader=getattr(self, "_pack_loader", None),
+            anticheat_note=getattr(self, "_anticheat_note", ""),
         )
 
     def _on_close_click(self) -> None:

@@ -5,6 +5,8 @@ game_version: "0.6"
 rag_collection_name: timberborn_knowledge
 rag_top_k: 4
 rag_min_game_version: "0.6"
+# anticheat_note: single-player only, no anti-cheat. GASSI is screen-capture only.
+anticheat_note: "Single-player game with no anti-cheat. GASSI uses screen capture only — no memory access."
 
 # v0.7.4: building footprint registry (width_cells x height_cells).
 # Keys are lowercase keywords matched against placement advice text.

@@ -167,7 +167,7 @@ class SettingsDialog(tk.Toplevel):
     """Modal settings dialog with tabs for different setting categories."""
 
     _WIDTH = 480
-    _HEIGHT = 640  # increased to accommodate API key fields (v0.8.1.1)
+    _HEIGHT = 660  # increased for anticheat_note + hide_from_capture row (v0.8.2)
 
     def __init__(
         self,
@@ -180,6 +180,7 @@ class SettingsDialog(tk.Toplevel):
         api_key: str = "",
         claude_api_key: str = "",
         pack_loader: GamePackLoader | None = None,
+        anticheat_note: str = "",
     ) -> None:
         super().__init__(parent)
         self._theme = theme
@@ -190,6 +191,7 @@ class SettingsDialog(tk.Toplevel):
         self._api_key = api_key
         self._claude_api_key = claude_api_key
         self._pack_loader = pack_loader
+        self._anticheat_note = anticheat_note
         t = theme
 
         self.title("GASSI — Settings")
@@ -331,6 +333,40 @@ class SettingsDialog(tk.Toplevel):
             values=pack_display, state="readonly", width=26,
         )
         game_menu.grid(row=row, column=1, sticky="w", pady=6)
+        row += 1
+
+        # -- anti-cheat note (v0.8.2) ------------------------------------
+        # Shown only when the active game pack has a non-empty anticheat_note.
+        if self._anticheat_note:
+            tk.Label(
+                frame, text="Anti-cheat", bg=t.bg_primary, fg=t.fg_text,
+                font=t.font("normal"),
+            ).grid(row=row, column=0, sticky="nw", pady=6, padx=(0, 16))
+
+            tk.Label(
+                frame,
+                text=self._anticheat_note,
+                bg=t.bg_primary, fg=t.fg_dim, font=t.font("small"),
+                wraplength=self._WIDTH - 140,
+                justify=tk.LEFT,
+            ).grid(row=row, column=1, sticky="w", pady=6)
+            row += 1
+
+        # -- hide from capture toggle (v0.8.2) ---------------------------
+        tk.Label(
+            frame, text="Hide from capture", bg=t.bg_primary, fg=t.fg_text,
+            font=t.font("normal"),
+        ).grid(row=row, column=0, sticky="w", pady=6, padx=(0, 16))
+
+        self._hide_capture_var = tk.BooleanVar(
+            value=bool(self._current.get("hide_from_capture", True))
+        )
+        hide_capture_check = ttk.Checkbutton(
+            frame,
+            text="Hide overlay from OBS and game capture (Win10 2004+ only)",
+            variable=self._hide_capture_var,
+        )
+        hide_capture_check.grid(row=row, column=1, sticky="w", pady=6)
         row += 1
 
         # -- AI backend provider selector --------------------------------
@@ -667,6 +703,7 @@ class SettingsDialog(tk.Toplevel):
         settings["advisor_input_source"] = self._source_var.get()
         settings["grid_overlay_enabled"] = self._grid_var.get()
         settings["show_floating_advice_when_hidden"] = self._floating_advice_var.get()
+        settings["hide_from_capture"] = self._hide_capture_var.get()
         settings["active_game_id"] = self._game_display_to_id.get(
             self._game_var.get(), self._game_var.get()
         )

@@ -12,7 +12,7 @@ def _get_version() -> str:
     try:
         return _pkg_version("gassi")
     except PackageNotFoundError:
-        return "0.8.6"  # keep in sync with pyproject.toml
+        return "0.8.7"  # keep in sync with pyproject.toml
 from typing import Any
 
 import keyring  # noqa: F401 — kept for type reference; actual key retrieval via factory
@@ -253,12 +253,23 @@ def main() -> None:
                 **{k: v for k, v in new_settings.items() if not k.startswith("_")}
             )
 
+        # hide_from_capture toggle: apply immediately, no restart needed (v0.8.2)
+        new_hide = new_settings.get("hide_from_capture", settings.hide_from_capture)
+        if new_hide != settings.hide_from_capture:
+            overlay.after(
+                0, lambda hide=new_hide: overlay.apply_capture_affinity_to_all(hide)
+            )
+            logger.info(
+                "hide_from_capture toggled: %s", "on" if new_hide else "off"
+            )
+
     overlay.set_settings_handler(_on_settings_saved)
     overlay.set_calibration_service(
         calibration_service, settings.active_game_id, _gemini_api_key_for_calib
     )
     overlay.set_claude_api_key(_claude_api_key)
     overlay.set_pack_loader(pack_loader)
+    overlay.set_anticheat_note(_active_manifest.anticheat_note or "")
 
     # -- cleanup on close -----------------------------------------------------
     def _on_close() -> None:
@@ -266,6 +277,13 @@ def main() -> None:
         hotkey_manager.stop()
         async_bridge.shutdown()
         overlay.destroy()
+
+    # v0.8.2: apply SetWindowDisplayAffinity to all overlay windows at startup.
+    # Must run after mainloop starts so the HWND is mapped and winfo_id() is valid.
+    overlay.after(
+        200,
+        lambda: overlay.apply_capture_affinity_to_all(settings.hide_from_capture),
+    )
 
     overlay.set_close_handler(_on_close)
 

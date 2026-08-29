@@ -202,6 +202,13 @@ class FloatingAdviceWindow:
 
         self._toplevel = top
         self._text_area = text_area
+
+        # Apply capture affinity if the parent overlay has requested it (v0.8.2).
+        _hide = getattr(self._parent, "_hide_from_capture", False)
+        if _hide:
+            from gassi.core.capture_affinity import apply_capture_affinity_to_widget  # noqa: PLC0415
+            apply_capture_affinity_to_widget(top, hide=True)
+
         logger.debug("FloatingAdviceWindow: built")
 
     def _on_click_dismiss(self, event: tk.Event) -> None:  # type: ignore[type-arg]

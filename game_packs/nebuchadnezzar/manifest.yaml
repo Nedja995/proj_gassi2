@@ -5,6 +5,7 @@ game_version: "1.0"
 rag_collection_name: nebuchadnezzar_knowledge
 rag_top_k: 4
 rag_min_game_version: "1.0"
+anticheat_note: "Single-player game with no anti-cheat. GASSI uses screen capture only — no memory access."
 
 # OCR regions are unreliable until calibration is refined;
 # screenshot mode gives better advice for mid/late game.

@@ -495,14 +495,20 @@ This is the milestone that makes GASSI publicly releasable as a zip bundle.
 
 ---
 
-## v0.8.2 — Anti-Cheat Posture (post-beta)
+## v0.8.2 — Anti-Cheat Posture (post-beta) ✅ Complete
 
 For games with anti-cheat. Pure overlay + CV approach already avoids memory reading;
 this adds capture hiding and explicit documentation.
 
-- [ ] `SetWindowDisplayAffinity` (Windows): hide overlay from OBS/game capture
-- [ ] Per-game `anticheat_note` surfaced in Settings UI (already in manifest model)
-- [ ] Anti-cheat compatibility notes in `adding_game_pack.md`
+- [x] `SetWindowDisplayAffinity` (Windows): hide overlay from OBS/game capture
+      (`core/capture_affinity.py`, `AppSettings.hide_from_capture`, applied to all
+      overlay windows at startup and on settings toggle; lazily-built Toplevels apply
+      on `_build()`; pull-tab applies on `_create_pull_tab()`)
+- [x] Per-game `anticheat_note` surfaced in Settings UI (read-only label in General tab,
+      visible only when non-empty; `MainOverlay.set_anticheat_note()`; both manifests updated)
+- [x] Anti-cheat compatibility notes in `adding_game_pack.md` (Section 8, risk table,
+      `SetWindowDisplayAffinity` explanation, risk classification by game type)
+- [x] AD-28 in `docs/architecture.md`
 
 ---
 

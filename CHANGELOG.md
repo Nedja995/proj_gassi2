@@ -5,9 +5,41 @@ All notable changes to GASSI will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.8.1 Distribution
+## [0.8.7] - 2026-08-29
 
-See [TODO.md](TODO.md) for planned sub-version v0.8.1.4.
+### Added
+- `core/capture_affinity.py`: `apply_capture_affinity(hwnd, hide)` and
+  `apply_capture_affinity_to_widget(widget, hide)` — ctypes wrappers for
+  `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`. Fail-open on older
+  Windows (build < 19041) and non-Windows platforms. Warning logged on failure.
+- `AppSettings.hide_from_capture: bool = True` — persisted to `settings.json`.
+- `MainOverlay.apply_capture_affinity_to_all(hide)` — applies affinity to
+  main root + all sub-window Toplevels (PlacementHighlight, FloatingAdvice,
+  FloatingPlacement, pull-tab). Persists `_hide_from_capture` flag so lazily-
+  built Toplevels pick it up in their own `_build()` method.
+- `MainOverlay.set_anticheat_note(note)` — setter forwarding pack's
+  `anticheat_note` from `main.py` to `SettingsDialog`.
+- Settings → General: read-only **Anti-cheat** label row (visible only when
+  active pack has a non-empty `anticheat_note`).
+- Settings → General: **Hide from capture** checkbutton (above AI Backend);
+  toggle applies immediately without restart.
+- `anticheat_note` field set in Timberborn and Nebuchadnezzar `manifest.yaml`.
+- AD-28 in `docs/architecture.md`.
+- Anti-cheat compatibility section (Section 8) in `docs/adding_game_pack.md`;
+  old Section 8 renumbered to Section 9.
+
+### Changed
+- `main.py`: `overlay.set_anticheat_note()` called after pack load. `after(200)`
+  schedules `apply_capture_affinity_to_all` for after mainloop start.
+- `main.py` `_on_settings_saved`: detects `hide_from_capture` change and calls
+  `overlay.apply_capture_affinity_to_all()` immediately (no restart required).
+- `SettingsDialog._HEIGHT` bumped 640 → 660px.
+- `PlacementHighlightWindow._build_toplevel()`, `FloatingAdviceWindow._build()`,
+  `FloatingPlacementDialog._build()`: each reads `parent._hide_from_capture` and
+  applies affinity on lazy Toplevel construction.
+- `MainOverlay._create_pull_tab()`: applies affinity to tab Toplevel if
+  `_hide_from_capture` is active.
+- `pyproject.toml` bumped to `0.8.7`.
 
 ## [0.8.6] - 2026-08-28
 

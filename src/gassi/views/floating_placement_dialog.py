@@ -194,6 +194,13 @@ class FloatingPlacementDialog:
         self._toplevel = top
         self._combo = combo
         self._combo_var = combo_var
+
+        # Apply capture affinity if the parent overlay has requested it (v0.8.2).
+        _hide = getattr(self._parent, "_hide_from_capture", False)
+        if _hide:
+            from gassi.core.capture_affinity import apply_capture_affinity_to_widget  # noqa: PLC0415
+            apply_capture_affinity_to_widget(top, hide=True)
+
         logger.debug("FloatingPlacementDialog: built")
 
     def _submit(self) -> None:

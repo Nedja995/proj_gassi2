@@ -182,6 +182,14 @@ class PlacementHighlightWindow:
 
         self._toplevel = top
         self._canvas = canvas
+
+        # Apply capture affinity if the parent overlay has requested it (v0.8.2).
+        # _hide_from_capture is set by MainOverlay.apply_capture_affinity_to_all().
+        _hide = getattr(self._parent, "_hide_from_capture", False)
+        if _hide:
+            from gassi.core.capture_affinity import apply_capture_affinity_to_widget  # noqa: PLC0415
+            apply_capture_affinity_to_widget(top, hide=True)
+
         logger.debug("PlacementHighlightWindow toplevel built")
 
     def _draw(self, pw: int, ph: int, label_w: int, cell_ref: str) -> None:
